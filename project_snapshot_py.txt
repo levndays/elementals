@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals
-Snapshot created on: 2025-06-29T13:41:01.895758
+Snapshot created on: 2025-06-29T13:57:38.370750
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -33,6 +33,7 @@ Snapshot created on: 2025-06-29T13:41:01.895758
                 <input type="file" id="editor-file-input" accept=".json" style="display: none;">
                 <button id="editor-save-btn" title="Save Level (.json)">Save</button>
                 <button id="editor-info-btn" title="Player Metrics Info">Info</button>
+                <button id="editor-back-to-menu">Back to Menu</button>
             </div>
             <div class="separator"></div>
             <div class="toolbar-group">
@@ -166,6 +167,7 @@ Snapshot created on: 2025-06-29T13:41:01.895758
             <div class="menu-options">
                 <button id="play-btn">Play</button>
                 <button id="tutorial-btn">How to Play</button>
+                <button id="editor-btn">Level Editor</button>
             </div>
         </div>
         <!-- Level Select -->
@@ -174,6 +176,10 @@ Snapshot created on: 2025-06-29T13:41:01.895758
             <div id="level-list" class="menu-list">
                 <!-- Dynamically populated -->
             </div>
+            <div class="menu-options" style="margin-top: 20px;">
+                 <button id="load-custom-level-btn">Load Custom Level</button>
+            </div>
+            <input type="file" id="custom-level-input" accept=".json" style="display: none;">
             <button class="back-button" data-target="main-menu">Back</button>
         </div>
         <!-- Pause Menu -->
@@ -3240,6 +3246,7 @@ export class EditorUI {
         document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
         document.getElementById('editor-save-btn').onclick = () => this.editor.actions.saveFile();
         document.getElementById('editor-info-btn').onclick = () => this.showInfoModal();
+        document.getElementById('editor-back-to-menu').onclick = () => { window.location.href = 'index.html'; };
         document.getElementById('editor-mode-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('editor-mode-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('editor-mode-scale').onclick = () => this.editor.controls.setTransformMode('scale');
@@ -4107,14 +4114,19 @@ export class Game {
             death: document.getElementById('death-screen'),
             levelList: document.getElementById('level-list'),
             respawnTimerText: document.getElementById('respawn-timer-text'),
-            playBtn: document.getElementById('play-btn'),
-            tutorialBtn: document.getElementById('tutorial-btn'),
+            loadCustomLevelBtn: document.getElementById('load-custom-level-btn'),
+            customLevelInput: document.getElementById('custom-level-input'),
             resumeBtn: document.getElementById('resume-btn'),
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
+            playBtn: null, // Will be queried dynamically
+            tutorialBtn: null, // Will be queried dynamically
+            editorBtn: null, // Will be queried dynamically
         };
 
         this.currentLevelUrl = null;
+        this.currentCustomLevelData = null;
+        this.customLevelPlayBtn = null;
     }
 
     async init() {
@@ -4137,10 +4149,23 @@ export class Game {
         this._warmupShaders();
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
+    
+    setupMainMenuListeners() {
+        // Get fresh references to buttons that might be recreated
+        this.ui.playBtn = document.getElementById('play-btn');
+        this.ui.tutorialBtn = document.getElementById('tutorial-btn');
+        this.ui.editorBtn = document.getElementById('editor-btn');
+
+        if(this.ui.playBtn) this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
+        if(this.ui.tutorialBtn) this.ui.tutorialBtn.onclick = () => this.startLevel({ url: './levels/level-tutorial.json' });
+        if(this.ui.editorBtn) this.ui.editorBtn.onclick = () => { window.location.href = 'editor.html'; };
+    }
 
     setupEventListeners() {
-        this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
-        this.ui.tutorialBtn.onclick = () => this.startGame('./levels/level-tutorial.json');
+        this.setupMainMenuListeners();
+
+        this.ui.loadCustomLevelBtn.onclick = () => this.ui.customLevelInput.click();
+        this.ui.customLevelInput.onchange = (e) => this.handleCustomLevelSelect(e);
 
         document.querySelectorAll('.back-button').forEach(btn => 
             btn.onclick = () => this.showScreen(document.getElementById(btn.dataset.target))
@@ -4194,7 +4219,7 @@ export class Game {
                 
                 const btn = document.createElement('button');
                 btn.textContent = level.name;
-                btn.onclick = () => this.startGame(level.path);
+                btn.onclick = () => this.startLevel({ url: level.path });
                 this.ui.levelList.appendChild(btn);
             }
         } catch (error) {
@@ -4212,16 +4237,22 @@ export class Game {
         screenToShow.style.display = 'flex';
     }
 
-    async startGame(levelUrl) {
+    async startLevel({ url = null, data = null }) {
+        if (!url && !data) {
+            console.error("Must provide a level URL or level data.");
+            return;
+        }
+
         this.gameState = 'LOADING';
-        this.currentLevelUrl = levelUrl;
-        
+        this.currentLevelUrl = url;
+        this.currentCustomLevelData = data;
+
         document.body.requestPointerLock();
 
         this.showScreen(this.ui.main);
         this.ui.main.innerHTML = '<h2>Loading...</h2>';
 
-        await this.loadLevel(levelUrl);
+        await this.loadLevel(url, data);
 
         if (document.pointerLockElement !== document.body) {
             this.returnToMenu();
@@ -4239,6 +4270,39 @@ export class Game {
 
         document.body.classList.add('game-active');
     }
+
+    handleCustomLevelSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const levelData = JSON.parse(e.target.result);
+                this.prepareCustomLevel(levelData);
+            } catch (err) {
+                alert("Invalid or corrupt level file.");
+                console.error("Error parsing custom level:", err);
+            } finally {
+                event.target.value = ''; 
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    prepareCustomLevel(data) {
+        if (this.customLevelPlayBtn && this.customLevelPlayBtn.parentElement) {
+            this.customLevelPlayBtn.parentElement.removeChild(this.customLevelPlayBtn);
+        }
+    
+        const levelName = data.name || 'Custom Level';
+        
+        this.customLevelPlayBtn = document.createElement('button');
+        this.customLevelPlayBtn.textContent = `Play: ${levelName}`;
+        this.customLevelPlayBtn.style.borderColor = '#2ed573';
+        this.customLevelPlayBtn.onclick = () => this.startLevel({ data });
+    
+        this.ui.levelList.appendChild(this.customLevelPlayBtn);
+    }
     
     handlePlayerDeath() {
         if (this.gameState === 'DEAD') return;
@@ -4253,7 +4317,7 @@ export class Game {
         this.gameState = 'LOADING';
         this.ui.death.innerHTML = '<h2>Loading...</h2>';
         
-        await this.loadLevel(this.currentLevelUrl);
+        await this.loadLevel(this.currentLevelUrl, this.currentCustomLevelData);
         
         this.ui.death.innerHTML = `
             <h2>YOU DIED</h2>
@@ -4284,22 +4348,30 @@ export class Game {
             <div class="menu-options">
                 <button id="play-btn">Play</button>
                 <button id="tutorial-btn">How to Play</button>
+                <button id="editor-btn">Level Editor</button>
             </div>`;
-        this.ui.playBtn = document.getElementById('play-btn');
-        this.ui.tutorialBtn = document.getElementById('tutorial-btn');
-        this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
-        this.ui.tutorialBtn.onclick = () => this.startGame('./levels/level-tutorial.json');
+        this.setupMainMenuListeners();
+
+        if (this.customLevelPlayBtn && this.customLevelPlayBtn.parentElement) {
+            this.customLevelPlayBtn.parentElement.removeChild(this.customLevelPlayBtn);
+            this.customLevelPlayBtn = null;
+        }
+        this.currentCustomLevelData = null;
+
         document.body.classList.remove('game-active');
         if (document.pointerLockElement) document.exitPointerLock();
     }
 
-    async loadLevel(levelUrl) {
+    async loadLevel(url, data = null) {
         this.clearLevel();
-        const levelData = await this.levelLoader.load(levelUrl);
-        const { levelObjects, enemies } = this.levelLoader.build(levelData);
+        if (!data) {
+            if (!url) throw new Error("loadLevel requires either a URL or data.");
+            data = await this.levelLoader.load(url);
+        }
+        const { levelObjects, enemies } = this.levelLoader.build(data);
         this.levelObjects = levelObjects;
         this.enemies = enemies;
-        this.tutorialManager.loadTriggers(levelData.triggers || []);
+        this.tutorialManager.loadTriggers(data.triggers || []);
     }
 
     clearLevel() {

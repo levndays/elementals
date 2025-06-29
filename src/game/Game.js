@@ -22,7 +22,7 @@ export class Game {
         this.enemies = [];
 
         // --- Game State & UI ---
-        this.gameState = 'MENU'; // MENU, LOADING, PLAYING, PAUSED, DEAD
+        this.gameState = 'MENU'; // MENU, LOADING, AWAITING_PLAY, PLAYING, PAUSED, DEAD
         this.respawnTimer = 0;
         this.RESPAWN_COOLDOWN = 5.0;
 
@@ -107,21 +107,27 @@ export class Game {
             }
         });
 
-        // This is the definitive source of truth for the pointer lock state.
+        // REVISED: This is the definitive source of truth for the pointer lock state.
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === document.body) {
-                // We just GAINED pointer lock.
+                // --- POINTER LOCK GAINED ---
                 if (this.gameState === 'PAUSED') {
                     this.gameState = 'PLAYING';
                     this.ui.pause.style.display = 'none';
                     document.body.classList.add('game-active');
+                } else if (this.gameState === 'AWAITING_PLAY') {
+                    this.startGameplay();
                 }
             } else {
-                // We just LOST pointer lock.
+                // --- POINTER LOCK LOST ---
                 if (this.gameState === 'PLAYING') {
                     this.gameState = 'PAUSED';
                     this.showScreen(this.ui.pause);
                     document.body.classList.remove('game-active');
+                } else if (this.gameState === 'AWAITING_PLAY') {
+                    // This happens if the user cancels the lock (e.g., hits Esc)
+                    // before the game has fully started.
+                    this.returnToMenu();
                 }
             }
         }, false);
@@ -156,6 +162,22 @@ export class Game {
         screenToShow.style.display = 'flex';
     }
 
+    // NEW METHOD: Finalizes the transition into gameplay.
+    startGameplay() {
+        this.player.spawn(this.levelLoader.getSpawnPoint());
+        this.gameState = 'PLAYING';
+        
+        // Hide all menus
+        Object.values(this.ui).forEach(element => {
+            if (element instanceof HTMLElement && element.classList.contains('menu-screen')) {
+                 element.style.display = 'none';
+            }
+        });
+
+        document.body.classList.add('game-active');
+    }
+
+    // REVISED: Decoupled from immediate pointer lock state.
     async startLevel({ url = null, data = null }) {
         if (!url && !data) {
             console.error("Must provide a level URL or level data.");
@@ -166,28 +188,22 @@ export class Game {
         this.currentLevelUrl = url;
         this.currentCustomLevelData = data;
 
-        document.body.requestPointerLock();
-
         this.showScreen(this.ui.main);
         this.ui.main.innerHTML = '<h2>Loading...</h2>';
+        
+        // Request pointer lock. The 'pointerlockchange' event will handle the transition.
+        document.body.requestPointerLock();
 
         await this.loadLevel(url, data);
 
-        if (document.pointerLockElement !== document.body) {
-            this.returnToMenu();
-            return;
-        }
-        
-        this.player.spawn(this.levelLoader.getSpawnPoint());
-        this.gameState = 'PLAYING';
-        
-        Object.values(this.ui).forEach(element => {
-            if (element instanceof HTMLElement && element.classList.contains('menu-screen')) {
-                 element.style.display = 'none';
-            }
-        });
+        // After loading, we are waiting for the pointer lock to be confirmed.
+        this.gameState = 'AWAITING_PLAY';
 
-        document.body.classList.add('game-active');
+        // It's possible the lock was acquired while we were loading the level.
+        // If so, we can start the game immediately.
+        if (document.pointerLockElement === document.body) {
+            this.startGameplay();
+        }
     }
 
     handleCustomLevelSelect(event) {
@@ -286,6 +302,10 @@ export class Game {
         if (!data) {
             if (!url) throw new Error("loadLevel requires either a URL or data.");
             data = await this.levelLoader.load(url);
+        } else {
+            // Manually update the level loader's spawn points when loading from a data object.
+            this.levelLoader.spawnPoint = data.spawnPoint;
+            this.levelLoader.deathSpawnPoint = data.deathSpawnPoint;
         }
         const { levelObjects, enemies } = this.levelLoader.build(data);
         this.levelObjects = levelObjects;
