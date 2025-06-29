@@ -25,43 +25,43 @@ export class Katana extends Weapon {
         this._forward = new THREE.Vector3();
 
         // --- Define Keyframes for the Swing Animation ---
-        // (All positions relative to camera, rotations are local Euler angles for simplicity then converted to Quaternion)
+// (All positions relative to camera, rotations are local Euler angles for simplicity then converted to Quaternion)
 
-        // Idle pose (resting horizontal)
-        this.idlePosition = new THREE.Vector3(0.5, -0.3, -0.7); 
-        this.idleRotation = new THREE.Euler(
-            THREE.MathUtils.degToRad(-5),   // Pitch (up/down tip)
-            THREE.MathUtils.degToRad(-15),  // Yaw (inward/outward)
-            THREE.MathUtils.degToRad(85),   // Roll (horizontal orientation)
-            'YXZ'
-        );
-        
-        // Wind-up pose (before the main slash)
-        this.windUpPosition = new THREE.Vector3(0.8, -0.5, -0.4); 
-        this.windUpRotation = new THREE.Euler(
-            THREE.MathUtils.degToRad(15),   // Blade points up slightly
-            THREE.MathUtils.degToRad(40),   // Pulled far right
-            THREE.MathUtils.degToRad(60),   // Tilted back for slice
-            'YXZ'
-        );
+// Idle pose (katana held at ready position, slightly to the side)
+this.idlePosition = new THREE.Vector3(0.3, -0.2, -0.7); 
+this.idleRotation = new THREE.Euler(
+    THREE.MathUtils.degToRad(0),    // Level
+    THREE.MathUtils.degToRad(15),   // Slightly angled right
+    THREE.MathUtils.degToRad(90),   // Horizontal blade
+    'YXZ'
+);
 
-        // Slash midpoint/peak (where the blade passes through the crosshair/target)
-        this.slashPeakPosition = new THREE.Vector3(0.1, -0.2, -0.9); // More central, slightly forward
-        this.slashPeakRotation = new THREE.Euler(
-            THREE.MathUtils.degToRad(0),    // Flat
-            THREE.MathUtils.degToRad(0),    // Facing forward
-            THREE.MathUtils.degToRad(90),   // Perfectly horizontal
-            'YXZ'
-        );
+// Wind-up pose (katana pulled back to the right, ready for horizontal slice)
+this.windUpPosition = new THREE.Vector3(0.8, -0.2, -0.5); 
+this.windUpRotation = new THREE.Euler(
+    THREE.MathUtils.degToRad(0),    // Keep level
+    THREE.MathUtils.degToRad(45),   // Pulled to the right
+    THREE.MathUtils.degToRad(90),   // Maintain horizontal blade
+    'YXZ'
+);
 
-        // Follow-through pose (after the main slash)
-        this.followThroughPosition = new THREE.Vector3(-0.6, -0.2, -0.5); 
-        this.followThroughRotation = new THREE.Euler(
-            THREE.MathUtils.degToRad(-15),  // Blade points down slightly
-            THREE.MathUtils.degToRad(-50),  // Far left
-            THREE.MathUtils.degToRad(110),  // Tilted forward after slice
-            'YXZ'
-        );
+// Slash midpoint/peak (blade slicing through center horizontally)
+this.slashPeakPosition = new THREE.Vector3(0.0, -0.2, -0.8); 
+this.slashPeakRotation = new THREE.Euler(
+    THREE.MathUtils.degToRad(0),    // Perfectly level
+    THREE.MathUtils.degToRad(0),    // Dead center
+    THREE.MathUtils.degToRad(90),   // Perfect horizontal slice
+    'YXZ'
+);
+
+// Follow-through pose (blade continues the slice to the left)
+this.followThroughPosition = new THREE.Vector3(-0.8, -0.2, -0.5); 
+this.followThroughRotation = new THREE.Euler(
+    THREE.MathUtils.degToRad(0),    // Stay level
+    THREE.MathUtils.degToRad(-45),  // Swept to the left
+    THREE.MathUtils.degToRad(90),   // Keep horizontal blade
+    'YXZ'
+);
 
         // Pre-calculate quaternions for smooth interpolation
         this.qIdle = new THREE.Quaternion().setFromEuler(this.idleRotation);
