@@ -1,0 +1,937 @@
+{
+  "name": "Custom Level",
+  "spawnPoint": {
+    "x": -44.98801551832607,
+    "y": 8.984053355471769,
+    "z": -10.625467485890029
+  },
+  "deathSpawnPoint": {
+    "x": -43.27678684780668,
+    "y": 7.839747674467933,
+    "z": -9.13641267191703
+  },
+  "settings": {
+    "backgroundColor": "0x1d2938",
+    "fogColor": "0x1d2938",
+    "fogNear": 20,
+    "fogFar": 150,
+    "ambientLight": {
+      "color": "0x607080",
+      "intensity": 0.7
+    },
+    "directionalLights": [
+      {
+        "color": "0xffffff",
+        "intensity": 1.5,
+        "position": {
+          "x": -0.19662520049809018,
+          "y": 100,
+          "z": 94.33960641496519
+        }
+      },
+      {
+        "color": "0xffffff",
+        "intensity": 1,
+        "position": {
+          "x": 46.55881067839958,
+          "y": 24.444200793879673,
+          "z": -110.47408034961622
+        }
+      }
+    ]
+  },
+  "objects": [
+    {
+      "type": "Box",
+      "name": "Platform_Start",
+      "size": [
+        15,
+        2,
+        15
+      ],
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_Jump_1",
+      "size": [
+        10,
+        2,
+        10
+      ],
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 20
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_Jump_2",
+      "size": [
+        10,
+        2,
+        10
+      ],
+      "position": {
+        "x": 15,
+        "y": 3,
+        "z": 20
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_DoubleJump_Target",
+      "size": [
+        15,
+        2,
+        15
+      ],
+      "position": {
+        "x": 15,
+        "y": 10,
+        "z": 40
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_Dash_Start",
+      "size": [
+        15,
+        2,
+        15
+      ],
+      "position": {
+        "x": 15,
+        "y": 10,
+        "z": 60
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_Dash_End",
+      "size": [
+        15,
+        2,
+        15
+      ],
+      "position": {
+        "x": 15,
+        "y": 10,
+        "z": 90
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Platform_Slam_Tower",
+      "size": [
+        5,
+        25,
+        5
+      ],
+      "position": {
+        "x": 15,
+        "y": 22.5,
+        "z": 90
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Bridge_To_Arena",
+      "size": [
+        30,
+        2,
+        8
+      ],
+      "position": {
+        "x": 40,
+        "y": 10,
+        "z": 90
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Floor",
+      "size": [
+        60,
+        2,
+        60
+      ],
+      "position": {
+        "x": 85,
+        "y": 10,
+        "z": 90
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Wall_Back",
+      "size": [
+        60,
+        15,
+        2
+      ],
+      "position": {
+        "x": 85,
+        "y": 17.5,
+        "z": 61
+      },
+      "material": {
+        "color": "0x223344"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Wall_Front",
+      "size": [
+        60,
+        15,
+        2
+      ],
+      "position": {
+        "x": 85,
+        "y": 17.5,
+        "z": 119
+      },
+      "material": {
+        "color": "0x223344"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Wall_Left",
+      "size": [
+        2,
+        15,
+        60
+      ],
+      "position": {
+        "x": 56,
+        "y": 17.5,
+        "z": 90
+      },
+      "material": {
+        "color": "0x223344"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Wall_Right",
+      "size": [
+        2,
+        15,
+        60
+      ],
+      "position": {
+        "x": 114,
+        "y": 17.5,
+        "z": 90
+      },
+      "material": {
+        "color": "0x223344"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281",
+      "size": [
+        -14.337207994854166,
+        -1.5326680171484088,
+        12.768471033444994
+      ],
+      "position": {
+        "x": -43.01285565350706,
+        "y": 5.086083636995656,
+        "z": -8.96661336105313
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy",
+      "size": [
+        -4.208012957269948,
+        -1.5326680171484088,
+        12.768471033444994
+      ],
+      "position": {
+        "x": -44.04379244343043,
+        "y": 5.066219354772365,
+        "z": 3.4946403812872124
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -46.26813359798705,
+        "y": 7.4800669261192,
+        "z": 22.107000844728145
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -48.395409662170735,
+        "y": 10.719786450366831,
+        "z": 36.41924432447844
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -54.1932531582041,
+        "y": 13.18059556107957,
+        "z": 52.03503159851534
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -54.958576548032475,
+        "y": 18.84840733318615,
+        "z": 64.32780639821098
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -57.6867224841606,
+        "y": 23.69989632801674,
+        "z": 77.74885396702486
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -1.5326680171484088,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -57.63703431691122,
+        "y": 25.12654970639061,
+        "z": 103.13826819776716
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -9.35459125727115,
+        -65.88732605570398,
+        11.51789748887716
+      ],
+      "position": {
+        "x": -65.2440753666263,
+        "y": 31.422054024356967,
+        "z": 139.4397373046035
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -7.11666436362174,
+        -1.5326680171484088,
+        21.664703872845354
+      ],
+      "position": {
+        "x": -73.56319029136195,
+        "y": 35.59654472372804,
+        "z": 137.033754853079
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -7.11666436362174,
+        -1.5326680171484088,
+        21.664703872845354
+      ],
+      "position": {
+        "x": -64.24971574707698,
+        "y": 28.892288912765864,
+        "z": 128.1662870532819
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -7.11666436362174,
+        -1.5326680171484088,
+        21.664703872845354
+      ],
+      "position": {
+        "x": -60.15226726030613,
+        "y": 51.332828177813,
+        "z": 148.97630285734766
+      },
+      "rotation": {
+        "x": -0.24134372440321145,
+        "y": -90.50230491319972,
+        "z": -25.90372093591107
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -12.960599066159523,
+        -1.1702203770092008,
+        7.572954931487935
+      ],
+      "position": {
+        "x": -59.34608228287116,
+        "y": 60.33037788384331,
+        "z": 138.2289013476706
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -44.02552743283555,
+        -1.1702203770092008,
+        7.572954931487935
+      ],
+      "position": {
+        "x": -25.03575772836654,
+        "y": 35.02651861542267,
+        "z": 138.37481365113624
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -7.11666436362174,
+        -1.5326680171484088,
+        21.664703872845354
+      ],
+      "position": {
+        "x": -64.59184036678384,
+        "y": 43.170755441366694,
+        "z": 156.88305744479786
+      },
+      "rotation": {
+        "x": 0.39692796464352986,
+        "y": -90.30783101314668,
+        "z": 26.30100650847053
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Katana Target"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Fireball Target"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Fireflies Target"
+    }
+  ],
+  "triggers": [
+    {
+      "type": "Trigger",
+      "name": "Welcome",
+      "position": {
+        "x": -41.75934763757055,
+        "y": 5.7614447295826245,
+        "z": -9.313608708592323
+      },
+      "size": [
+        16,
+        8,
+        10.876547004065293
+      ],
+      "message": "Use your MOUSE to look and W, A, S, D to move.",
+      "duration": 8,
+      "color": "0x2ed573"
+    },
+    {
+      "type": "Trigger",
+      "name": "Jump",
+      "position": {
+        "x": -44.13153928946884,
+        "y": 9.672358004866954,
+        "z": 8.012847526714085
+      },
+      "size": [
+        4.9135478529606775,
+        8,
+        4
+      ],
+      "message": "Press SPACE to jump across the platforms.",
+      "duration": 5,
+      "color": "0x2ed573"
+    },
+    {
+      "type": "Trigger",
+      "name": "DoubleJump",
+      "position": {
+        "x": -54.34750758720173,
+        "y": 16.07210572584555,
+        "z": 54.761976264200435
+      },
+      "size": [
+        9.020993927863413,
+        8,
+        4
+      ],
+      "message": "This gap is too high. Press SPACE again in mid-air to Double Jump.",
+      "duration": 8,
+      "color": "0xffa502"
+    },
+    {
+      "type": "Trigger",
+      "name": "DoubleJump_Cooldown",
+      "position": {
+        "x": -54.96415065519877,
+        "y": 22.096436794868733,
+        "z": 63.91251282277527
+      },
+      "size": [
+        7.1143018362574075,
+        6.015156160833573,
+        4
+      ],
+      "message": "Notice the JUMP bar (bottom-left) goes on cooldown after a double jump.",
+      "duration": 8,
+      "color": "0xffa502"
+    },
+    {
+      "type": "Trigger",
+      "name": "Dash",
+      "position": {
+        "x": -57.938917187698486,
+        "y": 27.1298445053377,
+        "z": 81.26106201212208
+      },
+      "size": [
+        10.164616862428192,
+        8,
+        4
+      ],
+      "message": "Double-tap a movement key to Dash across the gap. The DASH bar shows its cooldown.",
+      "duration": 8,
+      "color": "0xffa502"
+    },
+    {
+      "type": "Trigger",
+      "name": "Slam",
+      "position": {
+        "x": -57.60454343060415,
+        "y": 28.17041333083598,
+        "z": 107.49762430104798
+      },
+      "size": [
+        8,
+        7.231729781960025,
+        8
+      ],
+      "message": "Climb this tower, then hold SHIFT in the air to Ground Slam onto the bridge.",
+      "duration": 10,
+      "color": "0xffa502"
+    },
+    {
+      "type": "Trigger",
+      "name": "Combat_Intro",
+      "position": {
+        "x": 50,
+        "y": 13,
+        "z": 90
+      },
+      "size": [
+        15,
+        8,
+        10
+      ],
+      "message": "Welcome to the combat arena. Destroy all the dummies to complete the tutorial.",
+      "duration": 8,
+      "color": "0x1e90ff"
+    },
+    {
+      "type": "Trigger",
+      "name": "Melee_Intro",
+      "position": {
+        "x": 68,
+        "y": 13,
+        "z": 80
+      },
+      "size": [
+        10,
+        8,
+        10
+      ],
+      "message": "LEFT CLICK to use your Katana. Get close to the dummy and strike.",
+      "duration": 8,
+      "color": "0xff4757"
+    },
+    {
+      "type": "Trigger",
+      "name": "Ability_Intro",
+      "position": {
+        "x": 85,
+        "y": 13,
+        "z": 90
+      },
+      "size": [
+        10,
+        8,
+        10
+      ],
+      "message": "RIGHT CLICK casts abilities. They cost ENERGY and have COOLDOWNS.",
+      "duration": 8,
+      "color": "0xff4757"
+    },
+    {
+      "type": "Trigger",
+      "name": "Fireball_Intro",
+      "position": {
+        "x": 85,
+        "y": 13,
+        "z": 107
+      },
+      "size": [
+        15,
+        8,
+        10
+      ],
+      "message": "Press 1 to select Fireball. Aim and cast it on the dummy.",
+      "duration": 8,
+      "color": "0xff4757"
+    },
+    {
+      "type": "Trigger",
+      "name": "Fireflies_Intro",
+      "position": {
+        "x": 102,
+        "y": 13,
+        "z": 80
+      },
+      "size": [
+        10,
+        8,
+        10
+      ],
+      "message": "Press 2 for Fireflies. These homing shots seek out your locked-on target.",
+      "duration": 8,
+      "color": "0xff4757"
+    }
+  ],
+  "deathTriggers": []
+}

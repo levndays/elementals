@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elementals - Level Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <canvas id="game-canvas"></canvas>
+    
+    <div id="editor-ui">
+        <!-- TOP TOOLBAR -->
+        <div id="editor-toolbar">
+            <div class="toolbar-group">
+                <button id="editor-load-btn" title="Load Level (.json)">Load</button>
+                <input type="file" id="editor-file-input" accept=".json" style="display: none;">
+                <button id="editor-save-btn" title="Save Level (.json)">Save</button>
+            </div>
+            <div class="separator"></div>
+            <div class="toolbar-group">
+                <button id="editor-mode-translate" class="active" title="Translate (T)">T</button>
+                <button id="editor-mode-rotate" title="Rotate (R)">R</button>
+                <button id="editor-mode-scale" title="Scale (S)">S</button>
+            </div>
+        </div>
+
+        <!-- MAIN SCROLLABLE PANEL -->
+        <div id="editor-main-panel">
+            <!-- SCENE SETTINGS -->
+            <details class="editor-accordion" open>
+                <summary>Scene</summary>
+                <div class="accordion-content">
+                    <label>Skybox Color</label>
+                    <input type="color" id="skybox-color-input">
+                    <hr>
+                    <h4>Ambient Light</h4>
+                    <label>Color</label>
+                    <input type="color" id="ambient-color-input">
+                    <label>Intensity</label>
+                    <input type="range" id="ambient-intensity-input" min="0" max="5" step="0.1">
+                </div>
+            </details>
+
+            <!-- CREATE -->
+            <details class="editor-accordion" open>
+                <summary>Create</summary>
+                <div class="accordion-content">
+                    <h4>Geometry & Actors</h4>
+                    <button id="editor-add-box">Add Box</button>
+                    <button id="editor-add-enemy">Add Enemy</button>
+                    <button id="add-dirlight-btn">Add Directional Light</button>
+                    <h4>Volumes & Triggers</h4>
+                    <button id="editor-add-msg-trigger">Add Message Trigger</button>
+                    <button id="editor-add-death-trigger">Add Death Zone</button>
+                    <hr>
+                    <h4>Scene Points</h4>
+                    <button id="editor-set-spawn">Set Initial Spawn to Camera</button>
+                    <button id="editor-set-death-spawn">Set Death Spawn to Camera</button>
+                </div>
+            </details>
+            
+            <!-- VIEW OPTIONS -->
+            <details class="editor-accordion">
+                <summary>View Options</summary>
+                <div class="accordion-content">
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-msg-triggers" checked>
+                        <label for="view-toggle-msg-triggers">Message Triggers</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-death-triggers" checked>
+                        <label for="view-toggle-death-triggers">Death Zones</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-light-helpers" checked>
+                        <label for="view-toggle-light-helpers">Light Helpers</label>
+                    </div>
+                     <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-spawn-helpers" checked>
+                        <label for="view-toggle-spawn-helpers">Spawn Helpers</label>
+                    </div>
+                </div>
+            </details>
+
+            <!-- OUTLINER -->
+            <details class="editor-accordion" open>
+                <summary>Outliner</summary>
+                <div class="accordion-content" id="outliner-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </details>
+
+            <!-- PROPERTIES -->
+            <details class="editor-accordion" id="properties-accordion" style="display: none;">
+                <summary>Properties</summary>
+                <div class="accordion-content" id="properties-content">
+                    <!-- Dynamically populated based on selection -->
+                </div>
+                <button id="editor-delete-btn" class="delete-button">Delete Selected</button>
+            </details>
+        </div>
+    </div>
+
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/",
+            "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+    }
+    </script>
+    
+    <script type="module" src="src/editor_main.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELEMENTALS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <!-- Menu System (wrapper) -->
+    <div id="menu-system">
+        <!-- Main Menu -->
+        <div id="main-menu" class="menu-screen">
+            <h1>ELEMENTALS</h1>
+            <div class="menu-options">
+                <button id="play-btn">Play</button>
+                <button id="tutorial-btn">How to Play</button>
+            </div>
+        </div>
+        <!-- Level Select -->
+        <div id="level-select-menu" class="menu-screen" style="display: none;">
+            <h2>Select Level</h2>
+            <div id="level-list" class="menu-list">
+                <!-- Dynamically populated -->
+            </div>
+            <button class="back-button" data-target="main-menu">Back</button>
+        </div>
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="menu-screen" style="display: none;">
+            <h2>Paused</h2>
+            <div class="menu-options">
+                <button id="resume-btn">Resume</button>
+                <button id="pause-quit-btn">Quit to Menu</button>
+            </div>
+        </div>
+        <!-- Death Screen -->
+        <div id="death-screen" class="menu-screen" style="display: none;">
+            <h2>YOU DIED</h2>
+            <p id="respawn-timer-text">Respawning in 5...</p>
+            <div class="menu-options">
+                <button id="death-quit-btn">Return to Menu</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- In-Game UI & VFX -->
+    <div id="screen-overlay"></div>
+    <div id="vfx-dash-forward"></div>
+    <div id="vfx-dash-sideways"></div>
+    <div id="vfx-jump-wind"></div>
+    <div id="vfx-ground-slam"></div>
+    <div id="target-frame"></div>
+    <div id="tutorial-text-container" style="display: none;">
+        <p id="tutorial-text"></p>
+    </div>
+    <div id="crosshair"></div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Game HUD -->
+    <div id="game-hud">
+        <div id="hud-bottom-left">
+            <div id="health-bar-container" class="resource-bar-container">
+                <div id="health-bar"></div>
+                <span id="health-text" class="resource-text"></span>
+            </div>
+            <div id="ability-cooldowns">
+                <div class="cooldown-container">
+                    <div id="double-jump-bar" class="cooldown-bar"></div>
+                    <span class="cooldown-label">JUMP</span>
+                </div>
+                <div class="cooldown-container">
+                    <div id="dash-bar" class="cooldown-bar"></div>
+                    <span class="cooldown-label">DASH</span>
+                </div>
+            </div>
+        </div>
+        <div id="hud-bottom-center">
+            <div id="target-info">
+                <span id="target-name"></span>
+                <div id="target-health-bar-container" class="resource-bar-container">
+                    <div id="target-health-bar"></div>
+                    <span id="target-health-text" class="resource-text"></span>
+                </div>
+            </div>
+            <div id="abilities-container">
+                <div id="ability-0" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
+                <div id="ability-1" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
+                <div id="ability-2" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
+                <div id="ability-3" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
+            </div>
+        </div>
+        <div id="hud-bottom-right">
+            <div id="energy-bar-container" class="resource-bar-container">
+                <div id="energy-bar"></div>
+                <span id="energy-text" class="resource-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/",
+            "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+    }
+    </script>
+    
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
