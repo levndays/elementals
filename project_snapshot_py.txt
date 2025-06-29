@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals
-Snapshot created on: 2025-06-29T12:45:24.790719
+Snapshot created on: 2025-06-29T13:41:01.895758
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -488,7 +488,7 @@ body:not(.game-active) #tutorial-text-container {
     display: none !important;
 }
 
-/* --- TUTORIAL TEXT OVERLAY --- */
+/* --- TUTORIAL TEXT OVERLAY (REWORKED) --- */
 #tutorial-text-container {
     position: absolute;
     bottom: 25%;
@@ -496,18 +496,39 @@ body:not(.game-active) #tutorial-text-container {
     transform: translateX(-50%);
     width: 80%;
     max-width: 600px;
+    max-height: 25vh; /* Prevent it from growing too tall */
     background-color: rgba(0, 0, 0, 0.75);
     border-left: 4px solid #2ed573;
     padding: 20px 25px;
     z-index: 50;
-    pointer-events: none;
+    pointer-events: auto; /* Allow scrollbar interaction */
     transition: opacity 0.5s ease-out;
-}
-#tutorial-text {
-    color: #eee; font-size: 1.2rem; text-align: center; margin: 0; line-height: 1.5;
+    box-sizing: border-box; /* Ensure padding doesn't break layout */
+    overflow-y: auto; /* Add scrollbar if content is too long */
 }
 
-/* HUD STYLES */
+#tutorial-text {
+    color: #eee;
+    font-size: 1.2rem;
+    text-align: left; /* Better for multi-line text */
+    margin: 0;
+    line-height: 1.5;
+    overflow-wrap: break-word; /* Ensure long words wrap correctly */
+    pointer-events: none; /* Clicks should pass through text to the game */
+}
+
+#tutorial-text kbd {
+    background-color: #eee;
+    color: #111;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    border-bottom: 2px solid #ccc;
+    text-transform: uppercase;
+}
+
+/* --- HUD STYLES --- */
 #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
     position: absolute; bottom: 20px; display: flex; flex-direction: column;
     align-items: center; gap: 8px; pointer-events: none; z-index: 10;
@@ -855,7 +876,8 @@ jobs:
             {
                 "color": "0xE0E8FF",
                 "intensity": 9.0,
-                "position": { "x": -100, "y": 250, "z": 80 }
+                "position": { "x": -100, "y": 250, "z": 80 },
+                "targetPosition": { "x": 0, "y": 0, "z": 0 }
             }
         ]
     },
@@ -966,6 +988,11 @@ jobs:
           "x": -0.19662520049809018,
           "y": 100,
           "z": 94.33960641496519
+        },
+        "targetPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
         }
       },
       {
@@ -975,6 +1002,11 @@ jobs:
           "x": 46.55881067839958,
           "y": 24.444200793879673,
           "z": -110.47408034961622
+        },
+        "targetPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
         }
       }
     ]
@@ -1271,7 +1303,7 @@ jobs:
       "rotation": {
         "x": 0,
         "y": -90.5023004568972,
-        "z": -25.664483814825154
+        "z": -25.66448381482514
       },
       "material": {
         "color": "0xcccccc"
@@ -1290,7 +1322,7 @@ jobs:
       ],
       "position": {
         "x": -59.34608228287116,
-        "y": 60.33037788384331,
+        "y": 56.18227848289526,
         "z": 138.2289013476706
       },
       "rotation": {
@@ -1332,7 +1364,7 @@ jobs:
     },
     {
       "type": "Box",
-      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy",
       "size": [
         -7.11666436362174,
         -1.5326680171484088,
@@ -1627,12 +1659,12 @@ jobs:
       "size": [
         5,
         1.2147638168423514,
-        10.513717199832112
+        21.410547156871157
       ],
       "position": {
         "x": 28.618151953528375,
         "y": 32.01046566752841,
-        "z": 284.78370258926594
+        "z": 290.7677370378025
       },
       "rotation": {
         "x": 0,
@@ -1978,8 +2010,108 @@ jobs:
       ],
       "position": {
         "x": 50.107659018712376,
-        "y": 17.69692461161343,
+        "y": 16.169746544805204,
         "z": 299.36335939978414
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751189540507_copy_copy_copy",
+      "size": [
+        5,
+        8.436992494585535,
+        5
+      ],
+      "position": {
+        "x": 38.95952107314219,
+        "y": 19.014829220756837,
+        "z": 308.90970895954536
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751188368534_copy",
+      "size": [
+        5,
+        1.2147638168423514,
+        6.849803759880959
+      ],
+      "position": {
+        "x": 24.293863031792892,
+        "y": 33.303255944309875,
+        "z": 310.05424474411103
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -12.960599066159523,
+        -1.1702203770092008,
+        7.572954931487935
+      ],
+      "position": {
+        "x": -66.76667918411331,
+        "y": 60.60448127535637,
+        "z": 132.01784035049542
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751188368534_copy",
+      "size": [
+        5,
+        1.2147638168423514,
+        5.168579630942036
+      ],
+      "position": {
+        "x": 39.664726299169736,
+        "y": 31.845085950633848,
+        "z": 290.10534651298383
       },
       "rotation": {
         "x": 0,
@@ -1998,9 +2130,9 @@ jobs:
     {
       "type": "Dummy",
       "position": {
-        "x": 0,
-        "y": 0,
-        "z": 0
+        "x": 35.000228077174626,
+        "y": 18.799919941731627,
+        "z": 243.95776047717976
       },
       "rotation": {
         "x": 0,
@@ -2012,8 +2144,8 @@ jobs:
       "type": "Dummy",
       "position": {
         "x": 0,
-        "y": 0,
-        "z": 0
+        "y": 18.799919941731627,
+        "z": 230.18962744580983
       },
       "rotation": {
         "x": 0,
@@ -2025,36 +2157,9 @@ jobs:
     {
       "type": "Dummy",
       "position": {
-        "x": -3.614107592165178,
-        "y": 22.889187644887286,
-        "z": 233.8946648865683
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Dummy",
-      "position": {
-        "x": 16.284307688355824,
-        "y": 23.621860165850357,
-        "z": 233.8984155046697
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "name": "Dummy_copy"
-    },
-    {
-      "type": "Dummy",
-      "position": {
-        "x": 50.821649358951,
-        "y": 31.981390565223165,
-        "z": 299.06206678182264
+        "x": 18.476473589188785,
+        "y": 18.799919941731627,
+        "z": 225.77828841029188
       },
       "rotation": {
         "x": 0,
@@ -2066,9 +2171,37 @@ jobs:
     {
       "type": "Dummy",
       "position": {
-        "x": 18.011067911095736,
-        "y": 25.641784575817603,
-        "z": 307.07685224556457
+        "x": 42.73719317280715,
+        "y": 18.889764765513814,
+        "z": 314.0599099286152
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 55.19862555717065,
+        "y": 18.889764765513814,
+        "z": 296.439123284842
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 21.19258131465478,
+        "y": 18.889764765513814,
+        "z": 297.7708301405303
       },
       "rotation": {
         "x": 0,
@@ -2076,20 +2209,6 @@ jobs:
         "z": 0
       },
       "name": "Dummy_copy_copy_copy"
-    },
-    {
-      "type": "Dummy",
-      "position": {
-        "x": 55.85877399810535,
-        "y": 22.764138924599976,
-        "z": 322.52508921098513
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "name": "Dummy_copy_copy_copy_copy"
     }
   ],
   "triggers": [
@@ -2481,7 +2600,11 @@ export class EditorActions {
         switch (entityType) {
             case 'Trigger':       list = this.app.triggers; break;
             case 'DeathTrigger':  list = this.app.deathTriggers; break;
-            case 'DirectionalLight': /* To-do: Deleting lights needs undo*/ return;
+            case 'DirectionalLight': 
+                this.app.removeDirectionalLight(entity);
+                this.editor.deselect();
+                // TODO: Add undo/redo for light creation/deletion
+                return;
             case 'Enemy':         list = this.app.enemies; break;
             default:              list = this.app.levelObjects; break;
         }
@@ -2588,22 +2711,33 @@ export class EditorActions {
     }
 
     saveFile() {
-        // First, ensure all scaled objects have their scales "baked" into their definitions.
+        // --- PRE-SAVE SYNC ---
+        // Ensure all entities have their definitions updated from their editor state.
+        
+        // Bake scale for any scaled objects first.
         this.app.levelObjects.forEach(obj => this._bakeScaleIntoDefinition(obj));
 
-        // Now, proceed with saving, knowing the definitions are up-to-date.
+        // Sync standard mesh-based entities (Objects, Enemies, Triggers)
         [...this.app.levelObjects, ...this.app.enemies, ...this.app.triggers, ...this.app.deathTriggers].forEach(obj => {
-            obj.definition.position = {x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z};
-            if(obj.definition.rotation) {
+            if (!obj.definition) return;
+            obj.definition.position = { x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z };
+            if (obj.definition.rotation) {
                 const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
-                obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+                obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
             }
         });
 
+        // Sync directional lights
+        this.app.directionalLights.forEach(lightObj => {
+            lightObj.definition.position = { x: lightObj.light.position.x, y: lightObj.light.position.y, z: lightObj.light.position.z };
+            lightObj.definition.targetPosition = { x: lightObj.light.target.position.x, y: lightObj.light.target.position.y, z: lightObj.light.target.position.z };
+        });
+
+        // --- SERIALIZATION ---
         const levelData = {
             name: "Custom Level",
-            spawnPoint: this.app.spawnPoint,
-            deathSpawnPoint: this.app.deathSpawnPoint,
+            spawnPoint: { x: this.app.spawnPointHelper.position.x, y: this.app.spawnPointHelper.position.y, z: this.app.spawnPointHelper.position.z },
+            deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
             objects: this.app.levelObjects.map(obj => obj.definition),
             enemies: this.app.enemies.map(enemy => enemy.definition),
@@ -2780,7 +2914,8 @@ export class EditorApp {
         const lightData = {
             color: "0xffffff",
             intensity: 1,
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            targetPosition: { x: 0, y: 0, z: 0 }
         };
 
         if (!this.settings.directionalLights) this.settings.directionalLights = [];
@@ -2797,6 +2932,7 @@ export class EditorApp {
         if (!lightObjectToRemove) return;
         const index = this.directionalLights.indexOf(lightObjectToRemove);
         if (index > -1) {
+            this.scene.remove(lightObjectToRemove.light.target);
             this.scene.remove(lightObjectToRemove.light);
             this.scene.remove(lightObjectToRemove.helper);
             this.scene.remove(lightObjectToRemove.picker);
@@ -2804,9 +2940,11 @@ export class EditorApp {
             lightObjectToRemove.helper.dispose();
             lightObjectToRemove.picker.geometry.dispose();
             lightObjectToRemove.picker.material.dispose();
+            
+            const defIndex = this.settings.directionalLights.indexOf(lightObjectToRemove.definition);
+            if (defIndex > -1) this.settings.directionalLights.splice(defIndex, 1);
 
             this.directionalLights.splice(index, 1);
-            this.settings.directionalLights.splice(index, 1);
         }
     }
 
@@ -2876,6 +3014,12 @@ export class EditorApp {
     animate() {
         const deltaTime = this.clock.getDelta();
         this.physics.update(deltaTime);
+
+        // Update entities like enemies to sync their mesh positions
+        for (const updatable of this.updatables) {
+            updatable.update(deltaTime);
+        }
+
         this.editor.update(deltaTime);
         this.renderer.render();
     }
@@ -3340,9 +3484,13 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
              createColorInput('Color', entity.light.color, val => this.editor.updateSelectedProp('color', null, val));
              createNumberInput('Intensity', entity.light.intensity, 0, 20, 0.1, val => this.editor.updateSelectedProp('intensity', null, val));
              createVec3Inputs('Position', entity.light.position, (axis, val) => {
-                 entity.picker.position[axis] = val;
-                 this.editor.syncObjectTransforms();
-                 this.updatePropertiesPanel();
+                 entity.picker.position[axis] = val; // Move the picker
+                 this.editor.syncObjectTransforms(); // Sync picker to light
+                 this.updatePropertiesPanel(); // Redraw panel with new values
+             });
+             // NEW: Inputs for Target Position
+             createVec3Inputs('Target Position', entity.light.target.position, (axis, val) => {
+                 this.editor.updateSelectedProp('targetPosition', axis, val);
              });
         } else { // Generic Object or Enemy
             const def = entity.definition;
@@ -3556,14 +3704,29 @@ export class LevelEditor {
     
     applyDefinition(obj) {
         const type = obj.userData?.gameEntity?.type;
+        const def = obj.definition;
+        const mesh = obj.mesh;
+        const body = obj.body;
+
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
             this.controls.selectionBox.setFromObject(obj);
             return;
         }
 
-        const def = obj.definition;
-        const mesh = obj.mesh;
-        const body = obj.body;
+        if (type === 'DirectionalLight') {
+            const light = obj.light;
+            light.color.set(parseInt(def.color, 16));
+            light.intensity = def.intensity;
+            light.position.set(def.position.x, def.position.y, def.position.z);
+            if (def.targetPosition) {
+                light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
+            }
+            obj.picker.position.copy(light.position);
+            light.target.updateMatrixWorld(true);
+            obj.helper.update();
+            this.controls.selectionBox.setFromObject(obj.picker);
+            return;
+        }
         
         // Position
         mesh.position.set(def.position.x, def.position.y, def.position.z);
@@ -3630,8 +3793,7 @@ export class LevelEditor {
                 light.position.copy(picker.position);
             }
             
-            light.target.position.set(0,0,0);
-            entity.definition.position = { x: light.position.x, y: light.position.y, z: light.position.z };
+            // light.target.position is now managed by its definition and the UI
             entity.helper.update();
 
             if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);
@@ -6661,12 +6823,18 @@ export class LevelLoader {
         }
         
         // Return triggers to be handled by the TutorialManager
-        return { levelObjects, enemies, ambientLight, directionalLights, triggers: levelData.triggers };
+        return { levelObjects, enemies, ambientLight, directionalLights, triggers: levelData.triggers, deathTriggers: levelData.deathTriggers };
     }
 
     createDirectionalLight(lightData) {
         const light = new THREE.DirectionalLight(parseInt(lightData.color, 16), lightData.intensity);
         light.position.set(lightData.position.x, lightData.position.y, lightData.position.z);
+        
+        if (lightData.targetPosition) {
+            light.target.position.set(lightData.targetPosition.x, lightData.targetPosition.y, lightData.targetPosition.z);
+        }
+        this.scene.add(light.target); // Add target to scene for matrix updates
+        
         light.castShadow = true;
         light.userData.definition = lightData; 
         this.scene.add(light);

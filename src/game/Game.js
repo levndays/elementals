@@ -33,14 +33,18 @@ export class Game {
             death: document.getElementById('death-screen'),
             levelList: document.getElementById('level-list'),
             respawnTimerText: document.getElementById('respawn-timer-text'),
-            playBtn: document.getElementById('play-btn'),
-            tutorialBtn: document.getElementById('tutorial-btn'),
+            loadCustomLevelBtn: document.getElementById('load-custom-level-btn'),
+            customLevelInput: document.getElementById('custom-level-input'),
             resumeBtn: document.getElementById('resume-btn'),
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
+            playBtn: null, // Will be queried dynamically
+            tutorialBtn: null, // Will be queried dynamically
+            editorBtn: null, // Will be queried dynamically
         };
 
         this.currentLevelUrl = null;
+        this.currentCustomLevelData = null;
     }
 
     async init() {
@@ -63,10 +67,23 @@ export class Game {
         this._warmupShaders();
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
+    
+    setupMainMenuListeners() {
+        // Get fresh references to buttons that might be recreated
+        this.ui.playBtn = document.getElementById('play-btn');
+        this.ui.tutorialBtn = document.getElementById('tutorial-btn');
+        this.ui.editorBtn = document.getElementById('editor-btn');
+
+        if(this.ui.playBtn) this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
+        if(this.ui.tutorialBtn) this.ui.tutorialBtn.onclick = () => this.startLevel({ url: './levels/level-tutorial.json' });
+        if(this.ui.editorBtn) this.ui.editorBtn.onclick = () => { window.location.href = 'editor.html'; };
+    }
 
     setupEventListeners() {
-        this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
-        this.ui.tutorialBtn.onclick = () => this.startGame('./levels/level-tutorial.json');
+        this.setupMainMenuListeners();
+
+        this.ui.loadCustomLevelBtn.onclick = () => this.ui.customLevelInput.click();
+        this.ui.customLevelInput.onchange = (e) => this.handleCustomLevelLoad(e);
 
         document.querySelectorAll('.back-button').forEach(btn => 
             btn.onclick = () => this.showScreen(document.getElementById(btn.dataset.target))
@@ -120,7 +137,7 @@ export class Game {
                 
                 const btn = document.createElement('button');
                 btn.textContent = level.name;
-                btn.onclick = () => this.startGame(level.path);
+                btn.onclick = () => this.startLevel({ url: level.path });
                 this.ui.levelList.appendChild(btn);
             }
         } catch (error) {
@@ -138,16 +155,22 @@ export class Game {
         screenToShow.style.display = 'flex';
     }
 
-    async startGame(levelUrl) {
+    async startLevel({ url = null, data = null }) {
+        if (!url && !data) {
+            console.error("Must provide a level URL or level data.");
+            return;
+        }
+
         this.gameState = 'LOADING';
-        this.currentLevelUrl = levelUrl;
-        
+        this.currentLevelUrl = url;
+        this.currentCustomLevelData = data;
+
         document.body.requestPointerLock();
 
         this.showScreen(this.ui.main);
         this.ui.main.innerHTML = '<h2>Loading...</h2>';
 
-        await this.loadLevel(levelUrl);
+        await this.loadLevel(url, data);
 
         if (document.pointerLockElement !== document.body) {
             this.returnToMenu();
@@ -165,6 +188,25 @@ export class Game {
 
         document.body.classList.add('game-active');
     }
+
+    handleCustomLevelLoad(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const levelData = JSON.parse(e.target.result);
+                this.startLevel({ data: levelData });
+            } catch (err) {
+                alert("Invalid or corrupt level file.");
+                console.error("Error parsing custom level:", err);
+            } finally {
+                // Reset input to allow loading the same file again
+                event.target.value = ''; 
+            }
+        };
+        reader.readAsText(file);
+    }
     
     handlePlayerDeath() {
         if (this.gameState === 'DEAD') return;
@@ -179,7 +221,7 @@ export class Game {
         this.gameState = 'LOADING';
         this.ui.death.innerHTML = '<h2>Loading...</h2>';
         
-        await this.loadLevel(this.currentLevelUrl);
+        await this.loadLevel(this.currentLevelUrl, this.currentCustomLevelData);
         
         this.ui.death.innerHTML = `
             <h2>YOU DIED</h2>
@@ -210,22 +252,23 @@ export class Game {
             <div class="menu-options">
                 <button id="play-btn">Play</button>
                 <button id="tutorial-btn">How to Play</button>
+                <button id="editor-btn">Level Editor</button>
             </div>`;
-        this.ui.playBtn = document.getElementById('play-btn');
-        this.ui.tutorialBtn = document.getElementById('tutorial-btn');
-        this.ui.playBtn.onclick = () => this.showScreen(this.ui.levelSelect);
-        this.ui.tutorialBtn.onclick = () => this.startGame('./levels/level-tutorial.json');
+        this.setupMainMenuListeners();
         document.body.classList.remove('game-active');
         if (document.pointerLockElement) document.exitPointerLock();
     }
 
-    async loadLevel(levelUrl) {
+    async loadLevel(url, data = null) {
         this.clearLevel();
-        const levelData = await this.levelLoader.load(levelUrl);
-        const { levelObjects, enemies } = this.levelLoader.build(levelData);
+        if (!data) {
+            if (!url) throw new Error("loadLevel requires either a URL or data.");
+            data = await this.levelLoader.load(url);
+        }
+        const { levelObjects, enemies } = this.levelLoader.build(data);
         this.levelObjects = levelObjects;
         this.enemies = enemies;
-        this.tutorialManager.loadTriggers(levelData.triggers || []);
+        this.tutorialManager.loadTriggers(data.triggers || []);
     }
 
     clearLevel() {

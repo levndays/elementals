@@ -16,6 +16,7 @@
             <div class="menu-options">
                 <button id="play-btn">Play</button>
                 <button id="tutorial-btn">How to Play</button>
+                <button id="editor-btn">Level Editor</button>
             </div>
         </div>
         <!-- Level Select -->
@@ -24,6 +25,10 @@
             <div id="level-list" class="menu-list">
                 <!-- Dynamically populated -->
             </div>
+            <div class="menu-options" style="margin-top: 20px;">
+                 <button id="load-custom-level-btn">Load Custom Level</button>
+            </div>
+            <input type="file" id="custom-level-input" accept=".json" style="display: none;">
             <button class="back-button" data-target="main-menu">Back</button>
         </div>
         <!-- Pause Menu -->
