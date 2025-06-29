@@ -138,7 +138,8 @@ export class EditorApp {
         const lightData = {
             color: "0xffffff",
             intensity: 1,
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            targetPosition: { x: 0, y: 0, z: 0 }
         };
 
         if (!this.settings.directionalLights) this.settings.directionalLights = [];
@@ -155,6 +156,7 @@ export class EditorApp {
         if (!lightObjectToRemove) return;
         const index = this.directionalLights.indexOf(lightObjectToRemove);
         if (index > -1) {
+            this.scene.remove(lightObjectToRemove.light.target);
             this.scene.remove(lightObjectToRemove.light);
             this.scene.remove(lightObjectToRemove.helper);
             this.scene.remove(lightObjectToRemove.picker);
@@ -162,9 +164,11 @@ export class EditorApp {
             lightObjectToRemove.helper.dispose();
             lightObjectToRemove.picker.geometry.dispose();
             lightObjectToRemove.picker.material.dispose();
+            
+            const defIndex = this.settings.directionalLights.indexOf(lightObjectToRemove.definition);
+            if (defIndex > -1) this.settings.directionalLights.splice(defIndex, 1);
 
             this.directionalLights.splice(index, 1);
-            this.settings.directionalLights.splice(index, 1);
         }
     }
 
@@ -234,6 +238,12 @@ export class EditorApp {
     animate() {
         const deltaTime = this.clock.getDelta();
         this.physics.update(deltaTime);
+
+        // Update entities like enemies to sync their mesh positions
+        for (const updatable of this.updatables) {
+            updatable.update(deltaTime);
+        }
+
         this.editor.update(deltaTime);
         this.renderer.render();
     }

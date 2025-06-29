@@ -161,14 +161,29 @@ export class LevelEditor {
     
     applyDefinition(obj) {
         const type = obj.userData?.gameEntity?.type;
+        const def = obj.definition;
+        const mesh = obj.mesh;
+        const body = obj.body;
+
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
             this.controls.selectionBox.setFromObject(obj);
             return;
         }
 
-        const def = obj.definition;
-        const mesh = obj.mesh;
-        const body = obj.body;
+        if (type === 'DirectionalLight') {
+            const light = obj.light;
+            light.color.set(parseInt(def.color, 16));
+            light.intensity = def.intensity;
+            light.position.set(def.position.x, def.position.y, def.position.z);
+            if (def.targetPosition) {
+                light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
+            }
+            obj.picker.position.copy(light.position);
+            light.target.updateMatrixWorld(true);
+            obj.helper.update();
+            this.controls.selectionBox.setFromObject(obj.picker);
+            return;
+        }
         
         // Position
         mesh.position.set(def.position.x, def.position.y, def.position.z);
@@ -235,8 +250,7 @@ export class LevelEditor {
                 light.position.copy(picker.position);
             }
             
-            light.target.position.set(0,0,0);
-            entity.definition.position = { x: light.position.x, y: light.position.y, z: light.position.z };
+            // light.target.position is now managed by its definition and the UI
             entity.helper.update();
 
             if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);

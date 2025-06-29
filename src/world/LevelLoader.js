@@ -77,12 +77,18 @@ export class LevelLoader {
         }
         
         // Return triggers to be handled by the TutorialManager
-        return { levelObjects, enemies, ambientLight, directionalLights, triggers: levelData.triggers };
+        return { levelObjects, enemies, ambientLight, directionalLights, triggers: levelData.triggers, deathTriggers: levelData.deathTriggers };
     }
 
     createDirectionalLight(lightData) {
         const light = new THREE.DirectionalLight(parseInt(lightData.color, 16), lightData.intensity);
         light.position.set(lightData.position.x, lightData.position.y, lightData.position.z);
+        
+        if (lightData.targetPosition) {
+            light.target.position.set(lightData.targetPosition.x, lightData.targetPosition.y, lightData.targetPosition.z);
+        }
+        this.scene.add(light.target); // Add target to scene for matrix updates
+        
         light.castShadow = true;
         light.userData.definition = lightData; 
         this.scene.add(light);

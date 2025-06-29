@@ -257,9 +257,13 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
              createColorInput('Color', entity.light.color, val => this.editor.updateSelectedProp('color', null, val));
              createNumberInput('Intensity', entity.light.intensity, 0, 20, 0.1, val => this.editor.updateSelectedProp('intensity', null, val));
              createVec3Inputs('Position', entity.light.position, (axis, val) => {
-                 entity.picker.position[axis] = val;
-                 this.editor.syncObjectTransforms();
-                 this.updatePropertiesPanel();
+                 entity.picker.position[axis] = val; // Move the picker
+                 this.editor.syncObjectTransforms(); // Sync picker to light
+                 this.updatePropertiesPanel(); // Redraw panel with new values
+             });
+             // NEW: Inputs for Target Position
+             createVec3Inputs('Target Position', entity.light.target.position, (axis, val) => {
+                 this.editor.updateSelectedProp('targetPosition', axis, val);
              });
         } else { // Generic Object or Enemy
             const def = entity.definition;

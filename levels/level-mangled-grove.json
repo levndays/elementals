@@ -15,7 +15,8 @@
             {
                 "color": "0xE0E8FF",
                 "intensity": 9.0,
-                "position": { "x": -100, "y": 250, "z": 80 }
+                "position": { "x": -100, "y": 250, "z": 80 },
+                "targetPosition": { "x": 0, "y": 0, "z": 0 }
             }
         ]
     },

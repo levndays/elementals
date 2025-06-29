@@ -217,7 +217,7 @@ body:not(.game-active) #tutorial-text-container {
     display: none !important;
 }
 
-/* --- TUTORIAL TEXT OVERLAY --- */
+/* --- TUTORIAL TEXT OVERLAY (REWORKED) --- */
 #tutorial-text-container {
     position: absolute;
     bottom: 25%;
@@ -225,18 +225,39 @@ body:not(.game-active) #tutorial-text-container {
     transform: translateX(-50%);
     width: 80%;
     max-width: 600px;
+    max-height: 25vh; /* Prevent it from growing too tall */
     background-color: rgba(0, 0, 0, 0.75);
     border-left: 4px solid #2ed573;
     padding: 20px 25px;
     z-index: 50;
-    pointer-events: none;
+    pointer-events: auto; /* Allow scrollbar interaction */
     transition: opacity 0.5s ease-out;
-}
-#tutorial-text {
-    color: #eee; font-size: 1.2rem; text-align: center; margin: 0; line-height: 1.5;
+    box-sizing: border-box; /* Ensure padding doesn't break layout */
+    overflow-y: auto; /* Add scrollbar if content is too long */
 }
 
-/* HUD STYLES */
+#tutorial-text {
+    color: #eee;
+    font-size: 1.2rem;
+    text-align: left; /* Better for multi-line text */
+    margin: 0;
+    line-height: 1.5;
+    overflow-wrap: break-word; /* Ensure long words wrap correctly */
+    pointer-events: none; /* Clicks should pass through text to the game */
+}
+
+#tutorial-text kbd {
+    background-color: #eee;
+    color: #111;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    border-bottom: 2px solid #ccc;
+    text-transform: uppercase;
+}
+
+/* --- HUD STYLES --- */
 #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
     position: absolute; bottom: 20px; display: flex; flex-direction: column;
     align-items: center; gap: 8px; pointer-events: none; z-index: 10;

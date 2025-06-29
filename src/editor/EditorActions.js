@@ -94,7 +94,11 @@ export class EditorActions {
         switch (entityType) {
             case 'Trigger':       list = this.app.triggers; break;
             case 'DeathTrigger':  list = this.app.deathTriggers; break;
-            case 'DirectionalLight': /* To-do: Deleting lights needs undo*/ return;
+            case 'DirectionalLight': 
+                this.app.removeDirectionalLight(entity);
+                this.editor.deselect();
+                // TODO: Add undo/redo for light creation/deletion
+                return;
             case 'Enemy':         list = this.app.enemies; break;
             default:              list = this.app.levelObjects; break;
         }
@@ -201,22 +205,33 @@ export class EditorActions {
     }
 
     saveFile() {
-        // First, ensure all scaled objects have their scales "baked" into their definitions.
+        // --- PRE-SAVE SYNC ---
+        // Ensure all entities have their definitions updated from their editor state.
+        
+        // Bake scale for any scaled objects first.
         this.app.levelObjects.forEach(obj => this._bakeScaleIntoDefinition(obj));
 
-        // Now, proceed with saving, knowing the definitions are up-to-date.
+        // Sync standard mesh-based entities (Objects, Enemies, Triggers)
         [...this.app.levelObjects, ...this.app.enemies, ...this.app.triggers, ...this.app.deathTriggers].forEach(obj => {
-            obj.definition.position = {x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z};
-            if(obj.definition.rotation) {
+            if (!obj.definition) return;
+            obj.definition.position = { x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z };
+            if (obj.definition.rotation) {
                 const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
-                obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+                obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
             }
         });
 
+        // Sync directional lights
+        this.app.directionalLights.forEach(lightObj => {
+            lightObj.definition.position = { x: lightObj.light.position.x, y: lightObj.light.position.y, z: lightObj.light.position.z };
+            lightObj.definition.targetPosition = { x: lightObj.light.target.position.x, y: lightObj.light.target.position.y, z: lightObj.light.target.position.z };
+        });
+
+        // --- SERIALIZATION ---
         const levelData = {
             name: "Custom Level",
-            spawnPoint: this.app.spawnPoint,
-            deathSpawnPoint: this.app.deathSpawnPoint,
+            spawnPoint: { x: this.app.spawnPointHelper.position.x, y: this.app.spawnPointHelper.position.y, z: this.app.spawnPointHelper.position.z },
+            deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
             objects: this.app.levelObjects.map(obj => obj.definition),
             enemies: this.app.enemies.map(enemy => enemy.definition),
