@@ -45,6 +45,7 @@ export class Game {
 
         this.currentLevelUrl = null;
         this.currentCustomLevelData = null;
+        this.customLevelPlayBtn = null;
     }
 
     async init() {
@@ -83,7 +84,7 @@ export class Game {
         this.setupMainMenuListeners();
 
         this.ui.loadCustomLevelBtn.onclick = () => this.ui.customLevelInput.click();
-        this.ui.customLevelInput.onchange = (e) => this.handleCustomLevelLoad(e);
+        this.ui.customLevelInput.onchange = (e) => this.handleCustomLevelSelect(e);
 
         document.querySelectorAll('.back-button').forEach(btn => 
             btn.onclick = () => this.showScreen(document.getElementById(btn.dataset.target))
@@ -189,23 +190,37 @@ export class Game {
         document.body.classList.add('game-active');
     }
 
-    handleCustomLevelLoad(event) {
+    handleCustomLevelSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const levelData = JSON.parse(e.target.result);
-                this.startLevel({ data: levelData });
+                this.prepareCustomLevel(levelData);
             } catch (err) {
                 alert("Invalid or corrupt level file.");
                 console.error("Error parsing custom level:", err);
             } finally {
-                // Reset input to allow loading the same file again
                 event.target.value = ''; 
             }
         };
         reader.readAsText(file);
+    }
+    
+    prepareCustomLevel(data) {
+        if (this.customLevelPlayBtn && this.customLevelPlayBtn.parentElement) {
+            this.customLevelPlayBtn.parentElement.removeChild(this.customLevelPlayBtn);
+        }
+    
+        const levelName = data.name || 'Custom Level';
+        
+        this.customLevelPlayBtn = document.createElement('button');
+        this.customLevelPlayBtn.textContent = `Play: ${levelName}`;
+        this.customLevelPlayBtn.style.borderColor = '#2ed573';
+        this.customLevelPlayBtn.onclick = () => this.startLevel({ data });
+    
+        this.ui.levelList.appendChild(this.customLevelPlayBtn);
     }
     
     handlePlayerDeath() {
@@ -255,6 +270,13 @@ export class Game {
                 <button id="editor-btn">Level Editor</button>
             </div>`;
         this.setupMainMenuListeners();
+
+        if (this.customLevelPlayBtn && this.customLevelPlayBtn.parentElement) {
+            this.customLevelPlayBtn.parentElement.removeChild(this.customLevelPlayBtn);
+            this.customLevelPlayBtn = null;
+        }
+        this.currentCustomLevelData = null;
+
         document.body.classList.remove('game-active');
         if (document.pointerLockElement) document.exitPointerLock();
     }

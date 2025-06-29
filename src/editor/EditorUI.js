@@ -13,6 +13,7 @@ export class EditorUI {
         document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
         document.getElementById('editor-save-btn').onclick = () => this.editor.actions.saveFile();
         document.getElementById('editor-info-btn').onclick = () => this.showInfoModal();
+        document.getElementById('editor-back-to-menu').onclick = () => { window.location.href = 'index.html'; };
         document.getElementById('editor-mode-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('editor-mode-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('editor-mode-scale').onclick = () => this.editor.controls.setTransformMode('scale');
