@@ -1,3 +1,4 @@
+// src/editor/LevelEditor.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
@@ -296,7 +297,15 @@ export class LevelEditor {
                 input.type = 'number';
                 input.step = label.toLowerCase().includes('rot') ? 1 : 0.1;
                 input.value = vector[axis].toFixed(2);
-                input.onchange = (e) => callback(axis, parseFloat(e.target.value));
+                const updateValue = (val) => callback(axis, parseFloat(val));
+                input.onchange = (e) => updateValue(e.target.value);
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        updateValue(e.target.value);
+                        e.target.blur();
+                    }
+                };
                 group.appendChild(input);
             });
         };
@@ -310,7 +319,15 @@ export class LevelEditor {
                  input.type = 'number';
                  input.step = 0.1;
                  input.value = val.toFixed(2);
-                 input.onchange = (e) => callback(index, parseFloat(e.target.value));
+                 const updateValue = (valStr) => callback(index, parseFloat(valStr));
+                 input.onchange = (e) => updateValue(e.target.value);
+                 input.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        updateValue(e.target.value);
+                        e.target.blur();
+                    }
+                 };
                  group.appendChild(input);
              });
         };
@@ -337,7 +354,15 @@ export class LevelEditor {
             const input = fragment.appendChild(document.createElement('input'));
             input.type = 'text';
             input.value = value;
-            input.onchange = (e) => callback(e.target.value);
+            const updateValue = (val) => callback(val);
+            input.onchange = (e) => updateValue(e.target.value);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateValue(e.target.value);
+                    e.target.blur();
+                }
+            };
         };
         
         if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
