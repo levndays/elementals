@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
-Project Root: C:\Users\levndays\elementals_game
-Snapshot created on: 2025-06-28T21:58:10.606667
+Project Root: C:\Users\levndays\Desktop\elementals
+Snapshot created on: 2025-06-29T06:10:05.672794
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -26,26 +26,27 @@ Snapshot created on: 2025-06-28T21:58:10.606667
     <canvas id="game-canvas"></canvas>
     
     <div id="editor-ui">
-        <div id="editor-topbar">
-            <button id="editor-load-btn" title="Load Level from .json file">Load</button>
-            <input type="file" id="editor-file-input" accept=".json" style="display: none;">
-            <button id="editor-save-btn" title="Save Level to .json file">Save</button>
+        <!-- TOP TOOLBAR -->
+        <div id="editor-toolbar">
+            <div class="toolbar-group">
+                <button id="editor-load-btn" title="Load Level (.json)">Load</button>
+                <input type="file" id="editor-file-input" accept=".json" style="display: none;">
+                <button id="editor-save-btn" title="Save Level (.json)">Save</button>
+            </div>
             <div class="separator"></div>
-            <button id="editor-mode-translate" class="active" title="Translate Mode (T)">Translate</button>
-            <button id="editor-mode-rotate" title="Rotate Mode (R)">Rotate</button>
-            <button id="editor-mode-scale" title="Scale Mode (S)">Scale</button>
+            <div class="toolbar-group">
+                <button id="editor-mode-translate" class="active" title="Translate (T)">T</button>
+                <button id="editor-mode-rotate" title="Rotate (R)">R</button>
+                <button id="editor-mode-scale" title="Scale (S)">S</button>
+            </div>
         </div>
 
-        <div id="editor-main-panel" class="editor-panel">
-            <div id="editor-tabs">
-                <button class="editor-tab-btn active" data-tab="tab-scene">Scene</button>
-                <button class="editor-tab-btn" data-tab="tab-outliner">Outliner</button>
-                <button class="editor-tab-btn" data-tab="tab-create">Create</button>
-            </div>
-            <div id="editor-tab-content-container">
-                <div id="tab-scene" class="editor-tab-content active">
-                    <!-- Global Scene Settings -->
-                    <h4>Global Settings</h4>
+        <!-- MAIN SCROLLABLE PANEL -->
+        <div id="editor-main-panel">
+            <!-- SCENE SETTINGS -->
+            <details class="editor-accordion" open>
+                <summary>Scene</summary>
+                <div class="accordion-content">
                     <label>Skybox Color</label>
                     <input type="color" id="skybox-color-input">
                     <hr>
@@ -55,30 +56,65 @@ Snapshot created on: 2025-06-28T21:58:10.606667
                     <label>Intensity</label>
                     <input type="range" id="ambient-intensity-input" min="0" max="5" step="0.1">
                 </div>
-                <div id="tab-outliner" class="editor-tab-content">
-                    <div id="outliner-list">
-                        <!-- Dynamically populated -->
+            </details>
+
+            <!-- CREATE -->
+            <details class="editor-accordion" open>
+                <summary>Create</summary>
+                <div class="accordion-content">
+                    <h4>Geometry & Actors</h4>
+                    <button id="editor-add-box">Add Box</button>
+                    <button id="editor-add-enemy">Add Enemy</button>
+                    <button id="add-dirlight-btn">Add Directional Light</button>
+                    <h4>Volumes & Triggers</h4>
+                    <button id="editor-add-msg-trigger">Add Message Trigger</button>
+                    <button id="editor-add-death-trigger">Add Death Zone</button>
+                    <hr>
+                    <h4>Scene Points</h4>
+                    <button id="editor-set-spawn">Set Initial Spawn to Camera</button>
+                    <button id="editor-set-death-spawn">Set Death Spawn to Camera</button>
+                </div>
+            </details>
+            
+            <!-- VIEW OPTIONS -->
+            <details class="editor-accordion">
+                <summary>View Options</summary>
+                <div class="accordion-content">
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-msg-triggers" checked>
+                        <label for="view-toggle-msg-triggers">Message Triggers</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-death-triggers" checked>
+                        <label for="view-toggle-death-triggers">Death Zones</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-light-helpers" checked>
+                        <label for="view-toggle-light-helpers">Light Helpers</label>
+                    </div>
+                     <div class="checkbox-row">
+                        <input type="checkbox" id="view-toggle-spawn-helpers" checked>
+                        <label for="view-toggle-spawn-helpers">Spawn Helpers</label>
                     </div>
                 </div>
-                <div id="tab-create" class="editor-tab-content">
-                     <h4>Add to Scene</h4>
-                     <button id="editor-add-box">Add Box</button>
-                     <button id="editor-add-enemy">Add Enemy</button>
-                     <button id="add-dirlight-btn">Add Directional Light</button>
-                     <hr>
-                     <h4>Scene Actions</h4>
-                     <button id="editor-set-spawn">Set Initial Spawn to Camera</button>
-                     <button id="editor-set-death-spawn">Set Death Spawn to Camera</button>
-                </div>
-            </div>
-        </div>
+            </details>
 
-        <div id="properties-panel" class="editor-panel" style="display: none;">
-             <h3>Properties</h3>
-             <div id="properties-content">
-                <!-- Dynamically populated based on selection -->
-             </div>
-             <button id="editor-delete-btn" class="delete-button">Delete Selected</button>
+            <!-- OUTLINER -->
+            <details class="editor-accordion" open>
+                <summary>Outliner</summary>
+                <div class="accordion-content" id="outliner-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </details>
+
+            <!-- PROPERTIES -->
+            <details class="editor-accordion" id="properties-accordion" style="display: none;">
+                <summary>Properties</summary>
+                <div class="accordion-content" id="properties-content">
+                    <!-- Dynamically populated based on selection -->
+                </div>
+                <button id="editor-delete-btn" class="delete-button">Delete Selected</button>
+            </details>
         </div>
     </div>
 
@@ -233,7 +269,6 @@ body {
 }
 #game-canvas { display: block; }
 
-/* --- VFX Overlays --- */
 #screen-overlay {
     position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
     background-image: radial-gradient(circle at 50% 50%, transparent 50%, rgba(200, 0, 0, 0.9) 85%);
@@ -528,126 +563,161 @@ body:not(.game-active) #tutorial-text-container {
 }
 #target-health-text { font-size: 10px; }
 
-/* --- EDITOR UI --- */
+/* --- EDITOR UI REWORK --- */
+:root {
+    --editor-bg: rgba(35, 38, 46, 0.9);
+    --editor-border: rgba(255, 255, 255, 0.15);
+    --editor-text: #e0e0e0;
+    --editor-text-dark: #a0a0a0;
+    --editor-accent: #2ed573;
+    --editor-hover: #4a4e58;
+    --editor-active: #585c66;
+    --editor-input-bg: #1e2025;
+}
+
 #editor-ui {
-    position: absolute; top: 10px; right: 10px; width: 280px;
-    display: flex; flex-direction: column; gap: 10px;
-    z-index: 100; font-family: 'Consolas', 'Courier New', monospace;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 300px;
     max-height: calc(100vh - 20px);
+    background-color: var(--editor-bg);
+    border: 1px solid var(--editor-border);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: var(--editor-text);
+    z-index: 100;
 }
-#editor-topbar {
-    background-color: rgba(30, 30, 40, 0.85); border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px; padding: 5px; display: flex; gap: 5px; align-items: center;
+
+#editor-toolbar {
+    display: flex;
+    padding: 6px;
+    gap: 6px;
+    border-bottom: 1px solid var(--editor-border);
+    flex-shrink: 0;
 }
-#editor-topbar .separator { border-right: 1px solid #555; height: 20px; margin: 0 5px; }
-.editor-panel {
-    background-color: rgba(30, 30, 40, 0.85); border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;
-    color: #eee;
+.toolbar-group { display: flex; gap: 4px; }
+#editor-toolbar .separator { border-right: 1px solid var(--editor-border); height: 24px; margin: 0 4px; }
+
+#editor-main-panel {
+    padding: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-#editor-main-panel { flex-shrink: 1; overflow: hidden; }
-#properties-panel { flex-shrink: 0; }
-#editor-ui h3, #editor-ui h4 {
-    margin: 0 0 10px 0; padding-bottom: 5px; font-size: 14px; color: #2ed573;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+/* Accordion Styling */
+.editor-accordion summary {
+    padding: 8px 12px;
+    background-color: var(--editor-active);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    list-style: none; /* Remove default triangle */
+    transition: background-color 0.2s;
 }
-#editor-ui h4 { font-size: 13px; color: #ccc; margin-top: 5px; }
+.editor-accordion summary:hover { background-color: var(--editor-hover); }
+.editor-accordion summary::-webkit-details-marker { display: none; }
+.editor-accordion summary::before { content: '▶ '; font-size: 0.8em; }
+.editor-accordion[open] > summary::before { content: '▼ '; }
+
+.accordion-content {
+    padding: 12px;
+    background-color: rgba(0,0,0,0.2);
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#properties-accordion > .delete-button {
+    margin-top: 12px;
+    border-radius: 4px;
+}
+
+#editor-ui h4 {
+    margin: 5px 0 -5px 0;
+    padding-bottom: 5px;
+    font-size: 13px;
+    color: var(--editor-accent);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--editor-border);
+}
+
 #editor-ui button {
-    background-color: #333; border: 1px solid #555; color: #ddd; padding: 8px;
-    border-radius: 4px; cursor: pointer; font-family: inherit; transition: background-color 0.2s, border-color 0.2s;
+    background-color: var(--editor-active);
+    border: 1px solid var(--editor-border);
+    color: var(--editor-text);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s, border-color 0.2s;
     text-align: center;
 }
-#editor-ui button:hover { background-color: #444; border-color: #777; }
-#editor-ui button:active, #editor-ui button.active { background-color: #2ed573; border-color: #2ed573; color: #000; }
+#editor-ui button:hover { background-color: var(--editor-hover); }
+#editor-ui button.active {
+    background-color: var(--editor-accent);
+    border-color: var(--editor-accent);
+    color: #000;
+    font-weight: bold;
+}
 .delete-button { background-color: #8c2a2a !important; border-color: #a13b3b !important; color: #fff !important; }
 .delete-button:hover { background-color: #a13b3b !important; }
-#editor-ui label { display: block; font-size: 12px; margin-bottom: 4px; color: #aaa; }
+
+#editor-toolbar button { font-weight: bold; min-width: 32px; }
+
+#editor-ui label { font-size: 12px; color: var(--editor-text-dark); }
 #editor-ui input, #editor-ui hr { width: 100%; box-sizing: border-box; }
-#editor-ui input[type="text"], #editor-ui input[type="number"] {
-    background-color: #222; border: 1px solid #444; color: #eee;
-    padding: 6px; border-radius: 3px; font-family: inherit;
+#editor-ui input[type="text"], #editor-ui input[type="number"], #editor-ui input[type="color"], #editor-ui input[type="range"] {
+    background-color: var(--editor-input-bg);
+    border: 1px solid var(--editor-border);
+    color: var(--editor-text);
+    padding: 6px;
+    border-radius: 3px;
+    font-family: inherit;
 }
-#editor-ui hr { border: none; border-top: 1px solid #444; margin: 10px 0; }
+#editor-ui input[type="color"] { padding: 2px; height: 30px; }
+#editor-ui hr { border: none; border-top: 1px solid var(--editor-border); margin: 5px 0; }
 .prop-group { display: flex; gap: 4px; }
 .prop-group input { flex: 1; }
 
-/* Tabs */
-#editor-tabs { display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
-.editor-tab-btn {
-    flex: 1; border: none; border-radius: 4px 4px 0 0; padding: 8px; margin-bottom: -1px;
-    background-color: transparent; border-bottom: 1px solid transparent;
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.editor-tab-btn.active { background-color: rgba(50, 50, 60, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(50, 50, 60, 0.8); color: #2ed573;}
-#editor-tab-content-container {
-    padding-top: 10px;
-    min-height: 150px;
-    max-height: 40vh;
-    overflow-y: auto;
-}
-.editor-tab-content { display: none; flex-direction: column; gap: 8px; }
-.editor-tab-content.active { display: flex; }
+.checkbox-row input[type="checkbox"] { width: auto; }
+.checkbox-row label { cursor: pointer; }
+
 
 /* Outliner */
-#outliner-list { display: flex; flex-direction: column; gap: 2px; }
+#outliner-list { padding: 4px; }
 .outliner-item {
-    padding: 6px 8px; background-color: rgba(255,255,255,0.05); border-radius: 3px;
-    cursor: pointer; transition: background-color 0.15s; font-size: 12px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: 6px 8px;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .outliner-item:hover { background-color: rgba(255,255,255,0.15); }
-.outliner-item.selected { background-color: #2ed573; color: black; font-weight: bold; }
+.outliner-item.selected {
+    background-color: var(--editor-accent);
+    color: black;
+    font-weight: bold;
+}
+/* --- END EDITOR UI REWORK --- */
 --------------------------------------------------
 === END OF FILE: style.css ===
-
-
-=== FILE: .github/workflows/static.yml ===
---------------------------------------------------
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
-
-on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
---------------------------------------------------
-=== END OF FILE: .github/workflows/static.yml ===
 
 
 === FILE: levels/level-mangled-grove.json ===
@@ -777,9 +847,18 @@ jobs:
         "color": "0xffffff",
         "intensity": 1.5,
         "position": {
-          "x": -80,
+          "x": -0.19662520049809018,
           "y": 100,
-          "z": 50
+          "z": 94.33960641496519
+        }
+      },
+      {
+        "color": "0xffffff",
+        "intensity": 1,
+        "position": {
+          "x": 46.55881067839958,
+          "y": 24.444200793879673,
+          "z": -110.47408034961622
         }
       }
     ]
@@ -1243,7 +1322,7 @@ jobs:
       ],
       "position": {
         "x": -57.6867224841606,
-        "y": 25.175146687548885,
+        "y": 23.69989632801674,
         "z": 77.74885396702486
       },
       "rotation": {
@@ -1269,7 +1348,7 @@ jobs:
       "position": {
         "x": -57.63703431691122,
         "y": 25.12654970639061,
-        "z": 106.59536866908557
+        "z": 103.13826819776716
       },
       "rotation": {
         "x": 0,
@@ -1318,8 +1397,8 @@ jobs:
       ],
       "position": {
         "x": -73.56319029136195,
-        "y": 37.187714962965075,
-        "z": 134.2421438129049
+        "y": 35.59654472372804,
+        "z": 137.033754853079
       },
       "rotation": {
         "x": 0,
@@ -1344,7 +1423,7 @@ jobs:
       "position": {
         "x": -64.24971574707698,
         "y": 28.892288912765864,
-        "z": 132.61861510795148
+        "z": 128.1662870532819
       },
       "rotation": {
         "x": 0,
@@ -1372,9 +1451,9 @@ jobs:
         "z": 148.97630285734766
       },
       "rotation": {
-        "x": 25.663425860133525,
-        "y": -90.55727509084672,
-        "z": -0.2413529991993483
+        "x": -0.24134372440321145,
+        "y": -90.50230491319972,
+        "z": -25.90372093591107
       },
       "material": {
         "color": "0xcccccc"
@@ -1432,6 +1511,31 @@ jobs:
       "physics": {
         "mass": 0
       }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751135685281_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        -7.11666436362174,
+        -1.5326680171484088,
+        21.664703872845354
+      ],
+      "position": {
+        "x": -64.59184036678384,
+        "y": 43.170755441366694,
+        "z": 156.88305744479786
+      },
+      "rotation": {
+        "x": 0.39692796464352986,
+        "y": -90.30783101314668,
+        "z": 26.30100650847053
+      },
+      "material": {
+        "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
     }
   ],
   "enemies": [
@@ -1465,6 +1569,7 @@ jobs:
   ],
   "triggers": [
     {
+      "type": "Trigger",
       "name": "Welcome",
       "position": {
         "x": -41.75934763757055,
@@ -1481,6 +1586,7 @@ jobs:
       "color": "0x2ed573"
     },
     {
+      "type": "Trigger",
       "name": "Jump",
       "position": {
         "x": -44.13153928946884,
@@ -1497,6 +1603,7 @@ jobs:
       "color": "0x2ed573"
     },
     {
+      "type": "Trigger",
       "name": "DoubleJump",
       "position": {
         "x": -54.34750758720173,
@@ -1513,6 +1620,7 @@ jobs:
       "color": "0xffa502"
     },
     {
+      "type": "Trigger",
       "name": "DoubleJump_Cooldown",
       "position": {
         "x": -54.96415065519877,
@@ -1529,10 +1637,11 @@ jobs:
       "color": "0xffa502"
     },
     {
+      "type": "Trigger",
       "name": "Dash",
       "position": {
         "x": -57.938917187698486,
-        "y": 29.4656789976766,
+        "y": 27.1298445053377,
         "z": 81.26106201212208
       },
       "size": [
@@ -1545,6 +1654,7 @@ jobs:
       "color": "0xffa502"
     },
     {
+      "type": "Trigger",
       "name": "Slam",
       "position": {
         "x": -57.60454343060415,
@@ -1561,6 +1671,7 @@ jobs:
       "color": "0xffa502"
     },
     {
+      "type": "Trigger",
       "name": "Combat_Intro",
       "position": {
         "x": 50,
@@ -1577,6 +1688,7 @@ jobs:
       "color": "0x1e90ff"
     },
     {
+      "type": "Trigger",
       "name": "Melee_Intro",
       "position": {
         "x": 68,
@@ -1593,6 +1705,7 @@ jobs:
       "color": "0xff4757"
     },
     {
+      "type": "Trigger",
       "name": "Ability_Intro",
       "position": {
         "x": 85,
@@ -1609,6 +1722,7 @@ jobs:
       "color": "0xff4757"
     },
     {
+      "type": "Trigger",
       "name": "Fireball_Intro",
       "position": {
         "x": 85,
@@ -1625,6 +1739,7 @@ jobs:
       "color": "0xff4757"
     },
     {
+      "type": "Trigger",
       "name": "Fireflies_Intro",
       "position": {
         "x": 102,
@@ -1640,7 +1755,8 @@ jobs:
       "duration": 8,
       "color": "0xff4757"
     }
-  ]
+  ],
+  "deathTriggers": []
 }
 --------------------------------------------------
 === END OF FILE: levels/level-tutorial.json ===
@@ -1723,6 +1839,7 @@ export class EditorApp {
         this.levelObjects = [];
         this.enemies = [];
         this.triggers = [];
+        this.deathTriggers = [];
         
         this.spawnPoint = { x: 0, y: 5, z: 10 };
         this.spawnPointHelper = null;
@@ -1736,7 +1853,7 @@ export class EditorApp {
 
     async init() {
         this.levelLoader = new LevelLoader(this);
-        const levelData = await this.levelLoader.load('./levels/level-mangled-grove.json');
+        const levelData = await this.levelLoader.load('./levels/level-tutorial.json');
 
         this.editor = new LevelEditor(this);
         this.loadLevel(levelData);
@@ -1747,11 +1864,12 @@ export class EditorApp {
 
     loadLevel(levelData) {
         this.clearLevel();
-        const { levelObjects, enemies, ambientLight, directionalLights, triggers } = this.levelLoader.build(levelData);
+        const { levelObjects, enemies, ambientLight, directionalLights, triggers, deathTriggers } = this.levelLoader.build(levelData);
         
         this.levelObjects = levelObjects;
         this.enemies = enemies;
         this.triggers = (triggers || []).map(triggerData => this.createTrigger(triggerData));
+        this.deathTriggers = (deathTriggers || []).map(triggerData => this.createDeathTrigger(triggerData));
         this.spawnPoint = { ...levelData.spawnPoint };
         this.deathSpawnPoint = { ...(levelData.deathSpawnPoint || levelData.spawnPoint) };
         this.settings = levelData.settings;
@@ -1760,7 +1878,7 @@ export class EditorApp {
 
         this.createSpawnPointHelper();
         this.createDeathSpawnPointHelper();
-        this.editor.setLevelData(this.levelObjects, this.enemies, this.triggers);
+        this.editor.setLevelData(this.levelObjects, this.enemies, this.triggers, this.deathTriggers);
     }
 
     createTrigger(triggerData) {
@@ -1781,6 +1899,30 @@ export class EditorApp {
         };
 
         triggerObject.userData = { gameEntity: { type: 'Trigger', entity: triggerObject } };
+        mesh.userData.gameEntity = triggerObject.userData.gameEntity;
+
+        this.scene.add(mesh);
+        return triggerObject;
+    }
+
+    createDeathTrigger(triggerData) {
+        const geometry = new THREE.BoxGeometry(...triggerData.size);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xff0000, // Red for death
+            transparent: true,
+            opacity: 0.35,
+            wireframe: true,
+            depthWrite: false
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(triggerData.position.x, triggerData.position.y, triggerData.position.z);
+        
+        const triggerObject = {
+            mesh,
+            definition: triggerData
+        };
+
+        triggerObject.userData = { gameEntity: { type: 'DeathTrigger', entity: triggerObject } };
         mesh.userData.gameEntity = triggerObject.userData.gameEntity;
 
         this.scene.add(mesh);
@@ -1887,13 +2029,14 @@ export class EditorApp {
     }
 
     clearLevel() {
-        [...this.levelObjects, ...this.enemies, ...this.triggers].forEach(obj => {
+        [...this.levelObjects, ...this.enemies, ...this.triggers, ...this.deathTriggers].forEach(obj => {
             if (obj.mesh) this.scene.remove(obj.mesh);
             if (obj.body) this.physics.queueForRemoval(obj.body);
         });
         this.levelObjects = [];
         this.enemies = [];
         this.triggers = [];
+        this.deathTriggers = [];
 
         if (this.spawnPointHelper) this.scene.remove(this.spawnPointHelper);
         this.spawnPointHelper = null;
@@ -1937,14 +2080,23 @@ export class LevelEditor {
         this.levelObjects = [];
         this.enemies = [];
         this.triggers = [];
+        this.deathTriggers = [];
         this.selectedObject = null;
         this.clipboard = null;
+
+        this.helperVisibility = {
+            msgTriggers: true,
+            deathTriggers: true,
+            lightHelpers: true,
+            spawnHelpers: true,
+        };
         
+        // Internal state for rotation logic
+        this._initialLightPos = null;
+        this._initialPickerQuat = null;
+
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
-
-        this.tempVec3 = new THREE.Vector3();
-        this.tempQuat = new THREE.Quaternion();
         
         this.onMouseDownHandler = this.onMouseDown.bind(this);
         this.onKeyDownHandler = this.onKeyDown.bind(this);
@@ -1973,7 +2125,7 @@ export class LevelEditor {
     }
 
     initUI() {
-        // Top Bar
+        // Toolbar
         document.getElementById('editor-load-btn').onclick = () => document.getElementById('editor-file-input').click();
         document.getElementById('editor-file-input').onchange = (e) => this.loadFile(e);
         document.getElementById('editor-save-btn').onclick = () => this.saveFile();
@@ -1981,36 +2133,35 @@ export class LevelEditor {
         document.getElementById('editor-mode-rotate').onclick = () => this.setTransformMode('rotate');
         document.getElementById('editor-mode-scale').onclick = () => this.setTransformMode('scale');
 
-        // Tabs
-        this.tabs = document.querySelectorAll('.editor-tab-btn');
-        this.tabContents = document.querySelectorAll('.editor-tab-content');
-        this.tabs.forEach(tab => {
-            tab.onclick = () => this.switchTab(tab.dataset.tab);
-        });
-
-        // Scene Tab
+        // Scene Accordion
         document.getElementById('skybox-color-input').oninput = (e) => this.updateSkyboxColor(e.target.value);
         document.getElementById('ambient-color-input').oninput = (e) => this.updateAmbientLight('color', e.target.value);
         document.getElementById('ambient-intensity-input').oninput = (e) => this.updateAmbientLight('intensity', e.target.value);
 
-        // Create Tab
+        // Create Accordion
         document.getElementById('editor-add-box').onclick = () => this.addBox();
         document.getElementById('editor-add-enemy').onclick = () => this.addEnemy();
         document.getElementById('add-dirlight-btn').onclick = () => this.app.addDirectionalLight();
+        document.getElementById('editor-add-msg-trigger').onclick = () => this.addMessageTrigger();
+        document.getElementById('editor-add-death-trigger').onclick = () => this.addDeathTrigger();
         document.getElementById('editor-set-spawn').onclick = () => this.setSpawnPointToCamera();
         document.getElementById('editor-set-death-spawn').onclick = () => this.setDeathSpawnPointToCamera();
+
+        // View Options Accordion
+        document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('msgTriggers', e.target.checked);
+        document.getElementById('view-toggle-death-triggers').onchange = (e) => this.setHelpersVisibility('deathTriggers', e.target.checked);
+        document.getElementById('view-toggle-light-helpers').onchange = (e) => this.setHelpersVisibility('lightHelpers', e.target.checked);
+        document.getElementById('view-toggle-spawn-helpers').onchange = (e) => this.setHelpersVisibility('spawnHelpers', e.target.checked);
 
         // Outliner
         this.outlinerList = document.getElementById('outliner-list');
         this.outlinerList.onclick = (e) => {
             const item = e.target.closest('.outliner-item');
-            if (item) {
-                this.selectByUUID(item.dataset.uuid);
-            }
+            if (item) this.selectByUUID(item.dataset.uuid);
         };
 
         // Properties Panel
-        this.propertiesPanel = document.getElementById('properties-panel');
+        this.propertiesAccordion = document.getElementById('properties-accordion');
         this.propertiesContent = document.getElementById('properties-content');
         document.getElementById('editor-delete-btn').onclick = () => this.deleteSelected();
     }
@@ -2019,17 +2170,27 @@ export class LevelEditor {
         this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
         
         this.transformControls.addEventListener('dragging-changed', (event) => {
-            this.input.enabled = !event.value; // Disable camera controls while dragging
-            if (!event.value && this.selectedObject && this.transformControls.mode === 'scale') {
-                const attachedMesh = this.selectedObject.mesh || this.selectedObject;
-                const def = this.selectedObject.definition;
-                if (def && def.size) {
-                    def.size[0] *= attachedMesh.scale.x;
-                    def.size[1] *= attachedMesh.scale.y;
-                    if (def.size.length > 2) def.size[2] *= attachedMesh.scale.z;
-                    attachedMesh.scale.set(1, 1, 1);
-                    this.applyDefinition(this.selectedObject);
-                    this.updatePropertiesPanel();
+            this.input.enabled = !event.value;
+            
+            if (event.value) {
+                if (this.selectedObject?.userData?.gameEntity?.type === 'DirectionalLight' && this.transformControls.mode === 'rotate') {
+                    this._initialLightPos = this.selectedObject.light.position.clone();
+                    this._initialPickerQuat = this.selectedObject.picker.quaternion.clone();
+                }
+            } else {
+                this._initialLightPos = null;
+                this._initialPickerQuat = null;
+                if (this.selectedObject?.transformControls?.mode === 'scale') {
+                    const attachedMesh = this.selectedObject.mesh || this.selectedObject;
+                    const def = this.selectedObject.definition;
+                    if (def?.size) {
+                        def.size[0] *= attachedMesh.scale.x;
+                        def.size[1] *= attachedMesh.scale.y;
+                        if (def.size.length > 2) def.size[2] *= attachedMesh.scale.z;
+                        attachedMesh.scale.set(1, 1, 1);
+                        this.applyDefinition(this.selectedObject);
+                        this.updatePropertiesPanel();
+                    }
                 }
             }
         });
@@ -2063,9 +2224,7 @@ export class LevelEditor {
                 case 'KeyR': this.setTransformMode('rotate'); break;
                 case 'KeyS': this.setTransformMode('scale'); break;
                 case 'Delete':
-                case 'Backspace':
-                    this.deleteSelected();
-                    break;
+                case 'Backspace': this.deleteSelected(); break;
             }
         }
     }
@@ -2081,15 +2240,16 @@ export class LevelEditor {
             .concat(this.enemies.map(e => e.mesh))
             .concat(this.app.directionalLights.map(l => l.picker))
             .concat(this.triggers.map(t => t.mesh))
+            .concat(this.deathTriggers.map(t => t.mesh))
             .concat(this.app.spawnPointHelper ? [this.app.spawnPointHelper] : [])
             .concat(this.app.deathSpawnPointHelper ? [this.app.deathSpawnPointHelper] : []);
             
-        const intersects = this.raycaster.intersectObjects(pickableMeshes, true);
-        const validIntersects = intersects.filter(i => i.object.userData.gameEntity && i.object.userData.gameEntity.entity);
+        const intersects = this.raycaster.intersectObjects(pickableMeshes.filter(m => m.visible), true);
+        const validIntersects = intersects.filter(i => i.object.userData.gameEntity?.entity);
         
         if (validIntersects.length > 0) {
             const entity = validIntersects[0].object.userData.gameEntity.entity;
-            if (entity.definition && entity.definition.editorSelectable === false) {
+            if (entity.definition?.editorSelectable === false) {
                  this.deselect();
             } else {
                  this.select(entity);
@@ -2103,118 +2263,93 @@ export class LevelEditor {
 
     select(entity) {
         if (!entity || this.selectedObject === entity) return;
-        this.deselect(); // Clear previous selection
+        this.deselect();
         
         this.selectedObject = entity;
         const entityType = entity.userData?.gameEntity?.type;
-        let objectToAttach;
+        let objectToAttach = entity.mesh || entity.picker || entity;
 
-        if (entityType === 'DirectionalLight') {
-            objectToAttach = entity.picker;
-            entity.picker.material.visible = true;
-        } else {
-            objectToAttach = entity.mesh || entity; // Covers objects, enemies, triggers, and spawn point
-        }
+        if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
 
         this.transformControls.attach(objectToAttach);
         this.selectionBox.setFromObject(objectToAttach);
         this.selectionBox.visible = true;
-        this.propertiesPanel.style.display = 'flex';
+        this.propertiesAccordion.style.display = 'block';
+        this.propertiesAccordion.open = true;
         
         this.updatePropertiesPanel();
         this.updateOutliner();
         
-        // Disable transform modes if not applicable
         const isEnemy = entity.isDead !== undefined;
-        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || entityType === 'Trigger');
-        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy);
+        const isTrigger = entityType === 'Trigger' || entityType === 'DeathTrigger';
+        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isTrigger);
+        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isTrigger);
         
         document.getElementById('editor-mode-rotate').disabled = !canRotate;
         document.getElementById('editor-mode-scale').disabled = !canScale;
 
-        if (!canRotate && this.transformControls.getMode() === 'rotate') {
-            this.setTransformMode('translate');
-        }
-        if (!canScale && this.transformControls.getMode() === 'scale') {
-            this.setTransformMode('translate');
-        }
+        if (!canRotate && this.transformControls.getMode() === 'rotate') this.setTransformMode('translate');
+        if (!canScale && this.transformControls.getMode() === 'scale') this.setTransformMode('translate');
     }
 
     deselect() {
         if (!this.selectedObject) return;
         
-        const entityType = this.selectedObject.userData?.gameEntity?.type;
-        if (entityType === 'DirectionalLight') {
+        if (this.selectedObject.userData?.gameEntity?.type === 'DirectionalLight') {
             this.selectedObject.picker.material.visible = false;
         }
 
         this.selectedObject = null;
         this.transformControls.detach();
         this.selectionBox.visible = false;
-        this.propertiesPanel.style.display = 'none';
+        this.propertiesAccordion.style.display = 'none';
         this.updateOutliner();
         
-        // Re-enable all transform mode buttons
         document.getElementById('editor-mode-rotate').disabled = false;
         document.getElementById('editor-mode-scale').disabled = false;
     }
 
     selectByUUID(uuid) {
         const allEntities = [
-            ...this.app.levelObjects, 
-            ...this.app.enemies, 
-            ...this.app.directionalLights,
-            ...this.triggers,
-            this.app.spawnPointHelper,
-            this.app.deathSpawnPointHelper,
-        ].filter(e => e); // Filter out null/undefined
+            ...this.app.levelObjects, ...this.app.enemies, ...this.app.directionalLights,
+            ...this.triggers, ...this.deathTriggers,
+            this.app.spawnPointHelper, this.app.deathSpawnPointHelper,
+        ].filter(Boolean);
 
-        const entityToSelect = allEntities.find(e => {
-            const mesh = e.mesh || e.picker || e; // Handle different entity structures
-            return mesh.uuid === uuid;
-        });
-        
-        if (entityToSelect) {
-            this.select(entityToSelect);
-        }
+        const entityToSelect = allEntities.find(e => (e.mesh || e.picker || e).uuid === uuid);
+        if (entityToSelect) this.select(entityToSelect);
     }
     
     updateOutliner() {
         this.outlinerList.innerHTML = '';
-        const createItem = (entity, name, uuid) => {
+        const createItem = (entity, name, uuid, prefix = '') => {
             const item = document.createElement('div');
             item.className = 'outliner-item';
-            item.textContent = name;
+            item.textContent = `${prefix} ${name}`;
             item.dataset.uuid = uuid;
-            if (entity === this.selectedObject) {
-                item.classList.add('selected');
-            }
+            if (entity === this.selectedObject) item.classList.add('selected');
             this.outlinerList.appendChild(item);
         };
 
-        if (this.app.spawnPointHelper) {
-            createItem(this.app.spawnPointHelper, 'Initial Spawn Point', this.app.spawnPointHelper.uuid);
-        }
-        if (this.app.deathSpawnPointHelper) {
-            createItem(this.app.deathSpawnPointHelper, 'Death Spawn Point', this.app.deathSpawnPointHelper.uuid);
-        }
-        this.app.directionalLights.forEach((l, i) => createItem(l, `Directional Light ${i+1}`, l.picker.uuid));
-        this.app.levelObjects.forEach(o => createItem(o, o.definition.name || 'Object', o.mesh.uuid));
-        this.app.enemies.forEach(e => createItem(e, e.name || 'Enemy', e.mesh.uuid));
-        this.triggers.forEach((t, i) => createItem(t, t.definition.name || `Trigger ${i+1}`, t.mesh.uuid));
+        if (this.app.spawnPointHelper) createItem(this.app.spawnPointHelper, 'Initial Spawn', this.app.spawnPointHelper.uuid, '[P]');
+        if (this.app.deathSpawnPointHelper) createItem(this.app.deathSpawnPointHelper, 'Death Spawn', this.app.deathSpawnPointHelper.uuid, '[P]');
+        this.app.directionalLights.forEach((l, i) => createItem(l, `Directional Light ${i+1}`, l.picker.uuid, '[L]'));
+        this.app.levelObjects.forEach(o => createItem(o, o.definition.name || 'Object', o.mesh.uuid, '[G]'));
+        this.app.enemies.forEach(e => createItem(e, e.name || 'Enemy', e.mesh.uuid, '[E]'));
+        this.triggers.forEach((t, i) => createItem(t, t.definition.name || `Trigger ${i+1}`, t.mesh.uuid, '[T]'));
+        this.deathTriggers.forEach((t, i) => createItem(t, t.definition.name || `Death Zone ${i+1}`, t.mesh.uuid, '[D]'));
     }
     
     updatePropertiesPanel() {
         if (!this.selectedObject) {
-            this.propertiesPanel.style.display = 'none';
+            this.propertiesAccordion.style.display = 'none';
             return;
         }
-        this.propertiesContent.innerHTML = ''; // Clear previous content
-
+        this.propertiesContent.innerHTML = '';
         const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         
-        if (!entityType) return; // Exit if type can't be determined
+        if (!entityType) return;
         
         const fragment = document.createDocumentFragment();
 
@@ -2271,39 +2406,34 @@ export class LevelEditor {
             input.onchange = (e) => callback(e.target.value);
         };
         
-        if (entityType === 'Trigger') {
+        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
             const def = entity.definition;
-            createTextInput('Name', def.name || '', (val) => this.updateSelectedProp('name', null, val));
+            createTextInput('Name', def.name || '', val => this.updateSelectedProp('name', null, val));
             createVec3Inputs('Position', entity.mesh.position, (axis, val) => this.updateSelectedProp('position', axis, val));
             createSizeInputs('Size', def.size, (index, val) => this.updateSelectedProp('size', index, val));
-            fragment.appendChild(document.createElement('hr'));
-            createTextInput('Message', def.message || '', (val) => this.updateSelectedProp('message', null, val));
-            createColorInput('Color', entity.mesh.material.color, (val) => this.updateSelectedProp('color', null, val));
+            if (entityType === 'Trigger') {
+                fragment.appendChild(document.createElement('hr'));
+                createTextInput('Message', def.message || '', val => this.updateSelectedProp('message', null, val));
+                createColorInput('Color', entity.mesh.material.color, val => this.updateSelectedProp('color', null, val));
+            }
         } else if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') {
             createVec3Inputs('Position', entity.position, (axis, val) => this.updateSelectedProp('position', axis, val));
         } else if (entityType === 'DirectionalLight') {
-             createColorInput('Color', entity.light.color, (val) => this.updateSelectedProp('color', null, val));
-             createRangeInput('Intensity', entity.light.intensity, 0, 10, 0.1, (val) => this.updateSelectedProp('intensity', null, val));
+             createColorInput('Color', entity.light.color, val => this.updateSelectedProp('color', null, val));
+             createRangeInput('Intensity', entity.light.intensity, 0, 10, 0.1, val => this.updateSelectedProp('intensity', null, val));
              createVec3Inputs('Position (Direction)', entity.light.position, (axis, val) => this.updateSelectedProp('position', axis, val));
         } else { // Generic Object or Enemy
             const def = entity.definition;
             const mesh = entity.mesh;
-            
-            const nameLabel = fragment.appendChild(document.createElement('label'));
-            nameLabel.textContent = `Name: ${def.name || def.type}`;
-
+            fragment.appendChild(document.createElement('label')).textContent = `Name: ${def.name || def.type}`;
             createVec3Inputs('Position', mesh.position, (axis, val) => this.updateSelectedProp('position', axis, val));
-
             if (entity.isDead === undefined && def.type !== 'Plane') {
                  const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
                  const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.radToDeg(eulerRot.z) };
                  createVec3Inputs('Rotation', degRot, (axis, val) => this.updateSelectedProp('rotation', axis, val));
             }
-            if (def.size) {
-                 createSizeInputs('Size', def.size, (index, val) => this.updateSelectedProp('size', index, val));
-            }
+            if (def.size) createSizeInputs('Size', def.size, (index, val) => this.updateSelectedProp('size', index, val));
         }
-        
         this.propertiesContent.appendChild(fragment);
     }
     
@@ -2311,18 +2441,19 @@ export class LevelEditor {
 
     updateSelectedProp(prop, key, value) {
         if (!this.selectedObject) return;
-
         const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         const def = entity.definition;
 
-        if (entityType === 'Trigger') {
+        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
             const mesh = entity.mesh;
             if (prop === 'name') def.name = value;
             if (prop === 'position') mesh.position[key] = value;
             if (prop === 'size') def.size[key] = value;
-            if (prop === 'message') def.message = value;
-            if (prop === 'color') { mesh.material.color.set(value); def.color = value.replace('#', '0x'); }
+            if (entityType === 'Trigger') {
+                if (prop === 'message') def.message = value;
+                if (prop === 'color') { mesh.material.color.set(value); def.color = value.replace('#', '0x'); }
+            }
             this.applyDefinition(entity);
         } else if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') {
             if (prop === 'position') entity.position[key] = value;
@@ -2342,10 +2473,12 @@ export class LevelEditor {
             this.applyDefinition(entity);
         }
         this.syncObjectTransforms();
+        this.updateOutliner();
     }
     
     applyDefinition(obj) {
-        if (obj.userData?.gameEntity?.type === 'SpawnPoint' || obj.userData?.gameEntity?.type === 'DeathSpawnPoint') {
+        const type = obj.userData?.gameEntity?.type;
+        if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
             this.selectionBox.setFromObject(obj);
             return;
         }
@@ -2363,7 +2496,7 @@ export class LevelEditor {
             );
         }
 
-        if(obj.userData?.gameEntity?.type === 'Trigger' && def.size) {
+        if((type === 'Trigger' || type === 'DeathTrigger') && def.size) {
             mesh.geometry.dispose();
             mesh.geometry = new THREE.BoxGeometry(...def.size);
         } else if(def.size && def.type === 'Box' && body?.shapes[0]) {
@@ -2385,7 +2518,7 @@ export class LevelEditor {
         const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         
-        if (entityType === 'Trigger') {
+        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
             entity.definition.position = { x: entity.mesh.position.x, y: entity.mesh.position.y, z: entity.mesh.position.z };
         } else if (entityType === 'SpawnPoint') {
             this.app.spawnPoint.x = entity.position.x;
@@ -2396,15 +2529,26 @@ export class LevelEditor {
             this.app.deathSpawnPoint.y = entity.position.y;
             this.app.deathSpawnPoint.z = entity.position.z;
         } else if (entityType === 'DirectionalLight') {
-             entity.light.position.copy(entity.picker.position);
-             entity.definition.position = { x: entity.light.position.x, y: entity.light.position.y, z: entity.light.position.z };
-             entity.helper.update();
-        } else { // Object or Enemy
-            const mesh = entity.mesh;
-            const body = entity.body;
-            if (body) {
-                body.position.copy(mesh.position);
-                body.quaternion.copy(mesh.quaternion);
+            const picker = entity.picker;
+            const light = entity.light;
+
+            if (this.transformControls.mode === 'rotate' && this.transformControls.dragging && this._initialLightPos) {
+                const deltaQuat = picker.quaternion.clone().multiply(this._initialPickerQuat.clone().invert());
+                light.position.copy(this._initialLightPos).applyQuaternion(deltaQuat);
+                picker.position.copy(light.position);
+            } else {
+                light.position.copy(picker.position);
+            }
+            
+            light.target.position.set(0,0,0);
+            entity.definition.position = { x: light.position.x, y: light.position.y, z: light.position.z };
+            entity.helper.update();
+
+            if (this.selectedObject === entity) this.selectionBox.setFromObject(picker);
+        } else {
+            if (entity.body) {
+                entity.body.position.copy(entity.mesh.position);
+                entity.body.quaternion.copy(entity.mesh.quaternion);
             }
         }
     }
@@ -2416,25 +2560,26 @@ export class LevelEditor {
         
         if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') return;
 
-        if (entityType === 'Trigger') {
-            const index = this.triggers.findIndex(t => t === entity);
-            if (index > -1) this.triggers.splice(index, 1);
-            this.scene.remove(entity.mesh);
-            entity.mesh.geometry.dispose();
-            entity.mesh.material.dispose();
-        } else if (entityType === 'DirectionalLight') {
-            this.app.removeDirectionalLight(entity);
-        } else if (entityType === 'Enemy') {
-            if(entity.body) this.physics.queueForRemoval(entity.body);
-            const index = this.enemies.findIndex(e => e === entity);
-            if (index > -1) this.enemies.splice(index, 1);
-            this.scene.remove(entity.mesh);
-        } else { // Generic Object
-            if(entity.body) this.physics.queueForRemoval(entity.body);
-            const index = this.levelObjects.findIndex(o => o === entity);
-            if (index > -1) this.levelObjects.splice(index, 1);
-            this.scene.remove(entity.mesh);
+        let list, index;
+        switch (entityType) {
+            case 'Trigger':       list = this.triggers; break;
+            case 'DeathTrigger':  list = this.deathTriggers; break;
+            case 'DirectionalLight': this.app.removeDirectionalLight(entity); break;
+            case 'Enemy':         list = this.enemies; break;
+            default:              list = this.levelObjects; break;
         }
+
+        if (list) {
+            index = list.findIndex(item => item === entity);
+            if (index > -1) list.splice(index, 1);
+        }
+
+        if (entity.mesh) {
+            this.scene.remove(entity.mesh);
+            if(entity.mesh.geometry) entity.mesh.geometry.dispose();
+            if(entity.mesh.material) entity.mesh.material.dispose();
+        }
+        if (entity.body) this.physics.queueForRemoval(entity.body);
         
         this.deselect();
         this.updateOutliner();
@@ -2446,19 +2591,15 @@ export class LevelEditor {
         const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
 
-        if (entityType === 'Object' || entityType === 'Enemy' || entityType === 'Trigger') {
+        if (['Object', 'Enemy', 'Trigger', 'DeathTrigger'].includes(entityType)) {
             this.syncObjectTransforms(); 
-            
             if (entityType === 'Object') {
                 const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
                 entity.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
             }
-
             this.clipboard = JSON.parse(JSON.stringify(entity.definition));
             if (!this.clipboard.type) this.clipboard.type = entityType;
-            console.log(`Copied ${this.clipboard.name || entityType} to clipboard.`);
         } else {
-            console.log('Cannot copy this entity type:', entityType);
             this.clipboard = null;
         }
     }
@@ -2475,17 +2616,11 @@ export class LevelEditor {
         newDef.name = `${newDef.name || newDef.type}_copy`;
 
         let newEntity;
-        const entityType = newDef.type;
-
-        if (entityType === 'Dummy') {
-            newEntity = this.app.levelLoader.createEnemy(newDef);
-            this.app.enemies.push(newEntity);
-        } else if (entityType === 'Trigger') {
-            newEntity = this.app.createTrigger(newDef);
-            this.app.triggers.push(newEntity);
-        } else {
-            newEntity = this.app.levelLoader.createObject(newDef);
-            this.app.levelObjects.push(newEntity);
+        switch(newDef.type) {
+            case 'Dummy':         newEntity = this.app.levelLoader.createEnemy(newDef); this.enemies.push(newEntity); break;
+            case 'Trigger':       newEntity = this.app.createTrigger(newDef); this.triggers.push(newEntity); break;
+            case 'DeathTrigger':  newEntity = this.app.createDeathTrigger(newDef); this.deathTriggers.push(newEntity); break;
+            default:              newEntity = this.app.levelLoader.createObject(newDef); this.levelObjects.push(newEntity); break;
         }
         
         if (newEntity) this.select(newEntity);
@@ -2516,32 +2651,53 @@ export class LevelEditor {
         this.select(newEnemy);
     }
 
+    addMessageTrigger() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const triggerData = {
+            type: "Trigger", name: `MessageTrigger_${Date.now()}`, size: [5, 5, 5],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            message: "This is a test message.",
+            duration: 5,
+            color: "0x00ff00"
+        };
+        const newTrigger = this.app.createTrigger(triggerData);
+        this.triggers.push(newTrigger);
+        this.select(newTrigger);
+    }
+
+    addDeathTrigger() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const triggerData = {
+            type: "DeathTrigger", name: `DeathZone_${Date.now()}`, size: [10, 2, 10],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
+        };
+        const newTrigger = this.app.createDeathTrigger(triggerData);
+        this.deathTriggers.push(newTrigger);
+        this.select(newTrigger);
+    }
+
     loadFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            try {
-                this.app.loadLevel(JSON.parse(e.target.result));
-            } catch (err) {
-                console.error("Error parsing level file:", err);
-                alert("Invalid level file.");
-            }
+            try { this.app.loadLevel(JSON.parse(e.target.result)); } 
+            catch (err) { alert("Invalid level file."); }
         };
         reader.readAsText(file);
     }
 
     saveFile() {
-        this.app.levelObjects.forEach(obj => {
+        [...this.levelObjects, ...this.enemies, ...this.triggers, ...this.deathTriggers].forEach(obj => {
             obj.definition.position = {x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z};
-            const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
-            obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
-        });
-        this.app.enemies.forEach(enemy => {
-            enemy.definition.position = {x: enemy.mesh.position.x, y: enemy.mesh.position.y, z: enemy.mesh.position.z};
-        });
-        this.triggers.forEach(trigger => {
-            trigger.definition.position = {x: trigger.mesh.position.x, y: trigger.mesh.position.y, z: trigger.mesh.position.z};
+            if(obj.definition.rotation) {
+                const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
+                obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+            }
         });
 
         const levelData = {
@@ -2551,7 +2707,8 @@ export class LevelEditor {
             settings: this.app.settings,
             objects: this.app.levelObjects.map(obj => obj.definition),
             enemies: this.app.enemies.map(enemy => enemy.definition),
-            triggers: this.triggers.map(t => t.definition)
+            triggers: this.triggers.map(t => t.definition),
+            deathTriggers: this.deathTriggers.map(t => t.definition)
         };
         
         const blob = new Blob([JSON.stringify(levelData, null, 2)], { type: 'application/json' });
@@ -2574,36 +2731,23 @@ export class LevelEditor {
         if (prop === 'intensity') { light.intensity = parseFloat(value); setting.intensity = parseFloat(value); }
     }
 
-    switchTab(tabId) {
-        this.tabs.forEach(tab => tab.classList.remove('active'));
-        this.tabContents.forEach(content => content.classList.remove('active'));
-        document.querySelector(`.editor-tab-btn[data-tab="${tabId}"]`).classList.add('active');
-        document.getElementById(tabId).classList.add('active');
-    }
-
     setTransformMode(mode) {
         if (this.transformControls.object) {
             this.transformControls.setMode(mode);
-            document.getElementById('editor-mode-translate').classList.toggle('active', mode === 'translate');
-            document.getElementById('editor-mode-rotate').classList.toggle('active', mode === 'rotate');
-            document.getElementById('editor-mode-scale').classList.toggle('active', mode === 'scale');
+            ['translate', 'rotate', 'scale'].forEach(m => {
+                document.getElementById(`editor-mode-${m}`).classList.toggle('active', m === mode);
+            });
         }
     }
 
-    setSpawnPointToCamera() {
-        this.camera.getWorldPosition(this.app.spawnPointHelper.position);
-        this.syncObjectTransforms();
-    }
+    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.syncObjectTransforms(); }
+    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.syncObjectTransforms(); }
     
-    setDeathSpawnPointToCamera() {
-        this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position);
-        this.syncObjectTransforms();
-    }
-    
-    setLevelData(levelObjects, enemies, triggers) {
+    setLevelData(levelObjects, enemies, triggers, deathTriggers) {
         this.levelObjects = levelObjects;
         this.enemies = enemies;
         this.triggers = triggers || [];
+        this.deathTriggers = deathTriggers || [];
         this.deselect();
         this.updateOutliner();
         
@@ -2612,6 +2756,25 @@ export class LevelEditor {
         document.getElementById('skybox-color-input').value = '#' + new THREE.Color(parseInt(settings.backgroundColor || "0x000000", 16)).getHexString();
         document.getElementById('ambient-color-input').value = '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString();
         document.getElementById('ambient-intensity-input').value = settings.ambientLight.intensity;
+
+        // Apply initial visibility from UI checkboxes
+        this.setHelpersVisibility('msgTriggers', document.getElementById('view-toggle-msg-triggers').checked);
+        this.setHelpersVisibility('deathTriggers', document.getElementById('view-toggle-death-triggers').checked);
+        this.setHelpersVisibility('lightHelpers', document.getElementById('view-toggle-light-helpers').checked);
+        this.setHelpersVisibility('spawnHelpers', document.getElementById('view-toggle-spawn-helpers').checked);
+    }
+
+    setHelpersVisibility(type, isVisible) {
+        this.helperVisibility[type] = isVisible;
+        switch (type) {
+            case 'msgTriggers':   this.triggers.forEach(t => t.mesh.visible = isVisible); break;
+            case 'deathTriggers': this.deathTriggers.forEach(t => t.mesh.visible = isVisible); break;
+            case 'lightHelpers':  this.app.directionalLights.forEach(l => l.helper.visible = isVisible); break;
+            case 'spawnHelpers':
+                if (this.app.spawnPointHelper) this.app.spawnPointHelper.visible = isVisible;
+                if (this.app.deathSpawnPointHelper) this.app.deathSpawnPointHelper.visible = isVisible;
+                break;
+        }
     }
     
     update(deltaTime) {

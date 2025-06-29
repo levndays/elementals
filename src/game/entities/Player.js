@@ -1,3 +1,4 @@
+// src/game/entities/Player.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { FireballAbility } from '../abilities/FireballAbility.js';
@@ -88,6 +89,13 @@ export class Player {
         this.camera.add(this.weapon.mesh);
         this.scene.add(this.camera);
 
+        // ADDED: Lighting for the view model scene
+        this.viewModelAmbientLight = new THREE.AmbientLight(0xffffff, 1.0); // Soft white light
+        this.scene.add(this.viewModelAmbientLight);
+
+        this.viewModelDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Key light
+        this.viewModelDirectionalLight.position.set(0.5, 0.8, -0.2).normalize(); // Points slightly from top-right-front
+        this.scene.add(this.viewModelDirectionalLight);
 
         this.createPhysicsBody();
         this.setupEventListeners();
@@ -401,8 +409,20 @@ export class Player {
         this.weapon.update(deltaTime);
         this.updateVFX(deltaTime);
 
-        for (const ability of this.abilities) {
+        for (let i = 0; i < this.abilities.length; i++) {
+            const ability = this.abilities[i];
             if (ability) { ability.update(deltaTime); }
+            // ADDED: Update ability slot appearance based on selection
+            if (this.game.hud) { // Ensure HUD is initialized
+                const slotUI = this.game.hud.abilitySlots[i];
+                if (slotUI) {
+                    if (i === this.selectedAbilityIndex) {
+                        slotUI.element.classList.add('selected');
+                    } else {
+                        slotUI.element.classList.remove('selected');
+                    }
+                }
+            }
         }
 
         for (let i = 1; i <= 4; i++) {
