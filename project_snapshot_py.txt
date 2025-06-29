@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals
-Snapshot created on: 2025-06-29T06:10:05.672794
+Snapshot created on: 2025-06-29T12:45:24.790719
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -32,6 +32,7 @@ Snapshot created on: 2025-06-29T06:10:05.672794
                 <button id="editor-load-btn" title="Load Level (.json)">Load</button>
                 <input type="file" id="editor-file-input" accept=".json" style="display: none;">
                 <button id="editor-save-btn" title="Save Level (.json)">Save</button>
+                <button id="editor-info-btn" title="Player Metrics Info">Info</button>
             </div>
             <div class="separator"></div>
             <div class="toolbar-group">
@@ -115,6 +116,15 @@ Snapshot created on: 2025-06-29T06:10:05.672794
                 </div>
                 <button id="editor-delete-btn" class="delete-button">Delete Selected</button>
             </details>
+        </div>
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="editor-info-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close-btn">×</span>
+            <h3>Player Movement Metrics</h3>
+            <pre id="info-modal-text"></pre>
         </div>
     </div>
 
@@ -716,8 +726,114 @@ body:not(.game-active) #tutorial-text-container {
     font-weight: bold;
 }
 /* --- END EDITOR UI REWORK --- */
+
+/* --- MODAL STYLES --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--editor-bg);
+    border: 1px solid var(--editor-border);
+    border-radius: 8px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    color: var(--editor-text);
+    font-family: 'Consolas', 'Courier New', monospace;
+    position: relative;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--editor-text-dark);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.modal-close-btn:hover {
+    color: var(--editor-text);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--editor-accent);
+    border-bottom: 1px solid var(--editor-border);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+#info-modal-text {
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+}
 --------------------------------------------------
 === END OF FILE: style.css ===
+
+
+=== FILE: .github/workflows/static.yml ===
+--------------------------------------------------
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+--------------------------------------------------
+=== END OF FILE: .github/workflows/static.yml ===
 
 
 === FILE: levels/level-mangled-grove.json ===
@@ -866,304 +982,6 @@ body:not(.game-active) #tutorial-text-container {
   "objects": [
     {
       "type": "Box",
-      "name": "Platform_Start",
-      "size": [
-        15,
-        2,
-        15
-      ],
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_Jump_1",
-      "size": [
-        10,
-        2,
-        10
-      ],
-      "position": {
-        "x": 0,
-        "y": 0,
-        "z": 20
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_Jump_2",
-      "size": [
-        10,
-        2,
-        10
-      ],
-      "position": {
-        "x": 15,
-        "y": 3,
-        "z": 20
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_DoubleJump_Target",
-      "size": [
-        15,
-        2,
-        15
-      ],
-      "position": {
-        "x": 15,
-        "y": 10,
-        "z": 40
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_Dash_Start",
-      "size": [
-        15,
-        2,
-        15
-      ],
-      "position": {
-        "x": 15,
-        "y": 10,
-        "z": 60
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_Dash_End",
-      "size": [
-        15,
-        2,
-        15
-      ],
-      "position": {
-        "x": 15,
-        "y": 10,
-        "z": 90
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Platform_Slam_Tower",
-      "size": [
-        5,
-        25,
-        5
-      ],
-      "position": {
-        "x": 15,
-        "y": 22.5,
-        "z": 90
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Bridge_To_Arena",
-      "size": [
-        30,
-        2,
-        8
-      ],
-      "position": {
-        "x": 40,
-        "y": 10,
-        "z": 90
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Arena_Floor",
-      "size": [
-        60,
-        2,
-        60
-      ],
-      "position": {
-        "x": 85,
-        "y": 10,
-        "z": 90
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Arena_Wall_Back",
-      "size": [
-        60,
-        15,
-        2
-      ],
-      "position": {
-        "x": 85,
-        "y": 17.5,
-        "z": 61
-      },
-      "material": {
-        "color": "0x223344"
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Arena_Wall_Front",
-      "size": [
-        60,
-        15,
-        2
-      ],
-      "position": {
-        "x": 85,
-        "y": 17.5,
-        "z": 119
-      },
-      "material": {
-        "color": "0x223344"
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Arena_Wall_Left",
-      "size": [
-        2,
-        15,
-        60
-      ],
-      "position": {
-        "x": 56,
-        "y": 17.5,
-        "z": 90
-      },
-      "material": {
-        "color": "0x223344"
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
-      "name": "Arena_Wall_Right",
-      "size": [
-        2,
-        15,
-        60
-      ],
-      "position": {
-        "x": 114,
-        "y": 17.5,
-        "z": 90
-      },
-      "material": {
-        "color": "0x223344"
-      },
-      "physics": {
-        "mass": 0
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      }
-    },
-    {
-      "type": "Box",
       "name": "Box_1751135685281",
       "size": [
         -14.337207994854166,
@@ -1297,7 +1115,7 @@ body:not(.game-active) #tutorial-text-container {
       ],
       "position": {
         "x": -54.958576548032475,
-        "y": 18.84840733318615,
+        "y": 18.13906161427649,
         "z": 64.32780639821098
       },
       "rotation": {
@@ -1401,7 +1219,7 @@ body:not(.game-active) #tutorial-text-container {
         "z": 137.033754853079
       },
       "rotation": {
-        "x": 0,
+        "x": -22.22829831302085,
         "y": 0,
         "z": 0
       },
@@ -1447,13 +1265,13 @@ body:not(.game-active) #tutorial-text-container {
       ],
       "position": {
         "x": -60.15226726030613,
-        "y": 51.332828177813,
+        "y": 50.25184706471693,
         "z": 148.97630285734766
       },
       "rotation": {
-        "x": -0.24134372440321145,
-        "y": -90.50230491319972,
-        "z": -25.90372093591107
+        "x": 0,
+        "y": -90.5023004568972,
+        "z": -25.664483814825154
       },
       "material": {
         "color": "0xcccccc"
@@ -1526,12 +1344,650 @@ body:not(.game-active) #tutorial-text-container {
         "z": 156.88305744479786
       },
       "rotation": {
-        "x": 0.39692796464352986,
-        "y": -90.30783101314668,
-        "z": 26.30100650847053
+        "x": -1.5902773407317584e-15,
+        "y": -90.30782362623437,
+        "z": 25.906205379506094
       },
       "material": {
         "color": "0xcccccc"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Bridge_To_Arena_copy",
+      "size": [
+        30,
+        2,
+        8
+      ],
+      "position": {
+        "x": 23.33779959175221,
+        "y": 17,
+        "z": 137.69647229309595
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Bridge_To_Arena_copy_copy",
+      "size": [
+        92.6458948939345,
+        2,
+        8
+      ],
+      "position": {
+        "x": 34.36963647964132,
+        "y": 17,
+        "z": 180.20924912186356
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": -89.99999999999999,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Bridge_To_Arena_copy_copy_copy",
+      "size": [
+        100,
+        2,
+        100
+      ],
+      "position": {
+        "x": 33.73613975602902,
+        "y": 17,
+        "z": 263.93965210569985
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy",
+      "size": [
+        2,
+        21,
+        8
+      ],
+      "position": {
+        "x": 40.51169022811546,
+        "y": 28.712489526136228,
+        "z": 217.87657709750556
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy",
+      "size": [
+        2,
+        21,
+        8
+      ],
+      "position": {
+        "x": 26.79775531958377,
+        "y": 28.220483586753517,
+        "z": 218.05237318816356
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        42
+      ],
+      "position": {
+        "x": 5,
+        "y": 28,
+        "z": 220
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy",
+      "size": [
+        2,
+        20.90087054992844,
+        42
+      ],
+      "position": {
+        "x": 62.80109807243026,
+        "y": 28,
+        "z": 220
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        30.43040483634169
+      ],
+      "position": {
+        "x": 27.098884959275335,
+        "y": 28.161745844124074,
+        "z": 236.75043391546055
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        38.253271744653574
+      ],
+      "position": {
+        "x": 40.51,
+        "y": 28.71,
+        "z": 240.34479669916487
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        30.43040483634169
+      ],
+      "position": {
+        "x": 27.10740709271728,
+        "y": 28.295899468955504,
+        "z": 264.89569689574125
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        30.43040483634169
+      ],
+      "position": {
+        "x": 40.62314385706276,
+        "y": 28.77916185870848,
+        "z": 272.3821485082806
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751188368534",
+      "size": [
+        5,
+        1.2147638168423514,
+        10.513717199832112
+      ],
+      "position": {
+        "x": 28.618151953528375,
+        "y": 32.01046566752841,
+        "z": 284.78370258926594
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751188368534_copy",
+      "size": [
+        5,
+        1.2147638168423514,
+        5.9795431960832435
+      ],
+      "position": {
+        "x": 39.0276816535211,
+        "y": 21.5737853494403,
+        "z": 266.5165795708593
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751188368534_copy_copy",
+      "size": [
+        5,
+        1.2147638168423514,
+        5.9795431960832435
+      ],
+      "position": {
+        "x": 38.93453261207418,
+        "y": 27.32767221473951,
+        "z": 277.4627085616325
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        18.02086332300729
+      ],
+      "position": {
+        "x": 35.220742244897274,
+        "y": 28.720025301744933,
+        "z": 288.6444856241913
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        14.749420843674784,
+        11.811989803925266
+      ],
+      "position": {
+        "x": 27.159091822501022,
+        "y": 23.95641160076355,
+        "z": 282.65911374150534
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        80.76019405558864
+      ],
+      "position": {
+        "x": 35.02179249171756,
+        "y": 28.702243663384706,
+        "z": 288.63741505981824
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        67.73951804536438
+      ],
+      "position": {
+        "x": -15.187593194183867,
+        "y": 28.724469244999142,
+        "z": 253.68169009909604
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        67.73951804536438
+      ],
+      "position": {
+        "x": -15.337970860966319,
+        "y": 28.686729554749007,
+        "z": 321.31986403266734
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Bridge_To_Arena_copy_copy_copy_copy",
+      "size": [
+        100,
+        2,
+        100
+      ],
+      "position": {
+        "x": 19.115844563028965,
+        "y": 17.089844823782187,
+        "z": 341.8173037010886
+      },
+      "physics": {
+        "mass": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        67.73951804536438
+      ],
+      "position": {
+        "x": 19.161555963069226,
+        "y": 28.7212519381462,
+        "z": 332.9763058959693
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        70.63290423242627
+      ],
+      "position": {
+        "x": 68.05817206096688,
+        "y": 28.25803717150999,
+        "z": 297.1353537831629
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751185412489_copy_copy_copy_copy_copy_copy_copy_copy",
+      "size": [
+        2,
+        21,
+        19.259313785509278
+      ],
+      "position": {
+        "x": 62.107728984628636,
+        "y": 28.79925613263817,
+        "z": 333.00591342200784
+      },
+      "rotation": {
+        "x": 0,
+        "y": 89.99999999999999,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751189540507",
+      "size": [
+        5,
+        25,
+        5
+      ],
+      "position": {
+        "x": 22.64984414454856,
+        "y": 27.73367465196428,
+        "z": 320.476719378943
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751189540507_copy",
+      "size": [
+        5,
+        25,
+        5
+      ],
+      "position": {
+        "x": 6.431761615160653,
+        "y": 26.143146680203376,
+        "z": 302.86551412184036
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Box_1751189540507_copy_copy",
+      "size": [
+        5,
+        25,
+        5
+      ],
+      "position": {
+        "x": 50.107659018712376,
+        "y": 17.69692461161343,
+        "z": 299.36335939978414
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0xff7300"
       },
       "physics": {
         "mass": 0
@@ -1546,7 +2002,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 0,
         "z": 0
       },
-      "name": "Katana Target"
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     },
     {
       "type": "Dummy",
@@ -1555,16 +2015,81 @@ body:not(.game-active) #tutorial-text-container {
         "y": 0,
         "z": 0
       },
-      "name": "Fireball Target"
-    },
-    {
-      "type": "Dummy",
-      "position": {
+      "rotation": {
         "x": 0,
         "y": 0,
         "z": 0
       },
-      "name": "Fireflies Target"
+      "name": "Dummy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -3.614107592165178,
+        "y": 22.889187644887286,
+        "z": 233.8946648865683
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 16.284307688355824,
+        "y": 23.621860165850357,
+        "z": 233.8984155046697
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 50.821649358951,
+        "y": 31.981390565223165,
+        "z": 299.06206678182264
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 18.011067911095736,
+        "y": 25.641784575817603,
+        "z": 307.07685224556457
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy_copy_copy"
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 55.85877399810535,
+        "y": 22.764138924599976,
+        "z": 322.52508921098513
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "name": "Dummy_copy_copy_copy_copy"
     }
   ],
   "triggers": [
@@ -1624,8 +2149,8 @@ body:not(.game-active) #tutorial-text-container {
       "name": "DoubleJump_Cooldown",
       "position": {
         "x": -54.96415065519877,
-        "y": 22.096436794868733,
-        "z": 63.91251282277527
+        "y": 21.442005253000485,
+        "z": 66.81477044689034
       },
       "size": [
         7.1143018362574075,
@@ -1674,9 +2199,9 @@ body:not(.game-active) #tutorial-text-container {
       "type": "Trigger",
       "name": "Combat_Intro",
       "position": {
-        "x": 50,
-        "y": 13,
-        "z": 90
+        "x": 17.244894302181223,
+        "y": 22.80133576899718,
+        "z": 137.78605307420787
       },
       "size": [
         15,
@@ -1691,69 +2216,111 @@ body:not(.game-active) #tutorial-text-container {
       "type": "Trigger",
       "name": "Melee_Intro",
       "position": {
-        "x": 68,
-        "y": 13,
-        "z": 80
+        "x": 33.713461326627545,
+        "y": 20.40600635806252,
+        "z": 218.68734854023458
       },
       "size": [
-        10,
+        11.74524056614409,
         8,
         10
       ],
       "message": "LEFT CLICK to use your Katana. Get close to the dummy and strike.",
       "duration": 8,
-      "color": "0xff4757"
+      "color": "0xff4757",
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     },
     {
       "type": "Trigger",
       "name": "Ability_Intro",
       "position": {
-        "x": 85,
-        "y": 13,
-        "z": 90
+        "x": 33.70840575425143,
+        "y": 22.12451878403729,
+        "z": 252.9547921460112
       },
       "size": [
-        10,
+        13.878106820007062,
         8,
-        10
+        4.043653764435819
       ],
       "message": "RIGHT CLICK casts abilities. They cost ENERGY and have COOLDOWNS.",
       "duration": 8,
-      "color": "0xff4757"
+      "color": "0xff4757",
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     },
     {
       "type": "Trigger",
       "name": "Fireball_Intro",
       "position": {
-        "x": 85,
-        "y": 13,
-        "z": 107
+        "x": 26.41930770244788,
+        "y": 34.7840465692085,
+        "z": 284.43229434591416
       },
       "size": [
-        15,
-        8,
-        10
+        3.1849251368792157,
+        6.368137594503896,
+        8.625950920043731
       ],
       "message": "Press 1 to select Fireball. Aim and cast it on the dummy.",
       "duration": 8,
-      "color": "0xff4757"
+      "color": "0xff4757",
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     },
     {
       "type": "Trigger",
       "name": "Fireflies_Intro",
       "position": {
-        "x": 102,
-        "y": 13,
-        "z": 80
+        "x": -9.32984969763514,
+        "y": 21.415761089703913,
+        "z": 289.4060833549364
       },
       "size": [
-        10,
-        8,
-        10
+        10.916189740697234,
+        7.405774126009966,
+        3.815512880455527
       ],
-      "message": "Press 2 for Fireflies. These homing shots seek out your locked-on target.",
+      "message": "Press 2 for Fireflies. These homing shots seek out your locked-on target - ",
       "duration": 8,
-      "color": "0xff4757"
+      "color": "0xff4757",
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "Trigger",
+      "name": "MessageTrigger_1751189714433",
+      "size": [
+        4.789923093665238,
+        5,
+        4.181499598810611
+      ],
+      "position": {
+        "x": 22.485884509976458,
+        "y": 43.722955096133695,
+        "z": 320.27474856297374
+      },
+      "message": "This is a test message.",
+      "duration": 5,
+      "color": "0x00ff00",
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
     }
   ],
   "deathTriggers": []
@@ -1814,6 +2381,261 @@ export const COLLISION_GROUPS = {
 };
 --------------------------------------------------
 === END OF FILE: src/common/CollisionGroups.js ===
+
+
+=== FILE: src/editor/EditorActions.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+import { StateChangeCommand } from './UndoManager.js';
+
+export class EditorActions {
+    constructor(editor) {
+        this.editor = editor;
+        this.app = editor.app;
+        this.camera = editor.camera;
+    }
+
+    _createAndExecuteCreationCommand(entity, list) {
+        list.push(entity);
+        
+        const beforeState = null; // No state before creation
+        const afterState = entity.definition;
+        
+        const command = {
+            entity: entity,
+            execute: () => {
+                if (!list.includes(entity)) list.push(entity);
+                this.app.scene.add(entity.mesh);
+                if (entity.body) this.app.physics.world.addBody(entity.body);
+                this.editor.select(entity);
+            },
+            undo: () => {
+                const index = list.indexOf(entity);
+                if (index > -1) list.splice(index, 1);
+                this.app.scene.remove(entity.mesh);
+                if (entity.body) this.app.physics.queueForRemoval(entity.body);
+                this.editor.deselect();
+            }
+        };
+        this.editor.undoManager.execute(command);
+    }
+
+    addBox() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const boxData = {
+            type: "Box", name: `Box_${Date.now()}`, size: [2, 2, 2],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            rotation: { x: 0, y: 0, z: 0 },
+            material: { color: "0xcccccc" }, physics: { mass: 0 }
+        };
+        const newObj = this.app.levelLoader.createObject(boxData);
+        this._createAndExecuteCreationCommand(newObj, this.app.levelObjects);
+    }
+    
+    addEnemy() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const enemyData = { type: "Dummy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
+        const newEnemy = this.app.levelLoader.createEnemy(enemyData);
+        this._createAndExecuteCreationCommand(newEnemy, this.app.enemies);
+    }
+
+    addMessageTrigger() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const triggerData = {
+            type: "Trigger", name: `MessageTrigger_${Date.now()}`, size: [5, 5, 5],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            message: "This is a test message.",
+            duration: 5,
+            color: "0x00ff00"
+        };
+        const newTrigger = this.app.createTrigger(triggerData);
+        this._createAndExecuteCreationCommand(newTrigger, this.app.triggers);
+    }
+
+    addDeathTrigger() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
+        const triggerData = {
+            type: "DeathTrigger", name: `DeathZone_${Date.now()}`, size: [10, 2, 10],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
+        };
+        const newTrigger = this.app.createDeathTrigger(triggerData);
+        this._createAndExecuteCreationCommand(newTrigger, this.app.deathTriggers);
+    }
+
+    deleteSelected() {
+        if (!this.editor.selectedObject) return;
+        const entity = this.editor.selectedObject;
+        const entityType = entity.userData.gameEntity.type;
+        
+        if (['SpawnPoint', 'DeathSpawnPoint'].includes(entityType)) return;
+
+        let list;
+        switch (entityType) {
+            case 'Trigger':       list = this.app.triggers; break;
+            case 'DeathTrigger':  list = this.app.deathTriggers; break;
+            case 'DirectionalLight': /* To-do: Deleting lights needs undo*/ return;
+            case 'Enemy':         list = this.app.enemies; break;
+            default:              list = this.app.levelObjects; break;
+        }
+
+        const command = {
+            entity: entity,
+            execute: () => {
+                const index = list.indexOf(entity);
+                if (index > -1) list.splice(index, 1);
+                this.app.scene.remove(entity.mesh);
+                if (entity.body) this.app.physics.queueForRemoval(entity.body);
+                this.editor.deselect();
+            },
+            undo: () => {
+                if (!list.includes(entity)) list.push(entity);
+                this.app.scene.add(entity.mesh);
+                if (entity.body) this.app.physics.world.addBody(entity.body);
+                this.editor.select(entity);
+            }
+        };
+        this.editor.undoManager.execute(command);
+    }
+    
+    _bakeScaleIntoDefinition(entity) {
+        if (entity && entity.mesh && entity.definition?.size) {
+            const scale = entity.mesh.scale;
+            if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
+                entity.definition.size[0] *= scale.x;
+                entity.definition.size[1] *= scale.y;
+                entity.definition.size[2] *= scale.z;
+                scale.set(1, 1, 1);
+                this.editor.applyDefinition(entity);
+            }
+        }
+    }
+    
+    copySelected() {
+        if (!this.editor.selectedObject) return;
+        
+        const entity = this.editor.selectedObject;
+        const entityType = entity.userData?.gameEntity?.type;
+
+        if (['Object', 'Enemy', 'Trigger', 'DeathTrigger'].includes(entityType)) {
+            // Apply scale before syncing other transforms to ensure correct data is copied
+            this._bakeScaleIntoDefinition(entity);
+            this.editor.syncObjectTransforms(); 
+
+            if (entityType === 'Object') {
+                const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
+                entity.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+            }
+            this.editor.clipboard = JSON.parse(JSON.stringify(entity.definition));
+            if (!this.editor.clipboard.type) this.editor.clipboard.type = entityType;
+        } else {
+            this.editor.clipboard = null;
+        }
+    }
+
+    pasteFromClipboard() {
+        if (!this.editor.clipboard) return;
+
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        
+        const newDef = JSON.parse(JSON.stringify(this.editor.clipboard));
+        newDef.position = { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z };
+        newDef.name = `${newDef.name || newDef.type}_copy`;
+
+        let newEntity;
+        let list;
+
+        switch(newDef.type) {
+            case 'Dummy':         
+                newEntity = this.app.levelLoader.createEnemy(newDef); 
+                list = this.app.enemies;
+                break;
+            case 'Trigger':       
+                newEntity = this.app.createTrigger(newDef);
+                list = this.app.triggers;
+                break;
+            case 'DeathTrigger':  
+                newEntity = this.app.createDeathTrigger(newDef);
+                list = this.app.deathTriggers;
+                break;
+            default:              
+                newEntity = this.app.levelLoader.createObject(newDef);
+                list = this.app.levelObjects;
+                break;
+        }
+        
+        if (newEntity) this._createAndExecuteCreationCommand(newEntity, list);
+    }
+
+    loadFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try { this.app.loadLevel(JSON.parse(e.target.result)); } 
+            catch (err) { alert("Invalid level file."); }
+        };
+        reader.readAsText(file);
+    }
+
+    saveFile() {
+        // First, ensure all scaled objects have their scales "baked" into their definitions.
+        this.app.levelObjects.forEach(obj => this._bakeScaleIntoDefinition(obj));
+
+        // Now, proceed with saving, knowing the definitions are up-to-date.
+        [...this.app.levelObjects, ...this.app.enemies, ...this.app.triggers, ...this.app.deathTriggers].forEach(obj => {
+            obj.definition.position = {x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z};
+            if(obj.definition.rotation) {
+                const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
+                obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+            }
+        });
+
+        const levelData = {
+            name: "Custom Level",
+            spawnPoint: this.app.spawnPoint,
+            deathSpawnPoint: this.app.deathSpawnPoint,
+            settings: this.app.settings,
+            objects: this.app.levelObjects.map(obj => obj.definition),
+            enemies: this.app.enemies.map(enemy => enemy.definition),
+            triggers: this.app.triggers.map(t => t.definition),
+            deathTriggers: this.app.deathTriggers.map(t => t.definition)
+        };
+        
+        const blob = new Blob([JSON.stringify(levelData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'custom-level.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    
+    updateSkyboxColor(color) {
+        this.app.scene.background = new THREE.Color(color);
+        this.app.settings.backgroundColor = color.replace('#', '0x');
+    }
+    
+    updateAmbientLight(prop, value) {
+        const light = this.app.ambientLight;
+        const setting = this.app.settings.ambientLight;
+        if (prop === 'color') { light.color.set(value); setting.color = value.replace('#', '0x'); }
+        if (prop === 'intensity') { light.intensity = parseFloat(value); setting.intensity = parseFloat(value); }
+    }
+    
+    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.editor.syncObjectTransforms(); }
+    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.editor.syncObjectTransforms(); }
+}
+--------------------------------------------------
+=== END OF FILE: src/editor/EditorActions.js ===
 
 
 === FILE: src/editor/EditorApp.js ===
@@ -2062,61 +2884,98 @@ export class EditorApp {
 === END OF FILE: src/editor/EditorApp.js ===
 
 
-=== FILE: src/editor/LevelEditor.js ===
+=== FILE: src/editor/EditorCamera.js ===
 --------------------------------------------------
 import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
-import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
-export class LevelEditor {
-    constructor(app) {
-        this.app = app;
-        this.scene = app.scene;
-        this.camera = app.camera;
-        this.renderer = app.renderer.renderer;
-        this.physics = app.physics;
-        this.input = app.input;
+export class EditorCamera {
+    constructor(editor) {
+        this.editor = editor;
+        this.camera = editor.camera;
+        this.input = editor.input;
+    }
 
-        this.levelObjects = [];
-        this.enemies = [];
-        this.triggers = [];
-        this.deathTriggers = [];
-        this.selectedObject = null;
-        this.clipboard = null;
+    update(deltaTime) {
+        // Prevent camera movement while transform controls are active or if input is disabled
+        if (this.editor.controls.transformControls.dragging || !this.input.enabled) {
+            this.input.update();
+            return;
+        }
 
-        this.helperVisibility = {
-            msgTriggers: true,
-            deathTriggers: true,
-            lightHelpers: true,
-            spawnHelpers: true,
-        };
+        const moveSpeed = 50 * deltaTime;
+        const forward = new THREE.Vector3();
+        this.camera.getWorldDirection(forward);
+        const right = new THREE.Vector3().crossVectors(this.camera.up, forward).negate();
         
-        // Internal state for rotation logic
-        this._initialLightPos = null;
-        this._initialPickerQuat = null;
+        if (this.input.keys['KeyW']) this.camera.position.addScaledVector(forward, moveSpeed);
+        if (this.input.keys['KeyS']) this.camera.position.addScaledVector(forward, -moveSpeed);
+        if (this.input.keys['KeyA']) this.camera.position.addScaledVector(right, -moveSpeed);
+        if (this.input.keys['KeyD']) this.camera.position.addScaledVector(right, moveSpeed);
+        if (this.input.keys['Space']) this.camera.position.y += moveSpeed;
+        if (this.input.keys['ShiftLeft']) this.camera.position.y -= moveSpeed;
+        
+        // Right-click look
+        if (this.input.mouse.rightClick && !this.input.isClickOnUI(this.input.mouse.screenX, this.input.mouse.screenY)) {
+            const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+            euler.setFromQuaternion(this.camera.quaternion);
+            euler.y -= this.input.mouse.movementX * 0.002;
+            euler.x -= this.input.mouse.movementY * 0.002;
+            euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, euler.x));
+            this.camera.quaternion.setFromEuler(euler);
+        }
+
+        this.input.update();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/editor/EditorCamera.js ===
+
+
+=== FILE: src/editor/EditorControls.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { StateChangeCommand } from './UndoManager.js';
+
+export class EditorControls {
+    constructor(editor) {
+        this.editor = editor;
+        this.app = editor.app;
+        this.scene = editor.scene;
+        this.camera = editor.camera;
+        this.renderer = editor.renderer;
+        this.input = editor.input;
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
         this.onMouseDownHandler = this.onMouseDown.bind(this);
-        this.onKeyDownHandler = this.onKeyDown.bind(this);
         this.onContextMenuHandler = (e) => e.preventDefault();
+        
+        this._initialDragState = null; // For Undo/Redo
 
-        this.initUI();
-        this.initControls();
-        this.addEventListeners();
+        this.init();
     }
+    
+    init() {
+        this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+        this.transformControls.addEventListener('dragging-changed', (event) => this.onDraggingChanged(event));
+        this.transformControls.addEventListener('objectChange', () => this.onObjectChange());
+        this.scene.add(this.transformControls);
 
-    addEventListeners() {
+        this.selectionBox = new THREE.BoxHelper();
+        this.selectionBox.material.depthTest = false;
+        this.selectionBox.material.transparent = true;
+        this.selectionBox.visible = false;
+        this.scene.add(this.selectionBox);
+        
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDownHandler, false);
         this.renderer.domElement.addEventListener('contextmenu', this.onContextMenuHandler, false);
-        document.addEventListener('keydown', this.onKeyDownHandler);
     }
 
     dispose() {
         this.renderer.domElement.removeEventListener('mousedown', this.onMouseDownHandler, false);
         this.renderer.domElement.removeEventListener('contextmenu', this.onContextMenuHandler, false);
-        document.removeEventListener('keydown', this.onKeyDownHandler);
         this.transformControls.dispose();
         this.scene.remove(this.transformControls);
         this.scene.remove(this.selectionBox);
@@ -2124,28 +2983,136 @@ export class LevelEditor {
         this.selectionBox.material.dispose();
     }
 
-    initUI() {
+    onDraggingChanged(event) {
+        this.input.enabled = !event.value;
+        const entity = this.editor.selectedObject;
+        if (!entity) return;
+
+        if (event.value) { // Drag started
+            this._initialDragState = {
+                definition: JSON.parse(JSON.stringify(entity.definition)), // Deep copy
+                position: entity.mesh.position.clone(),
+                quaternion: entity.mesh.quaternion.clone(),
+                scale: entity.mesh.scale.clone()
+            };
+
+            if (entity.userData.gameEntity.type === 'DirectionalLight' && this.transformControls.mode === 'rotate') {
+                this.editor._initialLightPos = entity.light.position.clone();
+                this.editor._initialPickerQuat = entity.picker.quaternion.clone();
+            }
+        } else { // Drag ended
+            const beforeState = this._initialDragState.definition;
+            
+            // The "after" state is the object's definition after applying the gizmo changes
+            const afterState = JSON.parse(JSON.stringify(entity.definition));
+            afterState.position = { x: entity.mesh.position.x, y: entity.mesh.position.y, z: entity.mesh.position.z };
+            const euler = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
+            afterState.rotation = { x: THREE.MathUtils.radToDeg(euler.x), y: THREE.MathUtils.radToDeg(euler.y), z: THREE.MathUtils.radToDeg(euler.z) };
+            
+            // For scaling, calculate final size but keep position centered.
+            if (this.transformControls.mode === 'scale' && afterState.size) {
+                 const initialSize = new THREE.Vector3().fromArray(this._initialDragState.definition.size);
+                 const newSize = initialSize.clone().multiply(entity.mesh.scale);
+                 
+                 afterState.size = newSize.toArray();
+                 // By not changing afterState.position here, we respect the object's center
+                 // position which was captured from the mesh's transform before this block.
+
+                 // Reset the mesh scale as it's now baked into the definition
+                 entity.mesh.scale.set(1, 1, 1);
+            }
+            
+            const command = new StateChangeCommand(this.editor, entity, beforeState, afterState);
+            this.editor.undoManager.execute(command);
+
+            this._initialDragState = null;
+            this.editor._initialLightPos = null;
+            this.editor._initialPickerQuat = null;
+        }
+    }
+
+    onObjectChange() {
+        if (this.editor.selectedObject && !this.transformControls.dragging) {
+            this.editor.syncObjectTransforms();
+            this.editor.ui.updatePropertiesPanel();
+        }
+    }
+
+    onMouseDown(event) {
+        if (event.button !== 0 || this.transformControls.dragging || this.input.isClickOnUI(event.clientX, event.clientY)) return;
+        
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        const pickableMeshes = this.app.levelObjects.map(o => o.mesh)
+            .concat(this.app.enemies.map(e => e.mesh))
+            .concat(this.app.directionalLights.map(l => l.picker))
+            .concat(this.app.triggers.map(t => t.mesh))
+            .concat(this.app.deathTriggers.map(t => t.mesh))
+            .concat(this.app.spawnPointHelper ? [this.app.spawnPointHelper] : [])
+            .concat(this.app.deathSpawnPointHelper ? [this.app.deathSpawnPointHelper] : []);
+            
+        const intersects = this.raycaster.intersectObjects(pickableMeshes.filter(m => m.visible), true);
+        const validIntersects = intersects.filter(i => i.object.userData.gameEntity?.entity);
+        
+        if (validIntersects.length > 0) {
+            const entity = validIntersects[0].object.userData.gameEntity.entity;
+            if (entity.definition?.editorSelectable === false) {
+                 this.editor.deselect();
+            } else {
+                 this.editor.select(entity);
+            }
+        } else {
+            this.editor.deselect();
+        }
+    }
+
+    setTransformMode(mode) {
+        if (this.transformControls.object) {
+            this.transformControls.setMode(mode);
+            this.editor.ui.updateTransformModeButtons(mode);
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/editor/EditorControls.js ===
+
+
+=== FILE: src/editor/EditorUI.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+export class EditorUI {
+    constructor(editor) {
+        this.editor = editor;
+        this.app = editor.app;
+        this.init();
+    }
+
+    init() {
         // Toolbar
         document.getElementById('editor-load-btn').onclick = () => document.getElementById('editor-file-input').click();
-        document.getElementById('editor-file-input').onchange = (e) => this.loadFile(e);
-        document.getElementById('editor-save-btn').onclick = () => this.saveFile();
-        document.getElementById('editor-mode-translate').onclick = () => this.setTransformMode('translate');
-        document.getElementById('editor-mode-rotate').onclick = () => this.setTransformMode('rotate');
-        document.getElementById('editor-mode-scale').onclick = () => this.setTransformMode('scale');
+        document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
+        document.getElementById('editor-save-btn').onclick = () => this.editor.actions.saveFile();
+        document.getElementById('editor-info-btn').onclick = () => this.showInfoModal();
+        document.getElementById('editor-mode-translate').onclick = () => this.editor.controls.setTransformMode('translate');
+        document.getElementById('editor-mode-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
+        document.getElementById('editor-mode-scale').onclick = () => this.editor.controls.setTransformMode('scale');
 
         // Scene Accordion
-        document.getElementById('skybox-color-input').oninput = (e) => this.updateSkyboxColor(e.target.value);
-        document.getElementById('ambient-color-input').oninput = (e) => this.updateAmbientLight('color', e.target.value);
-        document.getElementById('ambient-intensity-input').oninput = (e) => this.updateAmbientLight('intensity', e.target.value);
+        document.getElementById('skybox-color-input').oninput = (e) => this.editor.actions.updateSkyboxColor(e.target.value);
+        document.getElementById('ambient-color-input').oninput = (e) => this.editor.actions.updateAmbientLight('color', e.target.value);
+        document.getElementById('ambient-intensity-input').oninput = (e) => this.editor.actions.updateAmbientLight('intensity', e.target.value);
 
         // Create Accordion
-        document.getElementById('editor-add-box').onclick = () => this.addBox();
-        document.getElementById('editor-add-enemy').onclick = () => this.addEnemy();
+        document.getElementById('editor-add-box').onclick = () => this.editor.actions.addBox();
+        document.getElementById('editor-add-enemy').onclick = () => this.editor.actions.addEnemy();
         document.getElementById('add-dirlight-btn').onclick = () => this.app.addDirectionalLight();
-        document.getElementById('editor-add-msg-trigger').onclick = () => this.addMessageTrigger();
-        document.getElementById('editor-add-death-trigger').onclick = () => this.addDeathTrigger();
-        document.getElementById('editor-set-spawn').onclick = () => this.setSpawnPointToCamera();
-        document.getElementById('editor-set-death-spawn').onclick = () => this.setDeathSpawnPointToCamera();
+        document.getElementById('editor-add-msg-trigger').onclick = () => this.editor.actions.addMessageTrigger();
+        document.getElementById('editor-add-death-trigger').onclick = () => this.editor.actions.addDeathTrigger();
+        document.getElementById('editor-set-spawn').onclick = () => this.editor.actions.setSpawnPointToCamera();
+        document.getElementById('editor-set-death-spawn').onclick = () => this.editor.actions.setDeathSpawnPointToCamera();
 
         // View Options Accordion
         document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('msgTriggers', e.target.checked);
@@ -2157,169 +3124,92 @@ export class LevelEditor {
         this.outlinerList = document.getElementById('outliner-list');
         this.outlinerList.onclick = (e) => {
             const item = e.target.closest('.outliner-item');
-            if (item) this.selectByUUID(item.dataset.uuid);
+            if (item) this.editor.selectByUUID(item.dataset.uuid);
         };
 
         // Properties Panel
         this.propertiesAccordion = document.getElementById('properties-accordion');
         this.propertiesContent = document.getElementById('properties-content');
-        document.getElementById('editor-delete-btn').onclick = () => this.deleteSelected();
+        document.getElementById('editor-delete-btn').onclick = () => this.editor.actions.deleteSelected();
+        
+        // Modal Events
+        document.querySelector('#editor-info-modal .modal-close-btn').onclick = () => {
+            document.getElementById('editor-info-modal').style.display = 'none';
+        };
+        document.getElementById('editor-info-modal').onclick = (e) => {
+            if(e.target === e.currentTarget) e.currentTarget.style.display = 'none';
+        };
     }
 
-    initControls() {
-        this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+    showInfoModal() {
+        // --- Player & Physics Parameters (from Player.js and Physics.js) ---
+        const playerRadius = 0.8;
+        const speed = 8;
+        const jumpVy = 8;
+        const dashMultiplier = 4;
+        const dashDuration = 0.2;
+        const gravity = 9.82; // Absolute value
+
+        // --- Calculations ---
+        const playerHeight = playerRadius * 2;
+        const dashSpeed = speed * dashMultiplier;
+        const groundDashDist = dashSpeed * dashDuration;
+
+        // Single Jump
+        const timeToPeak1 = jumpVy / gravity;
+        const height1 = (jumpVy * jumpVy) / (2 * gravity);
+        const airTime1 = 2 * timeToPeak1;
+        const distance1 = speed * airTime1;
+
+        // Double Jump (Max Height: jump at peak of first)
+        const height2 = height1 + height1; // Second jump from peak (v=0) gains same height
+        const timeToFallFromH2 = Math.sqrt((2 * height2) / gravity);
+        const airTime2_height = timeToPeak1 + timeToFallFromH2;
+        const distance2_height = speed * airTime2_height;
         
-        this.transformControls.addEventListener('dragging-changed', (event) => {
-            this.input.enabled = !event.value;
-            
-            if (event.value) {
-                if (this.selectedObject?.userData?.gameEntity?.type === 'DirectionalLight' && this.transformControls.mode === 'rotate') {
-                    this._initialLightPos = this.selectedObject.light.position.clone();
-                    this._initialPickerQuat = this.selectedObject.picker.quaternion.clone();
-                }
-            } else {
-                this._initialLightPos = null;
-                this._initialPickerQuat = null;
-                if (this.selectedObject?.transformControls?.mode === 'scale') {
-                    const attachedMesh = this.selectedObject.mesh || this.selectedObject;
-                    const def = this.selectedObject.definition;
-                    if (def?.size) {
-                        def.size[0] *= attachedMesh.scale.x;
-                        def.size[1] *= attachedMesh.scale.y;
-                        if (def.size.length > 2) def.size[2] *= attachedMesh.scale.z;
-                        attachedMesh.scale.set(1, 1, 1);
-                        this.applyDefinition(this.selectedObject);
-                        this.updatePropertiesPanel();
-                    }
-                }
-            }
+        // Jump + Dash (Max Distance: dash at peak)
+        const horizontalDistToPeak = speed * timeToPeak1;
+        const timeToFallFromH1 = timeToPeak1; // Symmetry
+        const horizontalDistAfterDash = speed * timeToFallFromH1;
+        const jumpDashDist = horizontalDistToPeak + groundDashDist + horizontalDistAfterDash;
+
+        const infoText = `
+[Base Parameters]
+Player Collider Height: ${playerHeight.toFixed(2)}m
+Ground Speed          : ${speed.toFixed(2)} m/s
+Dash Speed            : ${dashSpeed.toFixed(2)} m/s
+Gravity               : ${gravity.toFixed(2)} m/s²
+
+[Ground Movement]
+Dash Distance         : ${groundDashDist.toFixed(2)}m
+
+[Single Jump]
+Max Height            : ${height1.toFixed(2)}m (Gap clearance: ${(height1 + playerHeight).toFixed(2)}m)
+Max Distance          : ${distance1.toFixed(2)}m
+Air Time              : ${airTime1.toFixed(2)}s
+
+[Double Jump (for max height)]
+Max Height            : ${height2.toFixed(2)}m (Gap clearance: ${(height2 + playerHeight).toFixed(2)}m)
+Horizontal Distance   : ${distance2_height.toFixed(2)}m
+Air Time              : ${airTime2_height.toFixed(2)}s
+
+[Jump + Dash (for max distance)]
+Max Distance          : ${jumpDashDist.toFixed(2)}m
+
+NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height + player height.
+        `.trim();
+
+        document.getElementById('info-modal-text').textContent = infoText;
+        document.getElementById('editor-info-modal').style.display = 'flex';
+    }
+
+
+    updateTransformModeButtons(mode) {
+        ['translate', 'rotate', 'scale'].forEach(m => {
+            document.getElementById(`editor-mode-${m}`).classList.toggle('active', m === mode);
         });
-        
-        this.transformControls.addEventListener('objectChange', () => {
-            if (this.selectedObject) {
-                this.syncObjectTransforms();
-                this.updatePropertiesPanel();
-            }
-        });
-        this.scene.add(this.transformControls);
-
-        this.selectionBox = new THREE.BoxHelper();
-        this.selectionBox.material.depthTest = false;
-        this.selectionBox.material.transparent = true;
-        this.selectionBox.visible = false;
-        this.scene.add(this.selectionBox);
-    }
-    
-    onKeyDown(event) {
-        if (event.target.tagName === 'INPUT' || this.transformControls.dragging) return;
-
-        if (event.ctrlKey) {
-            switch (event.code) {
-                case 'KeyC': event.preventDefault(); this.copySelected(); break;
-                case 'KeyV': event.preventDefault(); this.pasteFromClipboard(); break;
-            }
-        } else {
-            switch (event.code) {
-                case 'KeyT': this.setTransformMode('translate'); break;
-                case 'KeyR': this.setTransformMode('rotate'); break;
-                case 'KeyS': this.setTransformMode('scale'); break;
-                case 'Delete':
-                case 'Backspace': this.deleteSelected(); break;
-            }
-        }
     }
 
-    onMouseDown(event) {
-        if (event.button !== 0 || this.transformControls.dragging || this.input.isClickOnUI(event.clientX, event.clientY)) return;
-        
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-
-        const pickableMeshes = this.levelObjects.map(o => o.mesh)
-            .concat(this.enemies.map(e => e.mesh))
-            .concat(this.app.directionalLights.map(l => l.picker))
-            .concat(this.triggers.map(t => t.mesh))
-            .concat(this.deathTriggers.map(t => t.mesh))
-            .concat(this.app.spawnPointHelper ? [this.app.spawnPointHelper] : [])
-            .concat(this.app.deathSpawnPointHelper ? [this.app.deathSpawnPointHelper] : []);
-            
-        const intersects = this.raycaster.intersectObjects(pickableMeshes.filter(m => m.visible), true);
-        const validIntersects = intersects.filter(i => i.object.userData.gameEntity?.entity);
-        
-        if (validIntersects.length > 0) {
-            const entity = validIntersects[0].object.userData.gameEntity.entity;
-            if (entity.definition?.editorSelectable === false) {
-                 this.deselect();
-            } else {
-                 this.select(entity);
-            }
-        } else {
-            this.deselect();
-        }
-    }
-
-    // --- Selection and UI Management ---
-
-    select(entity) {
-        if (!entity || this.selectedObject === entity) return;
-        this.deselect();
-        
-        this.selectedObject = entity;
-        const entityType = entity.userData?.gameEntity?.type;
-        let objectToAttach = entity.mesh || entity.picker || entity;
-
-        if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
-
-        this.transformControls.attach(objectToAttach);
-        this.selectionBox.setFromObject(objectToAttach);
-        this.selectionBox.visible = true;
-        this.propertiesAccordion.style.display = 'block';
-        this.propertiesAccordion.open = true;
-        
-        this.updatePropertiesPanel();
-        this.updateOutliner();
-        
-        const isEnemy = entity.isDead !== undefined;
-        const isTrigger = entityType === 'Trigger' || entityType === 'DeathTrigger';
-        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isTrigger);
-        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isTrigger);
-        
-        document.getElementById('editor-mode-rotate').disabled = !canRotate;
-        document.getElementById('editor-mode-scale').disabled = !canScale;
-
-        if (!canRotate && this.transformControls.getMode() === 'rotate') this.setTransformMode('translate');
-        if (!canScale && this.transformControls.getMode() === 'scale') this.setTransformMode('translate');
-    }
-
-    deselect() {
-        if (!this.selectedObject) return;
-        
-        if (this.selectedObject.userData?.gameEntity?.type === 'DirectionalLight') {
-            this.selectedObject.picker.material.visible = false;
-        }
-
-        this.selectedObject = null;
-        this.transformControls.detach();
-        this.selectionBox.visible = false;
-        this.propertiesAccordion.style.display = 'none';
-        this.updateOutliner();
-        
-        document.getElementById('editor-mode-rotate').disabled = false;
-        document.getElementById('editor-mode-scale').disabled = false;
-    }
-
-    selectByUUID(uuid) {
-        const allEntities = [
-            ...this.app.levelObjects, ...this.app.enemies, ...this.app.directionalLights,
-            ...this.triggers, ...this.deathTriggers,
-            this.app.spawnPointHelper, this.app.deathSpawnPointHelper,
-        ].filter(Boolean);
-
-        const entityToSelect = allEntities.find(e => (e.mesh || e.picker || e).uuid === uuid);
-        if (entityToSelect) this.select(entityToSelect);
-    }
-    
     updateOutliner() {
         this.outlinerList.innerHTML = '';
         const createItem = (entity, name, uuid, prefix = '') => {
@@ -2327,7 +3217,7 @@ export class LevelEditor {
             item.className = 'outliner-item';
             item.textContent = `${prefix} ${name}`;
             item.dataset.uuid = uuid;
-            if (entity === this.selectedObject) item.classList.add('selected');
+            if (entity === this.editor.selectedObject) item.classList.add('selected');
             this.outlinerList.appendChild(item);
         };
 
@@ -2336,22 +3226,32 @@ export class LevelEditor {
         this.app.directionalLights.forEach((l, i) => createItem(l, `Directional Light ${i+1}`, l.picker.uuid, '[L]'));
         this.app.levelObjects.forEach(o => createItem(o, o.definition.name || 'Object', o.mesh.uuid, '[G]'));
         this.app.enemies.forEach(e => createItem(e, e.name || 'Enemy', e.mesh.uuid, '[E]'));
-        this.triggers.forEach((t, i) => createItem(t, t.definition.name || `Trigger ${i+1}`, t.mesh.uuid, '[T]'));
-        this.deathTriggers.forEach((t, i) => createItem(t, t.definition.name || `Death Zone ${i+1}`, t.mesh.uuid, '[D]'));
+        this.app.triggers.forEach((t, i) => createItem(t, t.definition.name || `Trigger ${i+1}`, t.mesh.uuid, '[T]'));
+        this.app.deathTriggers.forEach((t, i) => createItem(t, t.definition.name || `Death Zone ${i+1}`, t.mesh.uuid, '[D]'));
     }
-    
+
     updatePropertiesPanel() {
-        if (!this.selectedObject) {
+        if (!this.editor.selectedObject) {
             this.propertiesAccordion.style.display = 'none';
             return;
         }
         this.propertiesContent.innerHTML = '';
-        const entity = this.selectedObject;
+        const entity = this.editor.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         
         if (!entityType) return;
         
+        this.propertiesAccordion.style.display = 'block';
+        this.propertiesAccordion.open = true;
         const fragment = document.createDocumentFragment();
+
+        const handleEnterKey = (e, updateFn) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                updateFn(e.target.value);
+                e.target.blur();
+            }
+        };
 
         const createVec3Inputs = (label, vector, callback) => {
             fragment.appendChild(document.createElement('label')).textContent = label;
@@ -2362,7 +3262,9 @@ export class LevelEditor {
                 input.type = 'number';
                 input.step = label.toLowerCase().includes('rot') ? 1 : 0.1;
                 input.value = vector[axis].toFixed(2);
-                input.onchange = (e) => callback(axis, parseFloat(e.target.value));
+                const updateValue = (val) => callback(axis, parseFloat(val));
+                input.onchange = (e) => updateValue(e.target.value);
+                input.onkeydown = (e) => handleEnterKey(e, updateValue);
                 group.appendChild(input);
             });
         };
@@ -2376,18 +3278,11 @@ export class LevelEditor {
                  input.type = 'number';
                  input.step = 0.1;
                  input.value = val.toFixed(2);
-                 input.onchange = (e) => callback(index, parseFloat(e.target.value));
+                 const updateValue = (val) => callback(index, parseFloat(val));
+                 input.onchange = (e) => updateValue(e.target.value);
+                 input.onkeydown = (e) => handleEnterKey(e, updateValue);
                  group.appendChild(input);
              });
-        };
-        
-        const createRangeInput = (label, value, min, max, step, callback) => {
-            fragment.appendChild(document.createElement('label')).textContent = label;
-            const input = fragment.appendChild(document.createElement('input'));
-            input.type = 'range';
-            input.min = min; input.max = max; input.step = step;
-            input.value = value;
-            input.oninput = (e) => callback(parseFloat(e.target.value));
         };
         
         const createColorInput = (label, color, callback) => {
@@ -2403,83 +3298,266 @@ export class LevelEditor {
             const input = fragment.appendChild(document.createElement('input'));
             input.type = 'text';
             input.value = value;
-            input.onchange = (e) => callback(e.target.value);
+            const updateValue = (val) => callback(val);
+            input.onchange = (e) => updateValue(e.target.value);
+            input.onkeydown = (e) => handleEnterKey(e, updateValue);
+        };
+        
+        const createNumberInput = (label, value, min, max, step, callback) => {
+            fragment.appendChild(document.createElement('label')).textContent = label;
+            const input = fragment.appendChild(document.createElement('input'));
+            input.type = 'number';
+            if (min !== undefined) input.min = min;
+            if (max !== undefined) input.max = max;
+            input.step = step || 1;
+            input.value = value;
+            const updateValue = (val) => callback(parseFloat(val));
+            input.onchange = (e) => updateValue(e.target.value);
+            input.onkeydown = (e) => handleEnterKey(e, updateValue);
         };
         
         if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
             const def = entity.definition;
-            createTextInput('Name', def.name || '', val => this.updateSelectedProp('name', null, val));
-            createVec3Inputs('Position', entity.mesh.position, (axis, val) => this.updateSelectedProp('position', axis, val));
-            createSizeInputs('Size', def.size, (index, val) => this.updateSelectedProp('size', index, val));
+            const mesh = entity.mesh;
+
+            createTextInput('Name', def.name || '', val => this.editor.updateSelectedProp('name', null, val));
+            createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
+            createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));
+            
             if (entityType === 'Trigger') {
                 fragment.appendChild(document.createElement('hr'));
-                createTextInput('Message', def.message || '', val => this.updateSelectedProp('message', null, val));
-                createColorInput('Color', entity.mesh.material.color, val => this.updateSelectedProp('color', null, val));
+                createTextInput('Message', def.message || '', val => this.editor.updateSelectedProp('message', null, val));
+                createNumberInput('Duration (s)', def.duration || 5, 0.1, 100, 0.1, val => this.editor.updateSelectedProp('duration', null, val));
+                const initialColor = def.color ? parseInt(def.color, 16) : 0x00ff00;
+                createColorInput('Helper Color', new THREE.Color(initialColor), val => this.editor.updateSelectedProp('color', null, val));
             }
         } else if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') {
-            createVec3Inputs('Position', entity.position, (axis, val) => this.updateSelectedProp('position', axis, val));
+             createVec3Inputs('Position', entity.position, (axis, val) => {
+                entity.position[axis] = val;
+                this.editor.syncObjectTransforms();
+             });
         } else if (entityType === 'DirectionalLight') {
-             createColorInput('Color', entity.light.color, val => this.updateSelectedProp('color', null, val));
-             createRangeInput('Intensity', entity.light.intensity, 0, 10, 0.1, val => this.updateSelectedProp('intensity', null, val));
-             createVec3Inputs('Position (Direction)', entity.light.position, (axis, val) => this.updateSelectedProp('position', axis, val));
+             createColorInput('Color', entity.light.color, val => this.editor.updateSelectedProp('color', null, val));
+             createNumberInput('Intensity', entity.light.intensity, 0, 20, 0.1, val => this.editor.updateSelectedProp('intensity', null, val));
+             createVec3Inputs('Position', entity.light.position, (axis, val) => {
+                 entity.picker.position[axis] = val;
+                 this.editor.syncObjectTransforms();
+                 this.updatePropertiesPanel();
+             });
         } else { // Generic Object or Enemy
             const def = entity.definition;
             const mesh = entity.mesh;
             fragment.appendChild(document.createElement('label')).textContent = `Name: ${def.name || def.type}`;
-            createVec3Inputs('Position', mesh.position, (axis, val) => this.updateSelectedProp('position', axis, val));
+            createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
             if (entity.isDead === undefined && def.type !== 'Plane') {
                  const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
                  const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.radToDeg(eulerRot.z) };
-                 createVec3Inputs('Rotation', degRot, (axis, val) => this.updateSelectedProp('rotation', axis, val));
+                 createVec3Inputs('Rotation', degRot, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
             }
-            if (def.size) createSizeInputs('Size', def.size, (index, val) => this.updateSelectedProp('size', index, val));
+            if (def.size) createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));
+
+            if (def.material) {
+                fragment.appendChild(document.createElement('hr'));
+                const initialColor = def.material.color ? parseInt(def.material.color, 16) : 0xcccccc;
+                createColorInput('Material Color', new THREE.Color(initialColor), val => {
+                    this.editor.updateSelectedProp('material.color', null, val);
+                });
+            }
         }
         this.propertiesContent.appendChild(fragment);
     }
     
-    // --- Data Manipulation ---
+    setInitialSceneSettings(settings) {
+        if (!settings) return;
+        document.getElementById('skybox-color-input').value = '#' + new THREE.Color(parseInt(settings.backgroundColor || "0x000000", 16)).getHexString();
+        document.getElementById('ambient-color-input').value = '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString();
+        document.getElementById('ambient-intensity-input').value = settings.ambientLight.intensity;
+    }
+
+    setHelpersVisibility(type, isVisible) {
+        this.editor.helperVisibility[type] = isVisible;
+        switch (type) {
+            case 'msgTriggers':   this.app.triggers.forEach(t => t.mesh.visible = isVisible); break;
+            case 'deathTriggers': this.app.deathTriggers.forEach(t => t.mesh.visible = isVisible); break;
+            case 'lightHelpers':  this.app.directionalLights.forEach(l => l.helper.visible = isVisible); break;
+            case 'spawnHelpers':
+                if (this.app.spawnPointHelper) this.app.spawnPointHelper.visible = isVisible;
+                if (this.app.deathSpawnPointHelper) this.app.deathSpawnPointHelper.visible = isVisible;
+                break;
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/editor/EditorUI.js ===
+
+
+=== FILE: src/editor/LevelEditor.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { EditorControls } from './EditorControls.js';
+import { EditorUI } from './EditorUI.js';
+import { EditorActions } from './EditorActions.js';
+import { EditorCamera } from './EditorCamera.js';
+import { UndoManager, StateChangeCommand } from './UndoManager.js';
+
+export class LevelEditor {
+    constructor(app) {
+        this.app = app;
+        this.scene = app.scene;
+        this.camera = app.camera;
+        this.renderer = app.renderer.renderer;
+        this.physics = app.physics;
+        this.input = app.input;
+
+        // Core State
+        this.selectedObject = null;
+        this.clipboard = null;
+        this.helperVisibility = {
+            msgTriggers: true,
+            deathTriggers: true,
+            lightHelpers: true,
+            spawnHelpers: true,
+        };
+
+        // Internal state for rotation logic
+        this._initialLightPos = null;
+        this._initialPickerQuat = null;
+
+        // Modules
+        this.undoManager = new UndoManager(this);
+        this.ui = new EditorUI(this);
+        this.controls = new EditorControls(this);
+        this.actions = new EditorActions(this);
+        this.cameraController = new EditorCamera(this);
+        
+        this.onKeyDownHandler = this.onKeyDown.bind(this);
+        document.addEventListener('keydown', this.onKeyDownHandler);
+    }
+
+    dispose() {
+        document.removeEventListener('keydown', this.onKeyDownHandler);
+        this.controls.dispose();
+    }
+
+    onKeyDown(event) {
+        if (event.target.tagName === 'INPUT' || this.controls.transformControls.dragging) return;
+
+        if (event.ctrlKey) {
+            switch (event.code) {
+                case 'KeyC': event.preventDefault(); this.actions.copySelected(); break;
+                case 'KeyV': event.preventDefault(); this.actions.pasteFromClipboard(); break;
+                case 'KeyZ': event.preventDefault(); this.undoManager.undo(); break;
+                case 'KeyY': event.preventDefault(); this.undoManager.redo(); break;
+            }
+        } else {
+            switch (event.code) {
+                case 'KeyT': this.controls.setTransformMode('translate'); break;
+                case 'KeyR': this.controls.setTransformMode('rotate'); break;
+                case 'KeyS': this.controls.setTransformMode('scale'); break;
+                case 'Delete':
+                case 'Backspace': this.actions.deleteSelected(); break;
+            }
+        }
+    }
+
+    // --- State & Selection Management ---
+
+    select(entity) {
+        if (!entity || this.selectedObject === entity) return;
+        this.deselect();
+        
+        this.selectedObject = entity;
+        const entityType = entity.userData?.gameEntity?.type;
+        let objectToAttach = entity.mesh || entity.picker || entity;
+
+        if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
+
+        this.controls.transformControls.attach(objectToAttach);
+        this.controls.selectionBox.setFromObject(objectToAttach);
+        this.controls.selectionBox.visible = true;
+        
+        this.ui.propertiesAccordion.style.display = 'block';
+        this.ui.propertiesAccordion.open = true;
+        
+        this.ui.updatePropertiesPanel();
+        this.ui.updateOutliner();
+        
+        const isEnemy = entity.isDead !== undefined;
+        const isTrigger = entityType === 'Trigger' || entityType === 'DeathTrigger';
+        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isTrigger);
+        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isTrigger);
+        
+        document.getElementById('editor-mode-rotate').disabled = !canRotate;
+        document.getElementById('editor-mode-scale').disabled = !canScale;
+
+        if (!canRotate && this.controls.transformControls.getMode() === 'rotate') this.controls.setTransformMode('translate');
+        if (!canScale && this.controls.transformControls.getMode() === 'scale') this.controls.setTransformMode('translate');
+    }
+
+    deselect() {
+        if (!this.selectedObject) return;
+        
+        if (this.selectedObject.userData?.gameEntity?.type === 'DirectionalLight') {
+            this.selectedObject.picker.material.visible = false;
+        }
+
+        this.selectedObject = null;
+        this.controls.transformControls.detach();
+        this.controls.selectionBox.visible = false;
+        this.ui.propertiesAccordion.style.display = 'none';
+        this.ui.updateOutliner();
+        
+        document.getElementById('editor-mode-rotate').disabled = false;
+        document.getElementById('editor-mode-scale').disabled = false;
+    }
+
+    selectByUUID(uuid) {
+        const allEntities = [
+            ...this.app.levelObjects, ...this.app.enemies, ...this.app.directionalLights,
+            ...this.app.triggers, ...this.app.deathTriggers,
+            this.app.spawnPointHelper, this.app.deathSpawnPointHelper,
+        ].filter(Boolean);
+
+        const entityToSelect = allEntities.find(e => (e.mesh || e.picker || e).uuid === uuid);
+        if (entityToSelect) this.select(entityToSelect);
+    }
+    
+    // --- Data & Property Manipulation ---
 
     updateSelectedProp(prop, key, value) {
         if (!this.selectedObject) return;
         const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
-        const def = entity.definition;
+        
+        const beforeState = entity.definition;
+        const afterState = JSON.parse(JSON.stringify(beforeState)); // Create a working copy
+        let target = afterState;
 
-        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
-            const mesh = entity.mesh;
-            if (prop === 'name') def.name = value;
-            if (prop === 'position') mesh.position[key] = value;
-            if (prop === 'size') def.size[key] = value;
-            if (entityType === 'Trigger') {
-                if (prop === 'message') def.message = value;
-                if (prop === 'color') { mesh.material.color.set(value); def.color = value.replace('#', '0x'); }
-            }
-            this.applyDefinition(entity);
-        } else if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') {
-            if (prop === 'position') entity.position[key] = value;
-        } else if (entityType === 'DirectionalLight') {
-            if (prop === 'color') { entity.light.color.set(value); def.color = value.replace('#', '0x'); }
-            if (prop === 'intensity') { entity.light.intensity = value; def.intensity = value; }
-            if (prop === 'position') { entity.light.position[key] = value; entity.picker.position[key] = value; def.position[key] = value; entity.helper.update(); }
-        } else { // Generic Object / Enemy
-            const mesh = entity.mesh;
-            if (prop === 'position') mesh.position[key] = value;
-            if (prop === 'rotation') {
-                const euler = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
-                euler[key] = THREE.MathUtils.degToRad(value);
-                mesh.quaternion.setFromEuler(euler);
-            }
-            if (prop === 'size') def.size[key] = value;
-            this.applyDefinition(entity);
+        // Navigate to the correct property in the copied state
+        const path = prop.split('.');
+        for(let i = 0; i < path.length - 1; i++) {
+            if(!target[path[i]]) target[path[i]] = {};
+            target = target[path[i]];
         }
-        this.syncObjectTransforms();
-        this.updateOutliner();
+        const finalKey = path[path.length - 1];
+        
+        // Update the value in the copied state
+        if (key !== null) { // For vectors
+            if(!target[finalKey]) target[finalKey] = {};
+            target[finalKey][key] = value;
+        } else { // For direct properties
+            target[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
+        }
+
+        const command = new StateChangeCommand(this, entity, beforeState, afterState);
+        this.undoManager.execute(command);
     }
     
     applyDefinition(obj) {
         const type = obj.userData?.gameEntity?.type;
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
-            this.selectionBox.setFromObject(obj);
+            this.controls.selectionBox.setFromObject(obj);
             return;
         }
 
@@ -2487,7 +3565,10 @@ export class LevelEditor {
         const mesh = obj.mesh;
         const body = obj.body;
         
+        // Position
         mesh.position.set(def.position.x, def.position.y, def.position.z);
+        
+        // Rotation
         if (def.rotation && obj.isDead === undefined) {
              mesh.rotation.set(
                 THREE.MathUtils.degToRad(def.rotation.x || 0),
@@ -2496,9 +3577,18 @@ export class LevelEditor {
             );
         }
 
+        // Material Color
+        if (type !== 'Trigger' && def.material && def.material.color && mesh.material) {
+            mesh.material.color.set(parseInt(def.material.color, 16));
+        }
+
+        // Size & Geometry
         if((type === 'Trigger' || type === 'DeathTrigger') && def.size) {
             mesh.geometry.dispose();
             mesh.geometry = new THREE.BoxGeometry(...def.size);
+            if(type === 'Trigger' && def.color) { // Handle trigger color
+                mesh.material.color.set(parseInt(def.color, 16));
+            }
         } else if(def.size && def.type === 'Box' && body?.shapes[0]) {
             const halfExtents = new CANNON.Vec3(def.size[0]/2, def.size[1]/2, def.size[2]/2);
             body.shapes[0].halfExtents.copy(halfExtents);
@@ -2509,7 +3599,7 @@ export class LevelEditor {
         }
         
         this.syncObjectTransforms();
-        this.selectionBox.setFromObject(mesh);
+        this.controls.selectionBox.setFromObject(mesh);
     }
     
     syncObjectTransforms() {
@@ -2532,7 +3622,7 @@ export class LevelEditor {
             const picker = entity.picker;
             const light = entity.light;
 
-            if (this.transformControls.mode === 'rotate' && this.transformControls.dragging && this._initialLightPos) {
+            if (this.controls.transformControls.mode === 'rotate' && this.controls.transformControls.dragging && this._initialLightPos) {
                 const deltaQuat = picker.quaternion.clone().multiply(this._initialPickerQuat.clone().invert());
                 light.position.copy(this._initialLightPos).applyQuaternion(deltaQuat);
                 picker.position.copy(light.position);
@@ -2544,7 +3634,7 @@ export class LevelEditor {
             entity.definition.position = { x: light.position.x, y: light.position.y, z: light.position.z };
             entity.helper.update();
 
-            if (this.selectedObject === entity) this.selectionBox.setFromObject(picker);
+            if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);
         } else {
             if (entity.body) {
                 entity.body.position.copy(entity.mesh.position);
@@ -2553,262 +3643,86 @@ export class LevelEditor {
         }
     }
     
-    deleteSelected() {
-        if (!this.selectedObject) return;
-        const entity = this.selectedObject;
-        const entityType = entity.userData.gameEntity.type;
-        
-        if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') return;
-
-        let list, index;
-        switch (entityType) {
-            case 'Trigger':       list = this.triggers; break;
-            case 'DeathTrigger':  list = this.deathTriggers; break;
-            case 'DirectionalLight': this.app.removeDirectionalLight(entity); break;
-            case 'Enemy':         list = this.enemies; break;
-            default:              list = this.levelObjects; break;
-        }
-
-        if (list) {
-            index = list.findIndex(item => item === entity);
-            if (index > -1) list.splice(index, 1);
-        }
-
-        if (entity.mesh) {
-            this.scene.remove(entity.mesh);
-            if(entity.mesh.geometry) entity.mesh.geometry.dispose();
-            if(entity.mesh.material) entity.mesh.material.dispose();
-        }
-        if (entity.body) this.physics.queueForRemoval(entity.body);
-        
+    setLevelData() {
         this.deselect();
-        this.updateOutliner();
-    }
-    
-    copySelected() {
-        if (!this.selectedObject) return;
-        
-        const entity = this.selectedObject;
-        const entityType = entity.userData?.gameEntity?.type;
-
-        if (['Object', 'Enemy', 'Trigger', 'DeathTrigger'].includes(entityType)) {
-            this.syncObjectTransforms(); 
-            if (entityType === 'Object') {
-                const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
-                entity.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
-            }
-            this.clipboard = JSON.parse(JSON.stringify(entity.definition));
-            if (!this.clipboard.type) this.clipboard.type = entityType;
-        } else {
-            this.clipboard = null;
-        }
-    }
-
-    pasteFromClipboard() {
-        if (!this.clipboard) return;
-
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
-        
-        const newDef = JSON.parse(JSON.stringify(this.clipboard));
-        newDef.position = { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z };
-        newDef.name = `${newDef.name || newDef.type}_copy`;
-
-        let newEntity;
-        switch(newDef.type) {
-            case 'Dummy':         newEntity = this.app.levelLoader.createEnemy(newDef); this.enemies.push(newEntity); break;
-            case 'Trigger':       newEntity = this.app.createTrigger(newDef); this.triggers.push(newEntity); break;
-            case 'DeathTrigger':  newEntity = this.app.createDeathTrigger(newDef); this.deathTriggers.push(newEntity); break;
-            default:              newEntity = this.app.levelLoader.createObject(newDef); this.levelObjects.push(newEntity); break;
-        }
-        
-        if (newEntity) this.select(newEntity);
-    }
-    
-    addBox() {
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const boxData = {
-            type: "Box", name: `Box_${Date.now()}`, size: [2, 2, 2],
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-            rotation: { x: 0, y: 0, z: 0 },
-            material: { color: "0xcccccc" }, physics: { mass: 0 }
-        };
-        const newObj = this.app.levelLoader.createObject(boxData);
-        this.levelObjects.push(newObj);
-        this.select(newObj);
-    }
-    
-    addEnemy() {
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const enemyData = { type: "Dummy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
-        const newEnemy = this.app.levelLoader.createEnemy(enemyData);
-        this.enemies.push(newEnemy);
-        this.select(newEnemy);
-    }
-
-    addMessageTrigger() {
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const triggerData = {
-            type: "Trigger", name: `MessageTrigger_${Date.now()}`, size: [5, 5, 5],
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-            message: "This is a test message.",
-            duration: 5,
-            color: "0x00ff00"
-        };
-        const newTrigger = this.app.createTrigger(triggerData);
-        this.triggers.push(newTrigger);
-        this.select(newTrigger);
-    }
-
-    addDeathTrigger() {
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const triggerData = {
-            type: "DeathTrigger", name: `DeathZone_${Date.now()}`, size: [10, 2, 10],
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
-        };
-        const newTrigger = this.app.createDeathTrigger(triggerData);
-        this.deathTriggers.push(newTrigger);
-        this.select(newTrigger);
-    }
-
-    loadFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try { this.app.loadLevel(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid level file."); }
-        };
-        reader.readAsText(file);
-    }
-
-    saveFile() {
-        [...this.levelObjects, ...this.enemies, ...this.triggers, ...this.deathTriggers].forEach(obj => {
-            obj.definition.position = {x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z};
-            if(obj.definition.rotation) {
-                const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
-                obj.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
-            }
-        });
-
-        const levelData = {
-            name: "Custom Level",
-            spawnPoint: this.app.spawnPoint,
-            deathSpawnPoint: this.app.deathSpawnPoint,
-            settings: this.app.settings,
-            objects: this.app.levelObjects.map(obj => obj.definition),
-            enemies: this.app.enemies.map(enemy => enemy.definition),
-            triggers: this.triggers.map(t => t.definition),
-            deathTriggers: this.deathTriggers.map(t => t.definition)
-        };
-        
-        const blob = new Blob([JSON.stringify(levelData, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'custom-level.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
-    }
-    
-    updateSkyboxColor(color) {
-        this.app.scene.background = new THREE.Color(color);
-        this.app.settings.backgroundColor = color.replace('#', '0x');
-    }
-    
-    updateAmbientLight(prop, value) {
-        const light = this.app.ambientLight;
-        const setting = this.app.settings.ambientLight;
-        if (prop === 'color') { light.color.set(value); setting.color = value.replace('#', '0x'); }
-        if (prop === 'intensity') { light.intensity = parseFloat(value); setting.intensity = parseFloat(value); }
-    }
-
-    setTransformMode(mode) {
-        if (this.transformControls.object) {
-            this.transformControls.setMode(mode);
-            ['translate', 'rotate', 'scale'].forEach(m => {
-                document.getElementById(`editor-mode-${m}`).classList.toggle('active', m === mode);
-            });
-        }
-    }
-
-    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.syncObjectTransforms(); }
-    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.syncObjectTransforms(); }
-    
-    setLevelData(levelObjects, enemies, triggers, deathTriggers) {
-        this.levelObjects = levelObjects;
-        this.enemies = enemies;
-        this.triggers = triggers || [];
-        this.deathTriggers = deathTriggers || [];
-        this.deselect();
-        this.updateOutliner();
-        
-        const settings = this.app.settings;
-        if (!settings) return;
-        document.getElementById('skybox-color-input').value = '#' + new THREE.Color(parseInt(settings.backgroundColor || "0x000000", 16)).getHexString();
-        document.getElementById('ambient-color-input').value = '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString();
-        document.getElementById('ambient-intensity-input').value = settings.ambientLight.intensity;
+        this.ui.updateOutliner();
+        this.ui.setInitialSceneSettings(this.app.settings);
 
         // Apply initial visibility from UI checkboxes
-        this.setHelpersVisibility('msgTriggers', document.getElementById('view-toggle-msg-triggers').checked);
-        this.setHelpersVisibility('deathTriggers', document.getElementById('view-toggle-death-triggers').checked);
-        this.setHelpersVisibility('lightHelpers', document.getElementById('view-toggle-light-helpers').checked);
-        this.setHelpersVisibility('spawnHelpers', document.getElementById('view-toggle-spawn-helpers').checked);
-    }
-
-    setHelpersVisibility(type, isVisible) {
-        this.helperVisibility[type] = isVisible;
-        switch (type) {
-            case 'msgTriggers':   this.triggers.forEach(t => t.mesh.visible = isVisible); break;
-            case 'deathTriggers': this.deathTriggers.forEach(t => t.mesh.visible = isVisible); break;
-            case 'lightHelpers':  this.app.directionalLights.forEach(l => l.helper.visible = isVisible); break;
-            case 'spawnHelpers':
-                if (this.app.spawnPointHelper) this.app.spawnPointHelper.visible = isVisible;
-                if (this.app.deathSpawnPointHelper) this.app.deathSpawnPointHelper.visible = isVisible;
-                break;
-        }
+        this.ui.setHelpersVisibility('msgTriggers', document.getElementById('view-toggle-msg-triggers').checked);
+        this.ui.setHelpersVisibility('deathTriggers', document.getElementById('view-toggle-death-triggers').checked);
+        this.ui.setHelpersVisibility('lightHelpers', document.getElementById('view-toggle-light-helpers').checked);
+        this.ui.setHelpersVisibility('spawnHelpers', document.getElementById('view-toggle-spawn-helpers').checked);
     }
     
     update(deltaTime) {
-        if (this.transformControls.dragging || !this.input.enabled) {
-            this.input.update();
-            return;
-        }
-
-        const moveSpeed = 50 * deltaTime;
-        const forward = new THREE.Vector3();
-        this.camera.getWorldDirection(forward);
-        const right = new THREE.Vector3().crossVectors(this.camera.up, forward).negate();
-        
-        if (this.input.keys['KeyW']) this.camera.position.addScaledVector(forward, moveSpeed);
-        if (this.input.keys['KeyS']) this.camera.position.addScaledVector(forward, -moveSpeed);
-        if (this.input.keys['KeyA']) this.camera.position.addScaledVector(right, -moveSpeed);
-        if (this.input.keys['KeyD']) this.camera.position.addScaledVector(right, moveSpeed);
-        if (this.input.keys['Space']) this.camera.position.y += moveSpeed;
-        if (this.input.keys['ShiftLeft']) this.camera.position.y -= moveSpeed;
-        
-        if (this.input.mouse.rightClick && !this.input.isClickOnUI(this.input.mouse.screenX, this.input.mouse.screenY)) {
-            const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-            euler.setFromQuaternion(this.camera.quaternion);
-            euler.y -= this.input.mouse.movementX * 0.002;
-            euler.x -= this.input.mouse.movementY * 0.002;
-            euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, euler.x));
-            this.camera.quaternion.setFromEuler(euler);
-        }
-
-        this.input.update();
+        this.cameraController.update(deltaTime);
     }
 }
 --------------------------------------------------
 === END OF FILE: src/editor/LevelEditor.js ===
+
+
+=== FILE: src/editor/UndoManager.js ===
+--------------------------------------------------
+export class StateChangeCommand {
+    constructor(editor, entity, beforeState, afterState) {
+        this.editor = editor;
+        this.entity = entity;
+        this.beforeState = JSON.parse(JSON.stringify(beforeState)); // Deep copy
+        this.afterState = JSON.parse(JSON.stringify(afterState)); // Deep copy
+    }
+
+    execute() {
+        this.entity.definition = JSON.parse(JSON.stringify(this.afterState));
+        this.editor.applyDefinition(this.entity);
+        this.editor.select(this.entity); // Reselect to update UI
+    }
+
+    undo() {
+        this.entity.definition = JSON.parse(JSON.stringify(this.beforeState));
+        this.editor.applyDefinition(this.entity);
+        this.editor.select(this.entity); // Reselect to update UI
+    }
+}
+
+
+export class UndoManager {
+    constructor(editor) {
+        this.editor = editor;
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxHistory = 50;
+    }
+
+    execute(command) {
+        this.undoStack.push(command);
+        if (this.undoStack.length > this.maxHistory) {
+            this.undoStack.shift(); // Keep history size manageable
+        }
+        this.redoStack = []; // Clear redo stack on new action
+        command.execute();
+        console.log("Action executed. Undo stack size:", this.undoStack.length);
+    }
+
+    undo() {
+        if (this.undoStack.length === 0) return;
+        const command = this.undoStack.pop();
+        this.redoStack.push(command);
+        command.undo();
+        console.log("Action undone. Undo stack size:", this.undoStack.length);
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+        const command = this.redoStack.pop();
+        this.undoStack.push(command);
+        command.execute();
+        console.log("Action redone. Undo stack size:", this.undoStack.length);
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/editor/UndoManager.js ===
 
 
 === FILE: src/engine/InputManager.js ===
@@ -4120,7 +5034,7 @@ export class Enemy {
         this.name = name;
         
         // --- Core Parameters ---
-        this.maxHealth = 1000;
+        this.maxHealth = 500;
         this.currentHealth = this.maxHealth;
         this.speed = 8;
         this.isDead = false;
@@ -4520,6 +5434,7 @@ export class Enemy {
 
 === FILE: src/game/entities/Player.js ===
 --------------------------------------------------
+// src/game/entities/Player.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { FireballAbility } from '../abilities/FireballAbility.js';
@@ -4610,6 +5525,13 @@ export class Player {
         this.camera.add(this.weapon.mesh);
         this.scene.add(this.camera);
 
+        // ADDED: Lighting for the view model scene
+        this.viewModelAmbientLight = new THREE.AmbientLight(0xffffff, 1.0); // Soft white light
+        this.scene.add(this.viewModelAmbientLight);
+
+        this.viewModelDirectionalLight = new THREE.DirectionalLight(0xffffff, 2.0); // Key light
+        this.viewModelDirectionalLight.position.set(0.5, 0.8, -0.2).normalize(); // Points slightly from top-right-front
+        this.scene.add(this.viewModelDirectionalLight);
 
         this.createPhysicsBody();
         this.setupEventListeners();
@@ -4618,7 +5540,9 @@ export class Player {
     
     createPhysicsBody() {
         const playerShape = new CANNON.Sphere(0.8);
-        const playerMaterial = new CANNON.Material("playerMaterial");
+        // Define a player material with zero friction from the start.
+        const playerMaterial = new CANNON.Material({ name: "playerMaterial", friction: 0.0 });
+        
         this.body = new CANNON.Body({
             mass: 70,
             shape: playerShape,
@@ -4629,10 +5553,21 @@ export class Player {
         });
 
         const worldMaterial = this.world.defaultMaterial;
-        const playerWorldContactMaterial = new CANNON.ContactMaterial(worldMaterial, playerMaterial, {
-            friction: 0.1,
-            restitution: 0.1,
-        });
+        
+        // Create a contact material with high stiffness and no friction or bounce.
+        // This makes the interaction between the player and the world rigid and slippery.
+        const playerWorldContactMaterial = new CANNON.ContactMaterial(
+            worldMaterial,
+            playerMaterial,
+            {
+                friction: 0.0,
+                restitution: 0.0,
+                contactEquationStiffness: 1e8,
+                contactEquationRelaxation: 3,
+                frictionEquationStiffness: 1e8,
+            }
+        );
+
         this.world.addContactMaterial(playerWorldContactMaterial);
         this.world.addBody(this.body);
     }
@@ -4923,8 +5858,20 @@ export class Player {
         this.weapon.update(deltaTime);
         this.updateVFX(deltaTime);
 
-        for (const ability of this.abilities) {
+        for (let i = 0; i < this.abilities.length; i++) {
+            const ability = this.abilities[i];
             if (ability) { ability.update(deltaTime); }
+            // ADDED: Update ability slot appearance based on selection
+            if (this.game.hud) { // Ensure HUD is initialized
+                const slotUI = this.game.hud.abilitySlots[i];
+                if (slotUI) {
+                    if (i === this.selectedAbilityIndex) {
+                        slotUI.element.classList.add('selected');
+                    } else {
+                        slotUI.element.classList.remove('selected');
+                    }
+                }
+            }
         }
 
         for (let i = 1; i <= 4; i++) {
@@ -5379,6 +6326,7 @@ export class TutorialManager {
 
 === FILE: src/game/weapons/Katana.js ===
 --------------------------------------------------
+// src/game/weapons/Katana.js
 import * as THREE from 'three';
 import { Weapon } from './Weapon.js';
 
@@ -5396,32 +6344,48 @@ export class Katana extends Weapon {
         // --- Animation Parameters ---
         this.isSwinging = false;
         this.swingProgress = 0;
-        this.swingDuration = 0.4; // A bit longer for a more complex animation
-        // Damage is applied ~100ms into the animation, during the fastest part of the slash
-        this.hitTiming = 100;
+        this.swingDuration = 0.45; // Slightly longer for a full vertical slice
+        this.hitTiming = 120; // Damage applied as the blade swings down
         
         // --- PERFORMANCE & Animation State: Reusable objects ---
         this._hitCheckPos = new THREE.Vector3();
         this._enemyPos = new THREE.Vector3();
         this._forward = new THREE.Vector3();
 
-        // --- Define Keyframes for the Swing Animation ---
-        // Idle pose (default)
-        this.idlePosition = new THREE.Vector3(0.4, -0.4, -0.8);
-        this.idleRotation = new THREE.Euler(0, -Math.PI / 12, Math.PI / 24, 'YXZ');
+        // --- REWORKED Keyframes for a TOP-DOWN Vertical Slice ---
+        // (All positions relative to camera, rotations are local Euler angles then converted to Quaternion)
+
+        // Idle pose (resting, held diagonally)
+        this.idlePosition = new THREE.Vector3(0.4, -0.4, -0.8); 
+        this.idleRotation = new THREE.Euler(
+            THREE.MathUtils.degToRad(25),   // Pitch (up/down tip)
+            THREE.MathUtils.degToRad(-20),  // Yaw (inward/outward)
+            THREE.MathUtils.degToRad(15),   // Roll 
+            'YXZ'
+        );
         
-        // Start of the swing (wind-up pose, bottom-right)
-        this.swingStartPosition = new THREE.Vector3(0.6, -0.6, -0.5);
-        this.swingStartRotation = new THREE.Euler(Math.PI / 8, Math.PI / 3, -Math.PI / 6, 'YXZ');
+        // Wind-up pose (raised high over the shoulder)
+        this.windUpPosition = new THREE.Vector3(0.5, 0.4, -0.6); 
+        this.windUpRotation = new THREE.Euler(
+            THREE.MathUtils.degToRad(70),   // Blade points up
+            THREE.MathUtils.degToRad(30),   // Pulled to the right
+            THREE.MathUtils.degToRad(-20),  // Tilted back for the slice
+            'YXZ'
+        );
 
-        // End of the swing (follow-through pose, top-left)
-        this.swingEndPosition = new THREE.Vector3(-0.4, -0.1, -0.6);
-        this.swingEndRotation = new THREE.Euler(-Math.PI / 6, -Math.PI / 2, Math.PI / 4, 'YXZ');
+        // Follow-through pose (after the slice, low and to the left)
+        this.followThroughPosition = new THREE.Vector3(-0.4, -0.5, -0.7); 
+        this.followThroughRotation = new THREE.Euler(
+            THREE.MathUtils.degToRad(-45),  // Blade points down
+            THREE.MathUtils.degToRad(-40),  // Swung across to the left
+            THREE.MathUtils.degToRad(45),   // Rolled over at the end of the swing
+            'YXZ'
+        );
 
-        // Pre-calculate quaternions to avoid re-creation in the update loop
+        // Pre-calculate quaternions for smooth interpolation
         this.qIdle = new THREE.Quaternion().setFromEuler(this.idleRotation);
-        this.qSwingStart = new THREE.Quaternion().setFromEuler(this.swingStartRotation);
-        this.qSwingEnd = new THREE.Quaternion().setFromEuler(this.swingEndRotation);
+        this.qWindUp = new THREE.Quaternion().setFromEuler(this.windUpRotation);
+        this.qFollowThrough = new THREE.Quaternion().setFromEuler(this.followThroughRotation);
 
         this.createMesh();
         // Set initial state
@@ -5432,23 +6396,51 @@ export class Katana extends Weapon {
     createMesh() {
         this.mesh = new THREE.Group();
 
-        const bladeMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.9, roughness: 0.3 });
-        const bladeGeom = new THREE.BoxGeometry(0.04, 0.9, 0.01); 
+        // Katana dimensions reference:
+        // Blade length (Nagasa): ~70-80cm (let's use 0.7 units for the blade, hilt around 0.25-0.3)
+        // Total length ~1 meter
+        
+        // Define common offset for the pivot point (where the player's hand holds the sword)
+        // Let's assume the origin of the group is at the guard's center.
+        // Hilt will extend down from here, blade will extend up.
+        const bladeHeight = 0.7; // length of the blade
+        const hiltHeight = 0.25; // length of the hilt
+        const guardThickness = 0.02;
+
+        // Blade material - metallic and slightly rough
+        const bladeMat = new THREE.MeshStandardMaterial({ 
+            color: 0xc0c0c0, // Light grey for steel
+            metalness: 0.9, 
+            roughness: 0.3 
+        });
+        const bladeGeom = new THREE.BoxGeometry(0.02, bladeHeight, 0.01); // Thinner, taller blade
         const blade = new THREE.Mesh(bladeGeom, bladeMat);
-        blade.position.y = 0.45;
+        blade.position.y = bladeHeight / 2 + guardThickness / 2; // Position above the guard
         blade.castShadow = true;
+        blade.receiveShadow = true;
 
-        const guardMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.5 });
-        const guardGeom = new THREE.BoxGeometry(0.06, 0.02, 0.15);
+        // Guard (Tsuba) material - dark and less reflective
+        const guardMat = new THREE.MeshStandardMaterial({ 
+            color: 0x333333, // Dark grey
+            metalness: 0.6, 
+            roughness: 0.5 
+        });
+        const guardGeom = new THREE.BoxGeometry(0.06, guardThickness, 0.15); // Flat and wide
         const guard = new THREE.Mesh(guardGeom, guardMat);
-        guard.position.y = 0;
+        guard.position.y = 0; // At the group's pivot point
         guard.castShadow = true;
+        guard.receiveShadow = true;
 
-        const hiltMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
-        const hiltGeom = new THREE.CylinderGeometry(0.025, 0.02, 0.25, 8);
+        // Hilt (Tsuka) material - dark and rough
+        const hiltMat = new THREE.MeshStandardMaterial({ 
+            color: 0x1a1a1a, // Very dark grey
+            roughness: 0.8 
+        });
+        const hiltGeom = new THREE.CylinderGeometry(0.025, 0.02, hiltHeight, 8); // Thin cylinder for handle
         const hilt = new THREE.Mesh(hiltGeom, hiltMat);
-        hilt.position.y = -0.125;
+        hilt.position.y = -hiltHeight / 2 - guardThickness / 2; // Below the guard
         hilt.castShadow = true;
+        hilt.receiveShadow = true;
         
         this.mesh.add(blade, guard, hilt);
     }
@@ -5460,8 +6452,12 @@ export class Katana extends Weapon {
         this.swingProgress = 0;
         this.triggerCooldown();
 
+        // Damage calculation happens slightly after the start of the "slash" phase
+        // This timing should align with the fastest part of the blade's movement.
         setTimeout(() => {
-            this.detectHit();
+            if (this.isSwinging) { // Ensure swing hasn't finished already
+                this.detectHit();
+            }
         }, this.hitTiming);
 
         return true;
@@ -5474,36 +6470,44 @@ export class Katana extends Weapon {
             this.swingProgress += deltaTime;
             const totalProgress = Math.min(this.swingProgress / this.swingDuration, 1.0);
 
-            // Define animation phases by their end points (e.g., wind-up ends at 15% of total duration)
-            const windUpEnd = 0.15;
-            const slashEnd = 0.50; // Wind-up (0.15) + Slash (0.35)
+            // Define timing for each animation phase (as percentages of totalDuration)
+            const windUpPhaseEnd = 0.20; // 0% - 20% : Wind-up
+            const slashPhaseEnd = 0.60;  // 20% - 60% : Main Slash (40% of duration)
+            // const recoveryPhaseEnd = 1.0; // 60% - 100% : Recovery (40% of duration)
 
+            let currentPosition = new THREE.Vector3();
+            let currentQuaternion = new THREE.Quaternion();
             let phaseProgress;
 
-            if (totalProgress < windUpEnd) {
-                // Phase 1: Wind-up (Idle -> Start)
-                phaseProgress = totalProgress / windUpEnd;
-                // Ease-out makes the wind-up start fast and settle into the pose
-                const easeProgress = 1 - Math.pow(1 - phaseProgress, 2);
-                this.mesh.position.lerpVectors(this.idlePosition, this.swingStartPosition, easeProgress);
-                this.mesh.quaternion.copy(this.qIdle).slerp(this.qSwingStart, easeProgress);
+            if (totalProgress < windUpPhaseEnd) {
+                // Phase 1: Wind-up (Idle -> WindUp)
+                phaseProgress = totalProgress / windUpPhaseEnd;
+                // Use a cubic ease-out for a responsive wind-up
+                const easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
+                currentPosition.lerpVectors(this.idlePosition, this.windUpPosition, easedProgress);
+                currentQuaternion.copy(this.qIdle).slerp(this.qWindUp, easedProgress);
 
-            } else if (totalProgress < slashEnd) {
-                // Phase 2: Slash (Start -> End)
-                phaseProgress = (totalProgress - windUpEnd) / (slashEnd - windUpEnd);
-                // Ease-out quart makes for a very fast, snappy slash
-                const easeProgress = 1 - Math.pow(1 - phaseProgress, 4);
-                this.mesh.position.lerpVectors(this.swingStartPosition, this.swingEndPosition, easeProgress);
-                this.mesh.quaternion.copy(this.qSwingStart).slerp(this.qSwingEnd, easeProgress);
+            } else if (totalProgress < slashPhaseEnd) {
+                // Phase 2: Main Slash (WindUp -> FollowThrough)
+                phaseProgress = (totalProgress - windUpPhaseEnd) / (slashPhaseEnd - windUpPhaseEnd);
+                // Quartic ease-out for a very fast, powerful slash
+                const easedProgress = 1 - Math.pow(1 - phaseProgress, 4);
+                currentPosition.lerpVectors(this.windUpPosition, this.followThroughPosition, easedProgress);
+                currentQuaternion.copy(this.qWindUp).slerp(this.qFollowThrough, easedProgress);
 
             } else {
-                // Phase 3: Recovery (End -> Idle)
-                phaseProgress = (totalProgress - slashEnd) / (1.0 - slashEnd);
-                // Ease-in makes the recovery smooth
-                const easeProgress = phaseProgress * phaseProgress;
-                this.mesh.position.lerpVectors(this.swingEndPosition, this.idlePosition, easeProgress);
-                this.mesh.quaternion.copy(this.qSwingEnd).slerp(this.qIdle, easeProgress);
+                // Phase 3: Recovery (FollowThrough -> Idle)
+                phaseProgress = (totalProgress - slashPhaseEnd) / (1.0 - slashPhaseEnd);
+                // Quadratic ease-in-out for a smooth return to idle
+                const easedProgress = phaseProgress < 0.5 
+                    ? 2 * phaseProgress * phaseProgress 
+                    : 1 - Math.pow(-2 * phaseProgress + 2, 2) / 2;
+                currentPosition.lerpVectors(this.followThroughPosition, this.idlePosition, easedProgress);
+                currentQuaternion.copy(this.qFollowThrough).slerp(this.qIdle, easedProgress);
             }
+
+            this.mesh.position.copy(currentPosition);
+            this.mesh.quaternion.copy(currentQuaternion);
 
             if (totalProgress >= 1.0) {
                 this.isSwinging = false;
@@ -5532,9 +6536,7 @@ export class Katana extends Weapon {
                 // cos(50 degrees) ~= 0.64, a generous frontal cone for the swing
                 if (dot > 0.64) { 
                     enemy.takeDamage(this.damage);
-                    // To prevent hitting multiple enemies with one swing, we break.
-                    // Remove this for a cleave effect.
-                    break;
+                    // The 'break;' statement was removed to allow hitting multiple enemies.
                 }
             }
         }

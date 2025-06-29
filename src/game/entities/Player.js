@@ -104,7 +104,9 @@ export class Player {
     
     createPhysicsBody() {
         const playerShape = new CANNON.Sphere(0.8);
-        const playerMaterial = new CANNON.Material("playerMaterial");
+        // Define a player material with zero friction from the start.
+        const playerMaterial = new CANNON.Material({ name: "playerMaterial", friction: 0.0 });
+        
         this.body = new CANNON.Body({
             mass: 70,
             shape: playerShape,
@@ -115,10 +117,21 @@ export class Player {
         });
 
         const worldMaterial = this.world.defaultMaterial;
-        const playerWorldContactMaterial = new CANNON.ContactMaterial(worldMaterial, playerMaterial, {
-            friction: 0.1,
-            restitution: 0.1,
-        });
+        
+        // Create a contact material with high stiffness and no friction or bounce.
+        // This makes the interaction between the player and the world rigid and slippery.
+        const playerWorldContactMaterial = new CANNON.ContactMaterial(
+            worldMaterial,
+            playerMaterial,
+            {
+                friction: 0.0,
+                restitution: 0.0,
+                contactEquationStiffness: 1e8,
+                contactEquationRelaxation: 3,
+                frictionEquationStiffness: 1e8,
+            }
+        );
+
         this.world.addContactMaterial(playerWorldContactMaterial);
         this.world.addBody(this.body);
     }

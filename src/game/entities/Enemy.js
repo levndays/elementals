@@ -13,7 +13,7 @@ export class Enemy {
         this.name = name;
         
         // --- Core Parameters ---
-        this.maxHealth = 1000;
+        this.maxHealth = 500;
         this.currentHealth = this.maxHealth;
         this.speed = 8;
         this.isDead = false;
