@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals
-Snapshot created on: 2025-06-30T16:47:48.471767
+Snapshot created on: 2025-06-30T17:01:01.533064
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -910,85 +910,6 @@ jobs:
 
 --------------------------------------------------
 === END OF FILE: .github/workflows/static.yml ===
-
-
-=== FILE: levels/level-city-dusk.json ===
---------------------------------------------------
-{
-    "name": "City at Dusk",
-    "spawnPoint": { "x": -25, "y": 22, "z": -120 },
-    "deathSpawnPoint": { "x": -25, "y": 22, "z": -120 },
-    "settings": {
-        "backgroundColor": "0x1B2035",
-        "fogColor": "0x1B2035",
-        "fogNear": 40,
-        "fogFar": 250,
-        "ambientLight": {
-            "color": "0x506080",
-            "intensity": 0.6
-        },
-        "directionalLights": [
-            {
-                "color": "0xFF8C40",
-                "intensity": 3.0,
-                "position": { "x": -200, "y": 80, "z": -50 },
-                "targetPosition": { "x": 0, "y": 0, "z": 0 }
-            },
-            {
-                "color": "0x405070",
-                "intensity": 0.8,
-                "position": { "x": 150, "y": 60, "z": 100 },
-                "targetPosition": { "x": 0, "y": 0, "z": 0 }
-            }
-        ]
-    },
-    "objects": [
-        { "type": "Plane", "name": "Ground_Plane", "size": [500, 500], "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": -90, "y": 0, "z": 0 }, "material": { "color": "0x222222" }, "physics": { "mass": 0 }, "editorSelectable": false },
-        { "type": "Box", "name": "Sidewalk_West", "size": [8, 0.2, 300], "position": { "x": -12, "y": 0.1, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Sidewalk_East", "size": [8, 0.2, 300], "position": { "x": 12, "y": 0.1, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Bldg_W1_Start", "size": [20, 20, 30], "position": { "x": -25, "y": 10, "z": -120 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W2", "size": [25, 35, 40], "position": { "x": -28, "y": 17.5, "z": -80 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W2_Ledge", "size": [2, 1, 40], "position": { "x": -16.5, "y": 25, "z": -80 }, "material": { "color": "0x606060" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W3", "size": [20, 50, 30], "position": { "x": -25, "y": 25, "z": -30 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W4", "size": [30, 70, 50], "position": { "x": -30, "y": 35, "z": 30 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W4_ACUnit", "size": [4, 2, 4], "position": { "x": -30, "y": 71, "z": 10 }, "material": { "color": "0xCCCCCC" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W5", "size": [25, 40, 35], "position": { "x": -28, "y": 20, "z": 90 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_W6_Alley", "size": [20, 25, 20], "position": { "x": -55, "y": 12.5, "z": -10 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Bldg_E1", "size": [22, 30, 50], "position": { "x": 25, "y": 15, "z": -100 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_E1_Balcony", "size": [4, 1, 10], "position": { "x": 14, "y": 20, "z": -90 }, "material": { "color": "0x4A4A4A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_E2", "size": [20, 60, 30], "position": { "x": 25, "y": 30, "z": -40 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_E3", "size": [30, 45, 40], "position": { "x": 30, "y": 22.5, "z": 10 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_E3_RooftopAccess", "size": [8, 3, 8], "position": { "x": 30, "y": 46.5, "z": 15 }, "material": { "color": "0x606060" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Bldg_E4_Tall", "size": [25, 90, 40], "position": { "x": 28, "y": 45, "z": 70 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Bridge_W3_E2", "size": [30, 1.5, 4], "position": { "x": 0, "y": 40, "z": -35 }, "material": { "color": "0x888888" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Car1", "size": [2.5, 1.5, 5], "position": { "x": 4, "y": 0.75, "z": -80 }, "material": { "color": "0x800000" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Car2", "size": [2.5, 1.5, 5], "position": { "x": -4, "y": 0.75, "z": -50 }, "rotation": {"y": 5}, "material": { "color": "0x000060" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Car3", "size": [2.5, 1.5, 5], "position": { "x": 4, "y": 0.75, "z": 20 }, "rotation": {"y": -3}, "material": { "color": "0x666666" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Car4", "size": [2.5, 1.5, 5], "position": { "x": -4, "y": 0.75, "z": 90 }, "material": { "color": "0x999999" }, "physics": { "mass": 0 } }
-    ],
-    "enemies": [
-        { "type": "Dummy", "position": { "x": -28, "y": 37, "z": -85 } },
-        { "type": "Dummy", "position": { "x": -28, "y": 37, "z": -75 } },
-        { "type": "Dummy", "position": { "x": -25, "y": 52, "z": -30 } },
-        { "type": "Dummy", "position": { "x": -30, "y": 72, "z": 35 } },
-        { "type": "Dummy", "position": { "x": -25, "y": 72, "z": 25 } },
-        { "type": "Dummy", "position": { "x": -55, "y": 27, "z": -10 } },
-        { "type": "Dummy", "position": { "x": 14, "y": 22, "z": -90 } },
-        { "type": "Dummy", "position": { "x": 25, "y": 32, "z": -110 } },
-        { "type": "Dummy", "position": { "x": 25, "y": 62, "z": -40 } },
-        { "type": "Dummy", "position": { "x": 30, "y": 49, "z": 15 } },
-        { "type": "Dummy", "position": { "x": 28, "y": 92, "z": 60 } },
-        { "type": "Dummy", "position": { "x": 28, "y": 92, "z": 80 } },
-        { "type": "Dummy", "position": { "x": -6, "y": 2, "z": -10 } },
-        { "type": "Dummy", "position": { "x": 6, "y": 2, "z": 50 } },
-        { "type": "Dummy", "position": { "x": 0, "y": 2, "z": 110 } }
-    ]
-}
---------------------------------------------------
-=== END OF FILE: levels/level-city-dusk.json ===
 
 
 === FILE: levels/level-mangled-grove.json ===
@@ -2588,10 +2509,6 @@ jobs:
     {
         "name": "Tutorial",
         "path": "./levels/level-tutorial.json"
-    },
-    {
-        "name": "City at Dusk",
-        "path": "./levels/level-city-dusk.json"
     },
     {
         "name": "Mangled Grove",
@@ -4836,6 +4753,7 @@ export class EnemyProjectile {
 
 === FILE: src/game/abilities/Fireball.js ===
 --------------------------------------------------
+// src/game/abilities/Fireball.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { ParticleExplosion } from './ParticleExplosion.js';
@@ -4861,7 +4779,7 @@ export class Fireball {
         
         this.state = 'TRAVELING';
         this.stateTimer = 0;
-        this.isDead = false;
+        this.isDead = false; // Initialize isDead
         this.body = null;
         this.preStepHandler = this.applyAntiGravity.bind(this);
 
@@ -4903,6 +4821,8 @@ export class Fireball {
         this.body.velocity.copy(cameraDirection.multiplyScalar(this.SPEED));
         
         this.body.addEventListener('collide', (event) => {
+            if (this.isDead) return; // Prevent multiple detonations or processing after already dead
+
             // Prevent explosion center from being inside a wall.
             // We find the contact normal and nudge the detonation point slightly away from the surface.
             const contactNormal = new CANNON.Vec3();
@@ -4949,27 +4869,32 @@ export class Fireball {
     }
 
     detonate(hitPoint) {
-        if (this.state !== 'TRAVELING') return;
+        if (this.isDead) return; // Ensure it detonates only once
         
         this.state = 'GROWING';
         this.stateTimer = 0;
+        this.isDead = true; // Mark as dead immediately upon detonation start
         
         this.mesh.position.copy(hitPoint);
         
         if (this.body) {
             this.physics.queueForRemoval(this.body);
-            this.body = null;
+            this.body = null; // Null the body reference immediately
         }
+        this.world.removeEventListener('preStep', this.preStepHandler);
         
         this.game.activeEffects.push(this);
         new ParticleExplosion(this.scene, this.mesh.position, this.game.updatables);
     }
 
     update(deltaTime) {
-        if (this.isDead) return;
+        if (this.isDead && this.state !== 'GROWING' && this.state !== 'LINGERING' && this.state !== 'SHRINKING') return;
+
         this.stateTimer += deltaTime;
 
-        this.light.position.copy(this.mesh.position);
+        if (this.mesh && this.light) { // Ensure mesh and light still exist for updates
+            this.light.position.copy(this.mesh.position);
+        }
 
         switch (this.state) {
             case 'TRAVELING':
@@ -4977,7 +4902,9 @@ export class Fireball {
                     this.detonate(this.body.position);
                     break;
                 }
-                this.mesh.position.copy(this.body.position);
+                if (this.body && this.mesh) { // Ensure body still exists for position update
+                    this.mesh.position.copy(this.body.position);
+                }
                 break;
             case 'GROWING':
                 this.handleGrowing();
@@ -4994,11 +4921,14 @@ export class Fireball {
     }
     
     handleGrowing() {
+        if (!this.mesh) return; // Ensure mesh exists
         let progress = Math.min(this.stateTimer / this.GROW_DURATION, 1.0);
         const scale = THREE.MathUtils.lerp(1, this.FINAL_SCALE, progress);
         this.mesh.scale.set(scale, scale, scale);
         this.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(5, 10, progress);
-        this.light.intensity = THREE.MathUtils.lerp(500, 1000, progress);
+        if (this.light) { // Ensure light exists
+            this.light.intensity = THREE.MathUtils.lerp(500, 1000, progress);
+        }
 
         if (progress >= 1.0) {
             this.mesh.scale.set(this.FINAL_SCALE, this.FINAL_SCALE, this.FINAL_SCALE);
@@ -5008,6 +4938,7 @@ export class Fireball {
     }
 
     updateAoeDamage(deltaTime) {
+        if (!this.mesh) return; // Ensure mesh exists
         const explosionRadius = this.explosionRadius;
         if (explosionRadius <= 0) return;
 
@@ -5035,6 +4966,7 @@ export class Fireball {
     }
     
     handleLingering() {
+        if (!this.mesh || !this.light) return; // Ensure mesh and light exist
         const pulse = Math.sin(this.stateTimer * Math.PI * 2) * 0.5 + 0.5;
         this.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(8, 12, pulse);
         this.light.intensity = THREE.MathUtils.lerp(20000, 25000, pulse);
@@ -5046,6 +4978,7 @@ export class Fireball {
     }
     
     handleShrinking() {
+        if (!this.mesh || !this.light) return; // Ensure mesh and light exist
         let progress = Math.min(this.stateTimer / this.SHRINK_DURATION, 1.0);
         const scale = THREE.MathUtils.lerp(this.FINAL_SCALE, 0, progress);
         this.mesh.scale.set(scale, scale, scale);
@@ -5056,22 +4989,24 @@ export class Fireball {
     }
 
     cleanup() {
-        if (this.isDead) return;
-        this.isDead = true;
-        
-        this.world.removeEventListener('preStep', this.preStepHandler);
+        // This function is intended for final visual cleanup and removal from updatables/activeEffects.
+        // The 'isDead' flag and body removal are handled by detonate().
+        if (!this.mesh) return; // Already cleaned up
 
         this.scene.remove(this.mesh);
-        this.scene.remove(this.light);
+        if (this.light) this.scene.remove(this.light); // Light might already be nulled by detonate
         this.mesh.geometry.dispose();
         this.mesh.material.dispose();
         
-        if(this.body) this.physics.queueForRemoval(this.body);
+        this.mesh = null; // Null references to prevent accidental re-cleanup
+        this.light = null;
 
         const effectIndex = this.game.activeEffects.indexOf(this);
         if (effectIndex > -1) this.game.activeEffects.splice(effectIndex, 1);
         const updatableIndex = this.game.updatables.indexOf(this);
-        if (updatableIndex > -1) this.game.updatables.splice(updatableIndex, 1);
+        if (updatableIndex > -1) {
+            this.game.updatables.splice(updatableIndex, 1);
+        }
     }
 }
 --------------------------------------------------
@@ -5157,6 +5092,7 @@ export class FirefliesAbility extends Ability {
 
 === FILE: src/game/abilities/FireflyProjectile.js ===
 --------------------------------------------------
+// src/game/abilities/FireflyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../common/CollisionGroups.js';
@@ -5178,21 +5114,8 @@ export class FireflyProjectile {
         this.state = 'HOMING';
         this.preStepHandler = this.applyAntiGravity.bind(this);
 
-        // --- Steering & Avoidance (REWORKED) ---
+        // --- Steering ---
         this.homingForce = 4.0;
-        this.avoidanceForce = 25.0; // Increased force to react more sharply
-        this.avoidanceLookahead = 0.6;
-
-        // --- Multi-Feeler Obstacle Avoidance ---
-        this.feelers = [
-            // Primary forward feeler
-            { direction: new CANNON.Vec3(0, 0, 1), strength: 1.0 },
-            // Side feelers to detect corners
-            { direction: new CANNON.Vec3(0.6, 0, 0.8), strength: 0.7 }, // Right 37 deg
-            { direction: new CANNON.Vec3(-0.6, 0, 0.8), strength: 0.7 }, // Left 37 deg
-            // Vertical feelers to handle ledges
-            { direction: new CANNON.Vec3(0, 0.5, 0.866), strength: 0.6 }, // Up 30 deg
-        ];
 
         // --- Explosion parameters ---
         this.explosionRadius = 2.5;
@@ -5205,7 +5128,6 @@ export class FireflyProjectile {
         this._homingEffectiveTargetPos = new CANNON.Vec3();
         this._steeringVector = new CANNON.Vec3();
         this._desiredVelocity = new CANNON.Vec3();
-        this._raycastResult = new CANNON.RaycastResult();
         this._tempObject3D = new THREE.Object3D();
         this._aoeExplosionCenter = new THREE.Vector3();
         this._aoeEnemyPosition = new THREE.Vector3();
@@ -5308,14 +5230,8 @@ export class FireflyProjectile {
     }
 
     applySteering() {
-        const avoidanceSteer = this.calculateAvoidanceVector();
-        
-        if (avoidanceSteer.lengthSquared() > 0) {
-            this._steeringVector.copy(avoidanceSteer);
-        } else {
-            const homingSteer = this.calculateHomingVector();
-            this._steeringVector.copy(homingSteer);
-        }
+        const homingSteer = this.calculateHomingVector();
+        this._steeringVector.copy(homingSteer);
 
         this.body.applyForce(this._steeringVector, this.body.position);
         
@@ -5323,41 +5239,6 @@ export class FireflyProjectile {
             this.body.velocity.normalize();
             this.body.velocity.scale(this.speed, this.body.velocity);
         }
-    }
-
-    calculateAvoidanceVector() {
-        const totalAvoidanceForce = new CANNON.Vec3();
-
-        // Use the projectile's actual orientation for feeler directions
-        const orientation = this.body.quaternion;
-
-        for (const feeler of this.feelers) {
-            // Transform the local feeler direction into world space
-            const worldFeelerDir = orientation.vmult(feeler.direction);
-            
-            const rayFrom = this.body.position;
-            const lookaheadDistance = this.avoidanceLookahead * this.speed * feeler.strength;
-            const rayTo = rayFrom.clone().vadd(worldFeelerDir.scale(lookaheadDistance));
-            
-            this._raycastResult.reset();
-            this.world.raycastClosest(
-                rayFrom, rayTo,
-                { collisionFilterMask: COLLISION_GROUPS.WORLD }, this._raycastResult
-            );
-            
-            if (this._raycastResult.hasHit) {
-                const hitNormal = this._raycastResult.hitNormalWorld;
-                const distanceToHit = this._raycastResult.distance;
-                
-                // The avoidance force is stronger for closer obstacles
-                const forceMagnitude = this.avoidanceForce * (1.0 - (distanceToHit / lookaheadDistance));
-
-                const avoidanceForce = hitNormal.scale(forceMagnitude);
-                totalAvoidanceForce.vadd(avoidanceForce, totalAvoidanceForce);
-            }
-        }
-        
-        return totalAvoidanceForce;
     }
 
     calculateHomingVector() {

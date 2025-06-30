@@ -9,28 +9,55 @@ export class EditorActions {
     }
 
     _createAndExecuteCreationCommand(entity, list) {
-        list.push(entity);
-        
-        const beforeState = null; // No state before creation
-        const afterState = entity.definition;
-        
-        const command = {
-            entity: entity,
-            execute: () => {
-                if (!list.includes(entity)) list.push(entity);
-                this.app.scene.add(entity.mesh);
-                if (entity.body) this.app.physics.world.addBody(entity.body);
-                this.editor.select(entity);
-            },
-            undo: () => {
-                const index = list.indexOf(entity);
-                if (index > -1) list.splice(index, 1);
-                this.app.scene.remove(entity.mesh);
-                if (entity.body) this.app.physics.queueForRemoval(entity.body);
-                this.editor.deselect();
-            }
-        };
-        this.editor.undoManager.execute(command);
+        // Handle DirectionalLight creation as it's slightly different
+        if (entity.userData.gameEntity.type === 'DirectionalLight') {
+             // For lights, `entity` is the {light, helper, picker, definition} object
+             // `list` is the app.directionalLights array
+             // `mesh` here refers to the light's picker mesh
+            const lightObj = entity;
+            const command = {
+                execute: () => {
+                    this.app.scene.add(lightObj.light);
+                    this.app.scene.add(lightObj.light.target);
+                    this.app.scene.add(lightObj.helper);
+                    this.app.scene.add(lightObj.picker);
+                    if (!list.includes(lightObj)) list.push(lightObj);
+                    if (!this.app.settings.directionalLights.includes(lightObj.definition)) {
+                        this.app.settings.directionalLights.push(lightObj.definition);
+                    }
+                    this.editor.select(lightObj);
+                },
+                undo: () => {
+                    this.app.removeDirectionalLight(lightObj); // This handles all removals
+                    this.editor.deselect();
+                }
+            };
+            this.editor.undoManager.execute(command);
+        } else {
+            // For other entities (Box, Enemy, Trigger, DeathTrigger)
+            list.push(entity);
+            
+            const beforeState = null; // No state before creation
+            const afterState = entity.definition;
+            
+            const command = {
+                entity: entity,
+                execute: () => {
+                    if (!list.includes(entity)) list.push(entity);
+                    this.app.scene.add(entity.mesh);
+                    if (entity.body) this.app.physics.world.addBody(entity.body);
+                    this.editor.select(entity);
+                },
+                undo: () => {
+                    const index = list.indexOf(entity);
+                    if (index > -1) list.splice(index, 1);
+                    this.app.scene.remove(entity.mesh);
+                    if (entity.body) this.app.physics.queueForRemoval(entity.body);
+                    this.editor.deselect();
+                }
+            };
+            this.editor.undoManager.execute(command);
+        }
     }
 
     addBox() {
@@ -83,6 +110,25 @@ export class EditorActions {
         this._createAndExecuteCreationCommand(newTrigger, this.app.deathTriggers);
     }
 
+    // This method is now called by the UI for adding lights
+    addDirectionalLight() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(20));
+
+        const lightData = {
+            color: "0xffffff",
+            intensity: 1,
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            targetPosition: { x: 0, y: 0, z: 0 }
+        };
+        
+        const newLight = this.app.levelLoader.createDirectionalLight(lightData);
+        const newLightObject = this.app.createDirectionalLightWithHelper(newLight);
+        
+        this._createAndExecuteCreationCommand(newLightObject, this.app.directionalLights);
+    }
+
     deleteSelected() {
         if (!this.editor.selectedObject) return;
         const entity = this.editor.selectedObject;
@@ -91,14 +137,15 @@ export class EditorActions {
         if (['SpawnPoint', 'DeathSpawnPoint'].includes(entityType)) return;
 
         let list;
+        let removeFunc = null;
+
         switch (entityType) {
             case 'Trigger':       list = this.app.triggers; break;
             case 'DeathTrigger':  list = this.app.deathTriggers; break;
             case 'DirectionalLight': 
-                this.app.removeDirectionalLight(entity);
-                this.editor.deselect();
-                // TODO: Add undo/redo for light creation/deletion
-                return;
+                list = this.app.directionalLights; 
+                removeFunc = (lightObj) => this.app.removeDirectionalLight(lightObj);
+                break;
             case 'Enemy':         list = this.app.enemies; break;
             default:              list = this.app.levelObjects; break;
         }
@@ -108,15 +155,41 @@ export class EditorActions {
             execute: () => {
                 const index = list.indexOf(entity);
                 if (index > -1) list.splice(index, 1);
-                this.app.scene.remove(entity.mesh);
-                if (entity.body) this.app.physics.queueForRemoval(entity.body);
+                if (removeFunc) {
+                    removeFunc(entity);
+                } else {
+                    this.app.scene.remove(entity.mesh);
+                    if (entity.body) this.app.physics.queueForRemoval(entity.body);
+                }
                 this.editor.deselect();
             },
             undo: () => {
-                if (!list.includes(entity)) list.push(entity);
-                this.app.scene.add(entity.mesh);
-                if (entity.body) this.app.physics.world.addBody(entity.body);
-                this.editor.select(entity);
+                // Re-add in the original order for consistency if possible, or at least re-add
+                if (!list.includes(entity)) {
+                    // This is a simplified re-add, ideally it should restore to original index
+                    list.push(entity); 
+                }
+                if (entityType === 'DirectionalLight') {
+                    // Re-create helper and re-add light to scene, physics, etc.
+                    // This is complex for lights due to helper/picker separation.
+                    // A proper implementation would need to restore the full state of the light object.
+                    // For now, if light removal involves full disposal, undoing might need re-creation.
+                    // This is a known area for improvement for light undo/redo.
+                    const reCreatedLight = this.app.levelLoader.createDirectionalLight(entity.definition);
+                    const reCreatedLightObj = this.app.createDirectionalLightWithHelper(reCreatedLight);
+                    // Replace the "removed" object in the array with the new one
+                    const originalIndex = list.indexOf(entity);
+                    if (originalIndex > -1) {
+                        list[originalIndex] = reCreatedLightObj;
+                    } else {
+                        list.push(reCreatedLightObj);
+                    }
+                    this.editor.select(reCreatedLightObj);
+                } else {
+                    this.app.scene.add(entity.mesh);
+                    if (entity.body) this.app.physics.world.addBody(entity.body);
+                    this.editor.select(entity);
+                }
             }
         };
         this.editor.undoManager.execute(command);
@@ -148,7 +221,7 @@ export class EditorActions {
 
             if (entityType === 'Object') {
                 const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
-                entity.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z)};
+                entity.definition.rotation = {x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.degToRad(rot.y), z: THREE.MathUtils.degToRad(rot.z)};
             }
             this.editor.clipboard = JSON.parse(JSON.stringify(entity.definition));
             if (!this.editor.clipboard.type) this.editor.clipboard.type = entityType;
@@ -193,18 +266,61 @@ export class EditorActions {
         if (newEntity) this._createAndExecuteCreationCommand(newEntity, list);
     }
 
+    newLevel() {
+        const newLevelData = {
+            name: "New Level",
+            spawnPoint: { x: 0, y: 3, z: 0 },
+            deathSpawnPoint: { x: 0, y: 3, z: 0 },
+            settings: {
+                backgroundColor: "0x1d2938",
+                fogColor: "0x1d2938",
+                fogNear: 20,
+                fogFar: 150,
+                ambientLight: {
+                    color: "0x607080",
+                    intensity: 0.7
+                },
+                directionalLights: [
+                    {
+                        color: "0xffffff",
+                        intensity: 1.5,
+                        position: { x: -0.19, y: 100, z: 94.33 },
+                        targetPosition: { x: 0, y: 0, z: 0 }
+                    }
+                ]
+            },
+            objects: [
+                {
+                    "type": "Plane",
+                    "name": "Ground Plane",
+                    "size": [200, 200],
+                    "position": { "x": 0, "y": 0, "z": 0 },
+                    "rotation": { "x": -90, "y": 0, "z": 0 },
+                    "material": { "color": "0x334455", "roughness": 0.9 },
+                    "physics": { "mass": 0 },
+                    "editorSelectable": false
+                }
+            ],
+            enemies: [],
+            triggers: [],
+            deathTriggers: []
+        };
+        this.app.loadLevel(newLevelData);
+    }
+
     loadFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try { this.app.loadLevel(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid level file."); }
+            catch (err) { alert("Invalid level file."); console.error("Error loading level:", err); }
         };
         reader.readAsText(file);
     }
 
-    saveFile() {
+    // Refactored to return the level data object
+    getSerializableLevelData() {
         // --- PRE-SAVE SYNC ---
         // Ensure all entities have their definitions updated from their editor state.
         
@@ -229,7 +345,7 @@ export class EditorActions {
 
         // --- SERIALIZATION ---
         const levelData = {
-            name: "Custom Level",
+            name: this.app.settings.name || "Custom Level", // Use current name or default
             spawnPoint: { x: this.app.spawnPointHelper.position.x, y: this.app.spawnPointHelper.position.y, z: this.app.spawnPointHelper.position.z },
             deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
@@ -238,13 +354,30 @@ export class EditorActions {
             triggers: this.app.triggers.map(t => t.definition),
             deathTriggers: this.app.deathTriggers.map(t => t.definition)
         };
-        
+        return levelData;
+    }
+
+    saveFile() {
+        const levelData = this.getSerializableLevelData();
         const blob = new Blob([JSON.stringify(levelData, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'custom-level.json';
+        a.download = `${levelData.name.toLowerCase().replace(/\s/g, '-')}.json`;
         a.click();
         URL.revokeObjectURL(a.href);
+    }
+
+    playInDebugMode() {
+        const levelData = this.getSerializableLevelData();
+        try {
+            // Store the level data in localStorage
+            localStorage.setItem('editorLevelData', JSON.stringify(levelData));
+            // Redirect to index.html with flags
+            window.location.href = 'index.html?loadFromEditor=true&debug=true';
+        } catch (e) {
+            console.error("Failed to save level to localStorage:", e);
+            alert("Could not play level in debug mode. Level data might be too large.");
+        }
     }
     
     updateSkyboxColor(color) {

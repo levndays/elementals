@@ -9,10 +9,12 @@ export class EditorUI {
 
     init() {
         // Toolbar
+        document.getElementById('editor-new-btn').onclick = () => this.editor.actions.newLevel();
         document.getElementById('editor-load-btn').onclick = () => document.getElementById('editor-file-input').click();
         document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
         document.getElementById('editor-save-btn').onclick = () => this.editor.actions.saveFile();
         document.getElementById('editor-info-btn').onclick = () => this.showInfoModal();
+        document.getElementById('editor-play-debug-btn').onclick = () => this.editor.actions.playInDebugMode();
         document.getElementById('editor-back-to-menu').onclick = () => { window.location.href = 'index.html'; };
         document.getElementById('editor-mode-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('editor-mode-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
@@ -26,7 +28,7 @@ export class EditorUI {
         // Create Accordion
         document.getElementById('editor-add-box').onclick = () => this.editor.actions.addBox();
         document.getElementById('editor-add-enemy').onclick = () => this.editor.actions.addEnemy();
-        document.getElementById('add-dirlight-btn').onclick = () => this.app.addDirectionalLight();
+        document.getElementById('add-dirlight-btn').onclick = () => this.editor.actions.addDirectionalLight();
         document.getElementById('editor-add-msg-trigger').onclick = () => this.editor.actions.addMessageTrigger();
         document.getElementById('editor-add-death-trigger').onclick = () => this.editor.actions.addDeathTrigger();
         document.getElementById('editor-set-spawn').onclick = () => this.editor.actions.setSpawnPointToCamera();
@@ -241,6 +243,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             createTextInput('Name', def.name || '', val => this.editor.updateSelectedProp('name', null, val));
             createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
             createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));
+            const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
+            const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.degToRad(eulerRot.y), z: THREE.MathUtils.degToRad(eulerRot.z) };
+            createVec3Inputs('Rotation', degRot, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
             
             if (entityType === 'Trigger') {
                 fragment.appendChild(document.createElement('hr'));
@@ -271,9 +276,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             const mesh = entity.mesh;
             fragment.appendChild(document.createElement('label')).textContent = `Name: ${def.name || def.type}`;
             createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
-            if (entity.isDead === undefined && def.type !== 'Plane') {
+            if (entity.isDead === undefined && def.type !== 'Plane') { // isDead check for Enemies (not defined on objects), type check for Plane
                  const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
-                 const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.radToDeg(eulerRot.z) };
+                 const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.degToRad(eulerRot.z) };
                  createVec3Inputs('Rotation', degRot, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
             }
             if (def.size) createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));

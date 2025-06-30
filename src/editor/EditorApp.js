@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import * as CANNON from 'cannon-es'; // Import CANNON for body types
 import { Renderer } from '../engine/Renderer.js';
 import { Physics } from '../engine/Physics.js';
 import { InputManager } from '../engine/InputManager.js';
@@ -33,10 +34,9 @@ export class EditorApp {
 
     async init() {
         this.levelLoader = new LevelLoader(this);
-        const levelData = await this.levelLoader.load('./levels/level-tutorial.json');
-
+        
         this.editor = new LevelEditor(this);
-        this.loadLevel(levelData);
+        this.editor.actions.newLevel(); // Load a new empty level by default
 
         window.editorApp = this;
         this.renderer.renderer.setAnimationLoop(() => this.animate());
@@ -56,6 +56,14 @@ export class EditorApp {
         this.ambientLight = ambientLight;
         this.directionalLights = directionalLights.map(light => this.createDirectionalLightWithHelper(light));
 
+        // FIX: Ensure enemies are static in the editor
+        this.enemies.forEach(enemy => {
+            if (enemy.body) {
+                enemy.body.type = CANNON.Body.STATIC;
+                enemy.body.mass = 0;
+            }
+        });
+
         this.createSpawnPointHelper();
         this.createDeathSpawnPointHelper();
         this.editor.setLevelData(this.levelObjects, this.enemies, this.triggers, this.deathTriggers);
@@ -72,6 +80,13 @@ export class EditorApp {
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(triggerData.position.x, triggerData.position.y, triggerData.position.z);
+        if (triggerData.rotation) { // Apply rotation if present
+            mesh.rotation.set(
+                THREE.MathUtils.degToRad(triggerData.rotation.x || 0),
+                THREE.MathUtils.degToRad(triggerData.rotation.y || 0),
+                THREE.MathUtils.degToRad(triggerData.rotation.z || 0)
+            );
+        }
         
         const triggerObject = {
             mesh,
@@ -96,6 +111,13 @@ export class EditorApp {
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(triggerData.position.x, triggerData.position.y, triggerData.position.z);
+        if (triggerData.rotation) { // Apply rotation if present
+            mesh.rotation.set(
+                THREE.MathUtils.degToRad(triggerData.rotation.x || 0),
+                THREE.MathUtils.degToRad(triggerData.rotation.y || 0),
+                THREE.MathUtils.degToRad(triggerData.rotation.z || 0)
+            );
+        }
         
         const triggerObject = {
             mesh,
@@ -130,28 +152,8 @@ export class EditorApp {
         return lightObject;
     }
     
-    addDirectionalLight() {
-        const lookDir = new THREE.Vector3();
-        this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(20));
-
-        const lightData = {
-            color: "0xffffff",
-            intensity: 1,
-            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-            targetPosition: { x: 0, y: 0, z: 0 }
-        };
-
-        if (!this.settings.directionalLights) this.settings.directionalLights = [];
-        this.settings.directionalLights.push(lightData);
-        
-        const newLight = this.levelLoader.createDirectionalLight(lightData);
-        const newLightObject = this.createDirectionalLightWithHelper(newLight);
-        this.directionalLights.push(newLightObject);
-
-        this.editor.select(newLightObject);
-    }
-    
+    // NOTE: For full undo/redo, removing lights needs a command that captures the state to re-add it.
+    // The current implementation directly removes, which is fine for its purpose, but not undoable.
     removeDirectionalLight(lightObjectToRemove) {
         if (!lightObjectToRemove) return;
         const index = this.directionalLights.indexOf(lightObjectToRemove);
@@ -161,10 +163,13 @@ export class EditorApp {
             this.scene.remove(lightObjectToRemove.helper);
             this.scene.remove(lightObjectToRemove.picker);
 
+            // Clean up Three.js resources
             lightObjectToRemove.helper.dispose();
             lightObjectToRemove.picker.geometry.dispose();
             lightObjectToRemove.picker.material.dispose();
-            
+            lightObjectToRemove.light.dispose(); // Dispose the light itself too
+
+            // Remove from the settings definition array
             const defIndex = this.settings.directionalLights.indexOf(lightObjectToRemove.definition);
             if (defIndex > -1) this.settings.directionalLights.splice(defIndex, 1);
 
@@ -213,8 +218,22 @@ export class EditorApp {
     }
 
     clearLevel() {
+        this.editor.deselect(); // Deselect any object before clearing
+
         [...this.levelObjects, ...this.enemies, ...this.triggers, ...this.deathTriggers].forEach(obj => {
-            if (obj.mesh) this.scene.remove(obj.mesh);
+            if (obj.mesh) {
+                this.scene.remove(obj.mesh);
+                // Dispose resources
+                if (obj.mesh.geometry) obj.mesh.geometry.dispose();
+                if (obj.mesh.material) {
+                    // If material is shared, don't dispose. Here, assuming unique for simplicity.
+                    if (Array.isArray(obj.mesh.material)) {
+                        obj.mesh.material.forEach(m => m.dispose());
+                    } else {
+                        obj.mesh.material.dispose();
+                    }
+                }
+            }
             if (obj.body) this.physics.queueForRemoval(obj.body);
         });
         this.levelObjects = [];
@@ -222,16 +241,30 @@ export class EditorApp {
         this.triggers = [];
         this.deathTriggers = [];
 
-        if (this.spawnPointHelper) this.scene.remove(this.spawnPointHelper);
+        if (this.spawnPointHelper) {
+            this.scene.remove(this.spawnPointHelper);
+            this.spawnPointHelper.children.forEach(c => c.geometry?.dispose());
+            this.spawnPointHelper.children.forEach(c => c.material?.dispose());
+            this.spawnPointHelper.material?.dispose(); // AxesHelper has a material
+        }
         this.spawnPointHelper = null;
         
-        if (this.deathSpawnPointHelper) this.scene.remove(this.deathSpawnPointHelper);
+        if (this.deathSpawnPointHelper) {
+            this.scene.remove(this.deathSpawnPointHelper);
+            this.deathSpawnPointHelper.children.forEach(c => c.geometry?.dispose());
+            this.deathSpawnPointHelper.children.forEach(c => c.material?.dispose());
+            this.deathSpawnPointHelper.material?.dispose();
+        }
         this.deathSpawnPointHelper = null;
 
+        // Dispose existing lights and their helpers/pickers
         this.directionalLights.forEach(lightObj => this.removeDirectionalLight(lightObj));
-        this.directionalLights = [];
-        
-        if (this.ambientLight) this.scene.remove(this.ambientLight);
+        this.directionalLights = []; // Ensure array is empty
+
+        if (this.ambientLight) {
+            this.scene.remove(this.ambientLight);
+            this.ambientLight.dispose();
+        }
         this.ambientLight = null;
     }
 
@@ -240,6 +273,7 @@ export class EditorApp {
         this.physics.update(deltaTime);
 
         // Update entities like enemies to sync their mesh positions
+        // (Though enemies are static in editor, their mesh might still need to sync if gizmo moved it)
         for (const updatable of this.updatables) {
             updatable.update(deltaTime);
         }

@@ -19,7 +19,7 @@ export class Game {
 
         this.updatables = []; 
         this.activeEffects = [];
-        this.levelObjects = [];
+        this.levelObjects = []; // Stores level objects like boxes and planes
         this.enemies = [];
 
         // --- Game State & UI ---
@@ -68,9 +68,36 @@ export class Game {
         this.minimap = new Minimap();
         this.tutorialManager = new TutorialManager(this);
 
-        await this.populateLevelList();
-        this.setupEventListeners();
-        this.returnToMenu(); // Start in the main menu
+        // Check for debug/editor level launch
+        const urlParams = new URLSearchParams(window.location.search);
+        const loadFromEditor = urlParams.get('loadFromEditor') === 'true';
+        const debugMode = urlParams.get('debug') === 'true';
+
+        if (loadFromEditor) {
+            const editorLevelDataString = localStorage.getItem('editorLevelData');
+            if (editorLevelDataString) {
+                try {
+                    const editorLevelData = JSON.parse(editorLevelDataString);
+                    await this.startLevel({ data: editorLevelData });
+                    if (debugMode) {
+                        this.toggleDebugMode();
+                    }
+                } catch (e) {
+                    console.error("Failed to parse level data from editor:", e);
+                    alert("Failed to load level from editor. It might be corrupted.");
+                    this.returnToMenu();
+                } finally {
+                    localStorage.removeItem('editorLevelData'); // Clean up localStorage
+                }
+            } else {
+                console.warn("Attempted to load from editor but no data found in localStorage.");
+                this.returnToMenu();
+            }
+        } else {
+            await this.populateLevelList();
+            this.setupEventListeners();
+            this.returnToMenu(); // Start in the main menu
+        }
 
         window.game = this; // Expose game instance for debugging
         this._warmupShaders();
@@ -326,7 +353,8 @@ export class Game {
             this.levelLoader.spawnPoint = data.spawnPoint;
             this.levelLoader.deathSpawnPoint = data.deathSpawnPoint;
         }
-        const { levelObjects, enemies } = this.levelLoader.build(data);
+        // Pass a flag to LevelLoader to indicate if it's for editor or game
+        const { levelObjects, enemies } = this.levelLoader.build(data); // No special flag needed, `build` is smart enough
         this.levelObjects = levelObjects;
         this.enemies = enemies;
 
@@ -353,7 +381,11 @@ export class Game {
         for (const obj of this.levelObjects) {
             this.renderer.scene.remove(obj.mesh);
             obj.mesh.geometry.dispose();
-            obj.mesh.material.dispose();
+            if(Array.isArray(obj.mesh.material)) {
+                obj.mesh.material.forEach(m => m.dispose());
+            } else {
+                obj.mesh.material.dispose();
+            }
             if(obj.body) this.physics.queueForRemoval(obj.body);
         }
         [...this.enemies].forEach(enemy => enemy.die(true));
@@ -376,7 +408,7 @@ export class Game {
                 this.updatables[i]?.update(deltaTime);
             }
             this.player.update(deltaTime);
-            this.minimap.update(this.player, this.enemies);
+            this.minimap.update(this.player, this.enemies, this.levelObjects); // Pass levelObjects to minimap
         } else if (this.gameState === 'DEAD') {
             this.respawnTimer -= deltaTime;
             this.ui.respawnTimerText.textContent = `Respawning in ${Math.ceil(this.respawnTimer)}...`;
@@ -384,10 +416,10 @@ export class Game {
                 this.respawnPlayer();
             }
             this.hud.update(); // Update HUD to show empty bars
-            this.minimap.update(this.player, this.enemies);
+            this.minimap.update(this.player, this.enemies, this.levelObjects);
         } else if (this.gameState === 'PAUSED') {
              this.hud.update();
-             this.minimap.update(this.player, this.enemies);
+             this.minimap.update(this.player, this.enemies, this.levelObjects);
         }
         
         this.renderer.render();
