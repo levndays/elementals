@@ -143,7 +143,11 @@ export class Enemy {
     die(isEditorClear = false) {
         if (this.isDead) return;
         this.isDead = true;
-
+    
+        if (!isEditorClear) {
+            this.game.onEnemyKilled();
+        }
+    
         if (this.healthBar) {
             this.healthBar.setVisible(false);
             this.healthBar.dispose();
@@ -156,10 +160,10 @@ export class Enemy {
             this.mesh.geometry.dispose();
             this.mesh.material.dispose();
         }
-
+    
         const enemyIndex = this.game.enemies.indexOf(this);
-        if (enemyIndex > -1 && !isEditorClear) {
-             this.game.enemies.splice(enemyIndex, 1);
+        if (enemyIndex > -1) {
+            this.game.enemies.splice(enemyIndex, 1);
         }
         
         const updatableIndex = this.game.updatables.indexOf(this);

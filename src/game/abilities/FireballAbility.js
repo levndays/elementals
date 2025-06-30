@@ -13,17 +13,10 @@ export class FireballAbility extends Ability {
 
     /**
      * @override
+     * @protected
      */
-    cast() {
-        if (this.canCast()) {
-            new Fireball(this.caster); // Creates the projectile
-            this.caster.currentEnergy -= this.energyCost;
-            this.caster.lastAbilityTime = this.caster.world.time; // For energy regen delay
-            this.triggerCooldown();
-            
-            console.log(`Casted ${this.name}. Energy: ${this.caster.currentEnergy}/${this.caster.maxEnergy}`);
-            return true;
-        }
-        return false;
+    _executeCast() {
+        new Fireball(this.caster); // Creates the projectile
+        return true;
     }
 }

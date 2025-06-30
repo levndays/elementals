@@ -1,3 +1,4 @@
+// src/game/abilities/FireflyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../common/CollisionGroups.js';
@@ -13,12 +14,14 @@ export class FireflyProjectile {
 
         // --- Configuration ---
         this.damage = 100;
-        this.lifetime = 5.0;
+        this.lifetime = 6.0;
         this.speed = 18;
-        this.homingStrength = 2.5;
         this.isDead = false;
-        this.state = 'HOMING'; // State machine: 'HOMING', 'EXPLODING'
+        this.state = 'HOMING';
         this.preStepHandler = this.applyAntiGravity.bind(this);
+
+        // --- Steering ---
+        this.homingForce = 4.0;
 
         // --- Explosion parameters ---
         this.explosionRadius = 2.5;
@@ -26,14 +29,14 @@ export class FireflyProjectile {
         this.explosionDuration = 0.5;
         this.explosionTimer = 0;
         
-        // --- PERFORMANCE: Reusable objects for AOE and Homing ---
-        this._aoeExplosionCenter = new THREE.Vector3();
-        this._aoeEnemyPosition = new THREE.Vector3();
+        // --- PERFORMANCE: Reusable objects ---
         this._homingTargetBasePos = new CANNON.Vec3();
         this._homingEffectiveTargetPos = new CANNON.Vec3();
-        this._homingDirectionToTarget = new CANNON.Vec3();
-        this._homingDesiredVelocity = new CANNON.Vec3();
-        this._homingSteeringForce = new CANNON.Vec3();
+        this._steeringVector = new CANNON.Vec3();
+        this._desiredVelocity = new CANNON.Vec3();
+        this._tempObject3D = new THREE.Object3D();
+        this._aoeExplosionCenter = new THREE.Vector3();
+        this._aoeEnemyPosition = new THREE.Vector3();
 
         // --- Trajectory variation parameters ---
         this.wobblePhase = Math.random() * Math.PI * 2;
@@ -65,7 +68,7 @@ export class FireflyProjectile {
             collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY,
             type: CANNON.Body.DYNAMIC,
-            linearDamping: 0,
+            linearDamping: 0.1,
             angularDamping: 0,
         });
         this.body.allowSleep = false;
@@ -114,36 +117,12 @@ export class FireflyProjectile {
                     return;
                 }
                 this.wobblePhase += deltaTime * this.wobbleFrequency;
-                if (this.target && this.target.body && !this.target.isDead) {
-                    this._homingTargetBasePos.copy(this.target.body.position);
-                    this._homingTargetBasePos.vadd(this.targetPointOffset, this._homingEffectiveTargetPos);
+                
+                this.applySteering();
+                this.orientToVelocity(deltaTime);
 
-                    const currentWobbleX = Math.sin(this.wobblePhase) * this.wobbleAmplitude;
-                    const currentWobbleZ = Math.cos(this.wobblePhase) * this.wobbleAmplitude;
-                    this._homingEffectiveTargetPos.x += currentWobbleX;
-                    this._homingEffectiveTargetPos.z += currentWobbleZ;
-
-                    const distanceToEffectiveTarget = this.body.position.distanceTo(this._homingEffectiveTargetPos);
-                    if (distanceToEffectiveTarget <= this.explosionRadius) {
-                        this.detonate();
-                        return;
-                    }
-                    
-                    this._homingEffectiveTargetPos.vsub(this.body.position, this._homingDirectionToTarget);
-                    this._homingDirectionToTarget.normalize();
-                    this._homingDirectionToTarget.scale(this.speed, this._homingDesiredVelocity);
-
-                    this._homingDesiredVelocity.vsub(this.body.velocity, this._homingSteeringForce);
-                    this._homingSteeringForce.scale(this.homingStrength * deltaTime, this._homingSteeringForce);
-                    this.body.velocity.vadd(this._homingSteeringForce, this.body.velocity);
-
-                    if (this.body.velocity.length() > this.speed) {
-                        this.body.velocity.normalize();
-                        this.body.velocity.scale(this.speed, this.body.velocity);
-                    }
-                }
                 this.mesh.position.copy(this.body.position);
-                this.mesh.quaternion.copy(this.body.quaternion);
+                // Orientation is now handled by orientToVelocity, no need to copy quaternion
                 break;
 
             case 'EXPLODING':
@@ -154,6 +133,62 @@ export class FireflyProjectile {
                 }
                 break;
         }
+    }
+
+    applySteering() {
+        const homingSteer = this.calculateHomingVector();
+        this._steeringVector.copy(homingSteer);
+
+        this.body.applyForce(this._steeringVector, this.body.position);
+        
+        if (this.body.velocity.length() > this.speed) {
+            this.body.velocity.normalize();
+            this.body.velocity.scale(this.speed, this.body.velocity);
+        }
+    }
+
+    calculateHomingVector() {
+        const homing = new CANNON.Vec3();
+        if (!this.target || !this.target.body || this.target.isDead) return homing;
+
+        this._homingTargetBasePos.copy(this.target.body.position);
+        this._homingTargetBasePos.vadd(this.targetPointOffset, this._homingEffectiveTargetPos);
+        const currentWobbleX = Math.sin(this.wobblePhase) * this.wobbleAmplitude;
+        const currentWobbleZ = Math.cos(this.wobblePhase) * this.wobbleAmplitude;
+        this._homingEffectiveTargetPos.x += currentWobbleX;
+        this._homingEffectiveTargetPos.z += currentWobbleZ;
+
+        this._homingEffectiveTargetPos.vsub(this.body.position, this._desiredVelocity);
+
+        if (this._desiredVelocity.lengthSquared() < (this.explosionRadius * this.explosionRadius)) {
+            this.detonate();
+            return homing;
+        }
+
+        this._desiredVelocity.normalize();
+        this._desiredVelocity.scale(this.speed, this._desiredVelocity);
+
+        this._desiredVelocity.vsub(this.body.velocity, homing);
+
+        if (homing.lengthSquared() > this.homingForce * this.homingForce) {
+            homing.normalize();
+            homing.scale(this.homingForce, homing);
+        }
+        
+        return homing;
+    }
+
+    orientToVelocity(deltaTime) {
+        if (this.body.velocity.lengthSquared() > 0.1) {
+            const lookAtTarget = new CANNON.Vec3();
+            this.body.position.vadd(this.body.velocity, lookAtTarget);
+            
+            this._tempObject3D.position.copy(this.body.position);
+            this._tempObject3D.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+            
+            this.body.quaternion.slerp(this._tempObject3D.quaternion, 15 * deltaTime, this.body.quaternion);
+        }
+        this.mesh.quaternion.copy(this.body.quaternion);
     }
 
     detonate() {

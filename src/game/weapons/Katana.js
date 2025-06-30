@@ -207,8 +207,12 @@ export class Katana extends Weapon {
                 
                 // cos(50 degrees) ~= 0.64, a generous frontal cone for the swing
                 if (dot > 0.64) { 
-                    enemy.takeDamage(this.damage);
-                    // The 'break;' statement was removed to allow hitting multiple enemies.
+                    let finalDamage = this.damage;
+                    // Check if player is currently in the ground slam state
+                    if (this.wielder.isSlamming) {
+                        finalDamage *= 2;
+                    }
+                    enemy.takeDamage(finalDamage);
                 }
             }
         }

@@ -6,6 +6,7 @@ import { LevelLoader } from '../world/LevelLoader.js';
 import { Player } from './entities/Player.js';
 import { HUD } from './ui/HUD.js';
 import { TutorialManager } from './ui/TutorialManager.js';
+import { Minimap } from './ui/Minimap.js';
 
 export class Game {
     constructor() {
@@ -23,8 +24,13 @@ export class Game {
 
         // --- Game State & UI ---
         this.gameState = 'MENU'; // MENU, LOADING, AWAITING_PLAY, PLAYING, PAUSED, DEAD
+        this.debugModeActive = false;
         this.respawnTimer = 0;
         this.RESPAWN_COOLDOWN = 5.0;
+
+        // --- Enemy Tracking ---
+        this.initialEnemyCount = 0;
+        this.enemiesKilled = 0;
 
         this.ui = {
             main: document.getElementById('main-menu'),
@@ -59,16 +65,29 @@ export class Game {
         this.hud = new HUD(this.player, this);
         this.updatables.push(this.hud);
         
+        this.minimap = new Minimap();
         this.tutorialManager = new TutorialManager(this);
 
         await this.populateLevelList();
         this.setupEventListeners();
         this.returnToMenu(); // Start in the main menu
 
+        window.game = this; // Expose game instance for debugging
         this._warmupShaders();
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
     
+    toggleDebugMode() {
+        this.debugModeActive = !this.debugModeActive;
+        if (this.debugModeActive) {
+            console.log('%cDEBUG MODE: ACTIVATED', 'color: #2ed573; font-weight: bold; font-size: 1.2em;');
+            console.log('  - Player is invincible.');
+            console.log('  - Abilities have no cooldown or energy cost.');
+        } else {
+            console.log('%cDEBUG MODE: DEACTIVATED', 'color: #ff4757; font-weight: bold; font-size: 1.2em;');
+        }
+    }
+
     setupMainMenuListeners() {
         // Get fresh references to buttons that might be recreated
         this.ui.playBtn = document.getElementById('play-btn');
@@ -310,7 +329,23 @@ export class Game {
         const { levelObjects, enemies } = this.levelLoader.build(data);
         this.levelObjects = levelObjects;
         this.enemies = enemies;
+
+        this.initialEnemyCount = this.enemies.length;
+        this.enemiesKilled = 0;
+        this.hud.updateEnemyCount(this.enemiesKilled, this.initialEnemyCount);
+
         this.tutorialManager.loadTriggers(data.triggers || []);
+    }
+
+    onEnemyKilled() {
+        if (this.gameState !== 'PLAYING') return;
+
+        this.enemiesKilled++;
+        this.hud.updateEnemyCount(this.enemiesKilled, this.initialEnemyCount);
+
+        if (this.initialEnemyCount > 0 && this.enemiesKilled === this.initialEnemyCount) {
+            this.hud.showLevelCompleted();
+        }
     }
 
     clearLevel() {
@@ -324,6 +359,9 @@ export class Game {
         [...this.enemies].forEach(enemy => enemy.die(true));
         this.levelObjects = [];
         this.enemies = [];
+
+        this.hud.updateEnemyCount(0, 0);
+        this.hud.hideTutorialText(); // Also hide any lingering messages
     }
 
     animate() {
@@ -338,6 +376,7 @@ export class Game {
                 this.updatables[i]?.update(deltaTime);
             }
             this.player.update(deltaTime);
+            this.minimap.update(this.player, this.enemies);
         } else if (this.gameState === 'DEAD') {
             this.respawnTimer -= deltaTime;
             this.ui.respawnTimerText.textContent = `Respawning in ${Math.ceil(this.respawnTimer)}...`;
@@ -345,8 +384,10 @@ export class Game {
                 this.respawnPlayer();
             }
             this.hud.update(); // Update HUD to show empty bars
+            this.minimap.update(this.player, this.enemies);
         } else if (this.gameState === 'PAUSED') {
              this.hud.update();
+             this.minimap.update(this.player, this.enemies);
         }
         
         this.renderer.render();

@@ -257,14 +257,57 @@ body:not(.game-active) #tutorial-text-container {
     text-transform: uppercase;
 }
 
+/* Level Complete Message Styling */
+#tutorial-text-container.level-complete {
+    border-left-color: #ffd700; /* Gold color */
+    background-color: rgba(20, 10, 0, 0.8);
+}
+#tutorial-text-container.level-complete #tutorial-text {
+    font-size: 2.5rem;
+    text-align: center;
+    color: #ffd700;
+    font-weight: bold;
+    text-shadow: 0 0 15px #ffd700;
+}
+
 /* --- HUD STYLES --- */
+#hud-top-left, #hud-top-right, #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    z-index: 10;
+}
+#hud-top-left { top: 20px; left: 20px; }
+#hud-top-right { top: 20px; right: 20px; align-items: flex-end; }
+
 #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
-    position: absolute; bottom: 20px; display: flex; flex-direction: column;
-    align-items: center; gap: 8px; pointer-events: none; z-index: 10;
+    bottom: 20px;
+    align-items: center;
+    gap: 8px;
 }
 #hud-bottom-left { left: 20px; align-items: flex-start; }
 #hud-bottom-center { left: 50%; transform: translateX(-50%); }
 #hud-bottom-right { right: 20px; align-items: flex-end; }
+
+/* Minimap & Enemy Counter */
+#minimap-canvas {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    pointer-events: auto;
+}
+#enemy-counter {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #eee;
+    text-shadow: 1px 1px 2px black;
+}
+
 #ability-cooldowns { display: flex; gap: 10px; width: 250px; }
 .cooldown-container {
     flex: 1; height: 10px; background-color: rgba(0, 0, 0, 0.5);

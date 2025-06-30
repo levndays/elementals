@@ -1,3 +1,4 @@
+// src/game/abilities/Fireball.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { ParticleExplosion } from './ParticleExplosion.js';
@@ -23,7 +24,7 @@ export class Fireball {
         
         this.state = 'TRAVELING';
         this.stateTimer = 0;
-        this.isDead = false;
+        this.isDead = false; // Initialize isDead
         this.body = null;
         this.preStepHandler = this.applyAntiGravity.bind(this);
 
@@ -65,6 +66,8 @@ export class Fireball {
         this.body.velocity.copy(cameraDirection.multiplyScalar(this.SPEED));
         
         this.body.addEventListener('collide', (event) => {
+            if (this.isDead) return; // Prevent multiple detonations or processing after already dead
+
             // Prevent explosion center from being inside a wall.
             // We find the contact normal and nudge the detonation point slightly away from the surface.
             const contactNormal = new CANNON.Vec3();
@@ -111,27 +114,32 @@ export class Fireball {
     }
 
     detonate(hitPoint) {
-        if (this.state !== 'TRAVELING') return;
+        if (this.isDead) return; // Ensure it detonates only once
         
         this.state = 'GROWING';
         this.stateTimer = 0;
+        this.isDead = true; // Mark as dead immediately upon detonation start
         
         this.mesh.position.copy(hitPoint);
         
         if (this.body) {
             this.physics.queueForRemoval(this.body);
-            this.body = null;
+            this.body = null; // Null the body reference immediately
         }
+        this.world.removeEventListener('preStep', this.preStepHandler);
         
         this.game.activeEffects.push(this);
         new ParticleExplosion(this.scene, this.mesh.position, this.game.updatables);
     }
 
     update(deltaTime) {
-        if (this.isDead) return;
+        if (this.isDead && this.state !== 'GROWING' && this.state !== 'LINGERING' && this.state !== 'SHRINKING') return;
+
         this.stateTimer += deltaTime;
 
-        this.light.position.copy(this.mesh.position);
+        if (this.mesh && this.light) { // Ensure mesh and light still exist for updates
+            this.light.position.copy(this.mesh.position);
+        }
 
         switch (this.state) {
             case 'TRAVELING':
@@ -139,7 +147,9 @@ export class Fireball {
                     this.detonate(this.body.position);
                     break;
                 }
-                this.mesh.position.copy(this.body.position);
+                if (this.body && this.mesh) { // Ensure body still exists for position update
+                    this.mesh.position.copy(this.body.position);
+                }
                 break;
             case 'GROWING':
                 this.handleGrowing();
@@ -156,11 +166,14 @@ export class Fireball {
     }
     
     handleGrowing() {
+        if (!this.mesh) return; // Ensure mesh exists
         let progress = Math.min(this.stateTimer / this.GROW_DURATION, 1.0);
         const scale = THREE.MathUtils.lerp(1, this.FINAL_SCALE, progress);
         this.mesh.scale.set(scale, scale, scale);
         this.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(5, 10, progress);
-        this.light.intensity = THREE.MathUtils.lerp(500, 1000, progress);
+        if (this.light) { // Ensure light exists
+            this.light.intensity = THREE.MathUtils.lerp(500, 1000, progress);
+        }
 
         if (progress >= 1.0) {
             this.mesh.scale.set(this.FINAL_SCALE, this.FINAL_SCALE, this.FINAL_SCALE);
@@ -170,6 +183,7 @@ export class Fireball {
     }
 
     updateAoeDamage(deltaTime) {
+        if (!this.mesh) return; // Ensure mesh exists
         const explosionRadius = this.explosionRadius;
         if (explosionRadius <= 0) return;
 
@@ -197,6 +211,7 @@ export class Fireball {
     }
     
     handleLingering() {
+        if (!this.mesh || !this.light) return; // Ensure mesh and light exist
         const pulse = Math.sin(this.stateTimer * Math.PI * 2) * 0.5 + 0.5;
         this.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(8, 12, pulse);
         this.light.intensity = THREE.MathUtils.lerp(20000, 25000, pulse);
@@ -208,6 +223,7 @@ export class Fireball {
     }
     
     handleShrinking() {
+        if (!this.mesh || !this.light) return; // Ensure mesh and light exist
         let progress = Math.min(this.stateTimer / this.SHRINK_DURATION, 1.0);
         const scale = THREE.MathUtils.lerp(this.FINAL_SCALE, 0, progress);
         this.mesh.scale.set(scale, scale, scale);
@@ -218,21 +234,23 @@ export class Fireball {
     }
 
     cleanup() {
-        if (this.isDead) return;
-        this.isDead = true;
-        
-        this.world.removeEventListener('preStep', this.preStepHandler);
+        // This function is intended for final visual cleanup and removal from updatables/activeEffects.
+        // The 'isDead' flag and body removal are handled by detonate().
+        if (!this.mesh) return; // Already cleaned up
 
         this.scene.remove(this.mesh);
-        this.scene.remove(this.light);
+        if (this.light) this.scene.remove(this.light); // Light might already be nulled by detonate
         this.mesh.geometry.dispose();
         this.mesh.material.dispose();
         
-        if(this.body) this.physics.queueForRemoval(this.body);
+        this.mesh = null; // Null references to prevent accidental re-cleanup
+        this.light = null;
 
         const effectIndex = this.game.activeEffects.indexOf(this);
         if (effectIndex > -1) this.game.activeEffects.splice(effectIndex, 1);
         const updatableIndex = this.game.updatables.indexOf(this);
-        if (updatableIndex > -1) this.game.updatables.splice(updatableIndex, 1);
+        if (updatableIndex > -1) {
+            this.game.updatables.splice(updatableIndex, 1);
+        }
     }
 }

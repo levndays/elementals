@@ -34,6 +34,9 @@ export class HUD {
         this.targetHealthBarElement = document.getElementById('target-health-bar');
         this.targetHealthTextElement = document.getElementById('target-health-text');
         
+        // Enemy Counter
+        this.enemyCounterElement = document.getElementById('enemy-counter');
+        
         // 2D Target Frame Element
         this.targetFrameElement = document.getElementById('target-frame');
         this.targetVector = new THREE.Vector3(); // Re-use vector to avoid GC churn
@@ -42,8 +45,11 @@ export class HUD {
         this.tutorialTextContainer = document.getElementById('tutorial-text-container');
         this.tutorialTextElement = document.getElementById('tutorial-text');
         this.tutorialTimer = null;
+        
+        // Crosshair
+        this.crosshairElement = document.getElementById('crosshair');
 
-        if (!this.healthBarElement || !this.energyBarElement || !this.abilitySlots[3].element || !this.targetInfoElement || !this.targetFrameElement || !this.tutorialTextContainer) {
+        if (!this.healthBarElement || !this.energyBarElement || !this.abilitySlots[3].element || !this.targetInfoElement || !this.targetFrameElement || !this.tutorialTextContainer || !this.enemyCounterElement || !this.crosshairElement) {
             console.error("Required HUD elements not found in the DOM!");
         }
     }
@@ -58,6 +64,7 @@ export class HUD {
 
     showTutorialText(message, duration) {
         if (this.tutorialTimer) clearTimeout(this.tutorialTimer);
+        this.tutorialTextContainer.classList.remove('level-complete');
 
         this.tutorialTextElement.innerHTML = message; // Use innerHTML to support kbd tags if needed
         this.tutorialTextContainer.style.opacity = '1';
@@ -67,13 +74,32 @@ export class HUD {
             this.hideTutorialText();
         }, duration * 1000);
     }
+    
+    showLevelCompleted() {
+        if (this.tutorialTimer) clearTimeout(this.tutorialTimer);
+        this.tutorialTextElement.textContent = 'LEVEL COMPLETE';
+        this.tutorialTextContainer.classList.add('level-complete');
+        this.tutorialTextContainer.style.opacity = '1';
+        this.tutorialTextContainer.style.display = 'block';
+    }
 
     hideTutorialText() {
         this.tutorialTextContainer.style.opacity = '0';
-        // Use a timeout to hide the element after the transition ends
         setTimeout(() => {
-            this.tutorialTextContainer.style.display = 'none';
+            // Only hide if it's not the permanent level complete message
+            if (!this.tutorialTextContainer.classList.contains('level-complete')) {
+                 this.tutorialTextContainer.style.display = 'none';
+            }
         }, 500); // Must match the CSS transition duration
+    }
+
+    updateEnemyCount(killed, total) {
+        if (total > 0) {
+            this.enemyCounterElement.style.display = 'block';
+            this.enemyCounterElement.textContent = `Enemies: ${killed} / ${total}`;
+        } else {
+            this.enemyCounterElement.style.display = 'none';
+        }
     }
 
     updateResourceBars() {
@@ -124,11 +150,16 @@ export class HUD {
         }
     }
 
-    // REWORKED: Function to update target info panel and 2D frame
     updateTargetInfo() {
+        const currentAbility = this.player.abilities[this.player.selectedAbilityIndex];
+        const isLockOnMode = currentAbility?.requiresLockOn;
         const target = this.player.lockedTarget;
 
-        if (target && !target.isDead) {
+        // Hide crosshair if in lock-on mode, show otherwise
+        this.crosshairElement.style.display = isLockOnMode ? 'none' : 'block';
+
+        // Show target frame and info only if in lock-on mode AND a target is acquired
+        if (isLockOnMode && target && !target.isDead) {
             // --- Update Target Info Panel ---
             this.targetInfoElement.style.display = 'flex';
             this.targetNameElement.textContent = target.name || 'Enemy';
@@ -147,14 +178,11 @@ export class HUD {
 
             // --- Update 2D Target Frame ---
             const targetPosition = this.targetVector.copy(target.body.position);
-            // Aim for the center of the enemy's mesh
             const enemyHeight = target.mesh.geometry?.parameters?.height || 2;
             targetPosition.y += enemyHeight / 2;
             
-            // Project 3D world space to 2D screen space
             targetPosition.project(this.game.renderer.camera);
             
-            // Check if target is in front of the camera
             if (targetPosition.z < 1) {
                 const x = (targetPosition.x * 0.5 + 0.5) * window.innerWidth;
                 const y = (targetPosition.y * -0.5 + 0.5) * window.innerHeight;
@@ -163,7 +191,6 @@ export class HUD {
                 this.targetFrameElement.style.left = `${x}px`;
                 this.targetFrameElement.style.top = `${y}px`;
 
-                // Scale the frame based on distance from camera
                 const distance = this.player.camera.position.distanceTo(target.body.position);
                 const frameSize = Math.max(30, Math.min(150, 4000 / distance)); // Clamp size
                 this.targetFrameElement.style.width = `${frameSize}px`;
@@ -172,7 +199,7 @@ export class HUD {
                 this.targetFrameElement.style.display = 'none';
             }
         } else {
-            // Hide all target info if no target or target is dead
+            // Hide all target info if not in lock-on mode or no target
             this.targetInfoElement.style.display = 'none';
             this.targetFrameElement.style.display = 'none';
         }

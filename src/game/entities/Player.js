@@ -62,6 +62,7 @@ export class Player {
         this._losRayTo = new CANNON.Vec3();
         this._forward = new THREE.Vector3();
         this._right = new THREE.Vector3();
+        this._raycastResult = new CANNON.RaycastResult();
 
         // --- Weapon & Ability Systems ---
         this.weapon = new Katana(this);
@@ -205,7 +206,7 @@ export class Player {
     }
 
     takeDamage(amount) {
-        if (this.isDead) return;
+        if (this.isDead || this.game.debugModeActive) return;
         this.currentHealth -= amount;
         this.triggerVFX(this.vfx.damage);
         if (this.currentHealth <= 0) {
@@ -370,23 +371,34 @@ export class Player {
 
         for (const enemy of this.game.enemies) { 
             if (enemy.isDead || !enemy.body || !enemy.mesh) continue;
+            
             this._enemyPos.copy(enemy.body.position);
-            const enemyHeight = enemy.mesh.geometry?.parameters?.height || 2;
-            this._enemyPos.y += enemyHeight / 2;
+            this._enemyPos.y += 1.0; // Aim for the center of the body mass
+
             const distanceToEnemy = this._targetRayOrigin.distanceTo(this._enemyPos);
             if (distanceToEnemy > this.maxTargetingRange) continue;
+            
             this._oToP.subVectors(this._enemyPos, this._targetRayOrigin).normalize();
             const dotProduct = this._oToP.dot(this._targetRayDirection);
+            if (dotProduct < 0) continue; // Enemy is behind the player
+
             const angle = Math.acos(Math.min(1, Math.max(-1, dotProduct)));
             const angularDeviation = Math.tan(angle);
+
             if (angularDeviation < this.maxAngularDeviation) {
                 this._losRayFrom.copy(this._targetRayOrigin);
                 this._losRayTo.copy(this._enemyPos);
-                const hasLineOfSight = !this.world.raycastClosest(
-                    this._losRayFrom, this._losRayTo, { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true }
+                
+                this._raycastResult.reset();
+                this.world.raycastClosest(
+                    this._losRayFrom, this._losRayTo, 
+                    { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true }, 
+                    this._raycastResult
                 );
-                if (hasLineOfSight) {
-                    const score = (angularDeviation * angularDeviation * 100) + distanceToEnemy; 
+
+                if (!this._raycastResult.hasHit) {
+                    // New scoring: prioritize angle, then distance (normalized)
+                    const score = angularDeviation + (distanceToEnemy / this.maxTargetingRange);
                     if (score < minScore) {
                         minScore = score;
                         bestEnemy = enemy;
@@ -418,24 +430,20 @@ export class Player {
         this.handleMovementCooldowns(deltaTime);
         this.handleEnergyRegen(deltaTime);
         this.handleMovement(deltaTime);
-        this.updateTargetingLogic();
+        
+        const currentAbility = this.abilities[this.selectedAbilityIndex];
+        if (currentAbility?.requiresLockOn) {
+            this.updateTargetingLogic();
+        } else {
+            this.lockedTarget = null;
+        }
+
         this.weapon.update(deltaTime);
         this.updateVFX(deltaTime);
 
         for (let i = 0; i < this.abilities.length; i++) {
             const ability = this.abilities[i];
             if (ability) { ability.update(deltaTime); }
-            // ADDED: Update ability slot appearance based on selection
-            if (this.game.hud) { // Ensure HUD is initialized
-                const slotUI = this.game.hud.abilitySlots[i];
-                if (slotUI) {
-                    if (i === this.selectedAbilityIndex) {
-                        slotUI.element.classList.add('selected');
-                    } else {
-                        slotUI.element.classList.remove('selected');
-                    }
-                }
-            }
         }
 
         for (let i = 1; i <= 4; i++) {

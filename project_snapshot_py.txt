@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals
-Snapshot created on: 2025-06-29T13:57:38.370750
+Snapshot created on: 2025-06-30T16:47:48.471767
 ================================================================================
 
 === FILE: create_snapshot.py ===
@@ -217,6 +217,12 @@ Snapshot created on: 2025-06-29T13:57:38.370750
 
     <!-- Game HUD -->
     <div id="game-hud">
+        <div id="hud-top-left">
+            <canvas id="minimap-canvas" width="200" height="200"></canvas>
+        </div>
+        <div id="hud-top-right">
+            <div id="enemy-counter"></div>
+        </div>
         <div id="hud-bottom-left">
             <div id="health-bar-container" class="resource-bar-container">
                 <div id="health-bar"></div>
@@ -534,14 +540,57 @@ body:not(.game-active) #tutorial-text-container {
     text-transform: uppercase;
 }
 
+/* Level Complete Message Styling */
+#tutorial-text-container.level-complete {
+    border-left-color: #ffd700; /* Gold color */
+    background-color: rgba(20, 10, 0, 0.8);
+}
+#tutorial-text-container.level-complete #tutorial-text {
+    font-size: 2.5rem;
+    text-align: center;
+    color: #ffd700;
+    font-weight: bold;
+    text-shadow: 0 0 15px #ffd700;
+}
+
 /* --- HUD STYLES --- */
+#hud-top-left, #hud-top-right, #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    z-index: 10;
+}
+#hud-top-left { top: 20px; left: 20px; }
+#hud-top-right { top: 20px; right: 20px; align-items: flex-end; }
+
 #hud-bottom-left, #hud-bottom-center, #hud-bottom-right {
-    position: absolute; bottom: 20px; display: flex; flex-direction: column;
-    align-items: center; gap: 8px; pointer-events: none; z-index: 10;
+    bottom: 20px;
+    align-items: center;
+    gap: 8px;
 }
 #hud-bottom-left { left: 20px; align-items: flex-start; }
 #hud-bottom-center { left: 50%; transform: translateX(-50%); }
 #hud-bottom-right { right: 20px; align-items: flex-end; }
+
+/* Minimap & Enemy Counter */
+#minimap-canvas {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    pointer-events: auto;
+}
+#enemy-counter {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #eee;
+    text-shadow: 1px 1px 2px black;
+}
+
 #ability-cooldowns { display: flex; gap: 10px; width: 250px; }
 .cooldown-container {
     flex: 1; height: 10px; background-color: rgba(0, 0, 0, 0.5);
@@ -861,6 +910,85 @@ jobs:
 
 --------------------------------------------------
 === END OF FILE: .github/workflows/static.yml ===
+
+
+=== FILE: levels/level-city-dusk.json ===
+--------------------------------------------------
+{
+    "name": "City at Dusk",
+    "spawnPoint": { "x": -25, "y": 22, "z": -120 },
+    "deathSpawnPoint": { "x": -25, "y": 22, "z": -120 },
+    "settings": {
+        "backgroundColor": "0x1B2035",
+        "fogColor": "0x1B2035",
+        "fogNear": 40,
+        "fogFar": 250,
+        "ambientLight": {
+            "color": "0x506080",
+            "intensity": 0.6
+        },
+        "directionalLights": [
+            {
+                "color": "0xFF8C40",
+                "intensity": 3.0,
+                "position": { "x": -200, "y": 80, "z": -50 },
+                "targetPosition": { "x": 0, "y": 0, "z": 0 }
+            },
+            {
+                "color": "0x405070",
+                "intensity": 0.8,
+                "position": { "x": 150, "y": 60, "z": 100 },
+                "targetPosition": { "x": 0, "y": 0, "z": 0 }
+            }
+        ]
+    },
+    "objects": [
+        { "type": "Plane", "name": "Ground_Plane", "size": [500, 500], "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": -90, "y": 0, "z": 0 }, "material": { "color": "0x222222" }, "physics": { "mass": 0 }, "editorSelectable": false },
+        { "type": "Box", "name": "Sidewalk_West", "size": [8, 0.2, 300], "position": { "x": -12, "y": 0.1, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Sidewalk_East", "size": [8, 0.2, 300], "position": { "x": 12, "y": 0.1, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Bldg_W1_Start", "size": [20, 20, 30], "position": { "x": -25, "y": 10, "z": -120 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W2", "size": [25, 35, 40], "position": { "x": -28, "y": 17.5, "z": -80 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W2_Ledge", "size": [2, 1, 40], "position": { "x": -16.5, "y": 25, "z": -80 }, "material": { "color": "0x606060" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W3", "size": [20, 50, 30], "position": { "x": -25, "y": 25, "z": -30 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W4", "size": [30, 70, 50], "position": { "x": -30, "y": 35, "z": 30 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W4_ACUnit", "size": [4, 2, 4], "position": { "x": -30, "y": 71, "z": 10 }, "material": { "color": "0xCCCCCC" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W5", "size": [25, 40, 35], "position": { "x": -28, "y": 20, "z": 90 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_W6_Alley", "size": [20, 25, 20], "position": { "x": -55, "y": 12.5, "z": -10 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Bldg_E1", "size": [22, 30, 50], "position": { "x": 25, "y": 15, "z": -100 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_E1_Balcony", "size": [4, 1, 10], "position": { "x": 14, "y": 20, "z": -90 }, "material": { "color": "0x4A4A4A" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_E2", "size": [20, 60, 30], "position": { "x": 25, "y": 30, "z": -40 }, "material": { "color": "0x454545" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_E3", "size": [30, 45, 40], "position": { "x": 30, "y": 22.5, "z": 10 }, "material": { "color": "0x505050" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_E3_RooftopAccess", "size": [8, 3, 8], "position": { "x": 30, "y": 46.5, "z": 15 }, "material": { "color": "0x606060" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Bldg_E4_Tall", "size": [25, 90, 40], "position": { "x": 28, "y": 45, "z": 70 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Bridge_W3_E2", "size": [30, 1.5, 4], "position": { "x": 0, "y": 40, "z": -35 }, "material": { "color": "0x888888" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Car1", "size": [2.5, 1.5, 5], "position": { "x": 4, "y": 0.75, "z": -80 }, "material": { "color": "0x800000" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Car2", "size": [2.5, 1.5, 5], "position": { "x": -4, "y": 0.75, "z": -50 }, "rotation": {"y": 5}, "material": { "color": "0x000060" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Car3", "size": [2.5, 1.5, 5], "position": { "x": 4, "y": 0.75, "z": 20 }, "rotation": {"y": -3}, "material": { "color": "0x666666" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Car4", "size": [2.5, 1.5, 5], "position": { "x": -4, "y": 0.75, "z": 90 }, "material": { "color": "0x999999" }, "physics": { "mass": 0 } }
+    ],
+    "enemies": [
+        { "type": "Dummy", "position": { "x": -28, "y": 37, "z": -85 } },
+        { "type": "Dummy", "position": { "x": -28, "y": 37, "z": -75 } },
+        { "type": "Dummy", "position": { "x": -25, "y": 52, "z": -30 } },
+        { "type": "Dummy", "position": { "x": -30, "y": 72, "z": 35 } },
+        { "type": "Dummy", "position": { "x": -25, "y": 72, "z": 25 } },
+        { "type": "Dummy", "position": { "x": -55, "y": 27, "z": -10 } },
+        { "type": "Dummy", "position": { "x": 14, "y": 22, "z": -90 } },
+        { "type": "Dummy", "position": { "x": 25, "y": 32, "z": -110 } },
+        { "type": "Dummy", "position": { "x": 25, "y": 62, "z": -40 } },
+        { "type": "Dummy", "position": { "x": 30, "y": 49, "z": 15 } },
+        { "type": "Dummy", "position": { "x": 28, "y": 92, "z": 60 } },
+        { "type": "Dummy", "position": { "x": 28, "y": 92, "z": 80 } },
+        { "type": "Dummy", "position": { "x": -6, "y": 2, "z": -10 } },
+        { "type": "Dummy", "position": { "x": 6, "y": 2, "z": 50 } },
+        { "type": "Dummy", "position": { "x": 0, "y": 2, "z": 110 } }
+    ]
+}
+--------------------------------------------------
+=== END OF FILE: levels/level-city-dusk.json ===
 
 
 === FILE: levels/level-mangled-grove.json ===
@@ -2460,6 +2588,10 @@ jobs:
     {
         "name": "Tutorial",
         "path": "./levels/level-tutorial.json"
+    },
+    {
+        "name": "City at Dusk",
+        "path": "./levels/level-city-dusk.json"
     },
     {
         "name": "Mangled Grove",
@@ -4087,6 +4219,7 @@ import { LevelLoader } from '../world/LevelLoader.js';
 import { Player } from './entities/Player.js';
 import { HUD } from './ui/HUD.js';
 import { TutorialManager } from './ui/TutorialManager.js';
+import { Minimap } from './ui/Minimap.js';
 
 export class Game {
     constructor() {
@@ -4103,9 +4236,14 @@ export class Game {
         this.enemies = [];
 
         // --- Game State & UI ---
-        this.gameState = 'MENU'; // MENU, LOADING, PLAYING, PAUSED, DEAD
+        this.gameState = 'MENU'; // MENU, LOADING, AWAITING_PLAY, PLAYING, PAUSED, DEAD
+        this.debugModeActive = false;
         this.respawnTimer = 0;
         this.RESPAWN_COOLDOWN = 5.0;
+
+        // --- Enemy Tracking ---
+        this.initialEnemyCount = 0;
+        this.enemiesKilled = 0;
 
         this.ui = {
             main: document.getElementById('main-menu'),
@@ -4140,16 +4278,29 @@ export class Game {
         this.hud = new HUD(this.player, this);
         this.updatables.push(this.hud);
         
+        this.minimap = new Minimap();
         this.tutorialManager = new TutorialManager(this);
 
         await this.populateLevelList();
         this.setupEventListeners();
         this.returnToMenu(); // Start in the main menu
 
+        window.game = this; // Expose game instance for debugging
         this._warmupShaders();
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
     
+    toggleDebugMode() {
+        this.debugModeActive = !this.debugModeActive;
+        if (this.debugModeActive) {
+            console.log('%cDEBUG MODE: ACTIVATED', 'color: #2ed573; font-weight: bold; font-size: 1.2em;');
+            console.log('  - Player is invincible.');
+            console.log('  - Abilities have no cooldown or energy cost.');
+        } else {
+            console.log('%cDEBUG MODE: DEACTIVATED', 'color: #ff4757; font-weight: bold; font-size: 1.2em;');
+        }
+    }
+
     setupMainMenuListeners() {
         // Get fresh references to buttons that might be recreated
         this.ui.playBtn = document.getElementById('play-btn');
@@ -4188,21 +4339,27 @@ export class Game {
             }
         });
 
-        // This is the definitive source of truth for the pointer lock state.
+        // REVISED: This is the definitive source of truth for the pointer lock state.
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === document.body) {
-                // We just GAINED pointer lock.
+                // --- POINTER LOCK GAINED ---
                 if (this.gameState === 'PAUSED') {
                     this.gameState = 'PLAYING';
                     this.ui.pause.style.display = 'none';
                     document.body.classList.add('game-active');
+                } else if (this.gameState === 'AWAITING_PLAY') {
+                    this.startGameplay();
                 }
             } else {
-                // We just LOST pointer lock.
+                // --- POINTER LOCK LOST ---
                 if (this.gameState === 'PLAYING') {
                     this.gameState = 'PAUSED';
                     this.showScreen(this.ui.pause);
                     document.body.classList.remove('game-active');
+                } else if (this.gameState === 'AWAITING_PLAY') {
+                    // This happens if the user cancels the lock (e.g., hits Esc)
+                    // before the game has fully started.
+                    this.returnToMenu();
                 }
             }
         }, false);
@@ -4237,6 +4394,22 @@ export class Game {
         screenToShow.style.display = 'flex';
     }
 
+    // NEW METHOD: Finalizes the transition into gameplay.
+    startGameplay() {
+        this.player.spawn(this.levelLoader.getSpawnPoint());
+        this.gameState = 'PLAYING';
+        
+        // Hide all menus
+        Object.values(this.ui).forEach(element => {
+            if (element instanceof HTMLElement && element.classList.contains('menu-screen')) {
+                 element.style.display = 'none';
+            }
+        });
+
+        document.body.classList.add('game-active');
+    }
+
+    // REVISED: Decoupled from immediate pointer lock state.
     async startLevel({ url = null, data = null }) {
         if (!url && !data) {
             console.error("Must provide a level URL or level data.");
@@ -4247,28 +4420,22 @@ export class Game {
         this.currentLevelUrl = url;
         this.currentCustomLevelData = data;
 
-        document.body.requestPointerLock();
-
         this.showScreen(this.ui.main);
         this.ui.main.innerHTML = '<h2>Loading...</h2>';
+        
+        // Request pointer lock. The 'pointerlockchange' event will handle the transition.
+        document.body.requestPointerLock();
 
         await this.loadLevel(url, data);
 
-        if (document.pointerLockElement !== document.body) {
-            this.returnToMenu();
-            return;
-        }
-        
-        this.player.spawn(this.levelLoader.getSpawnPoint());
-        this.gameState = 'PLAYING';
-        
-        Object.values(this.ui).forEach(element => {
-            if (element instanceof HTMLElement && element.classList.contains('menu-screen')) {
-                 element.style.display = 'none';
-            }
-        });
+        // After loading, we are waiting for the pointer lock to be confirmed.
+        this.gameState = 'AWAITING_PLAY';
 
-        document.body.classList.add('game-active');
+        // It's possible the lock was acquired while we were loading the level.
+        // If so, we can start the game immediately.
+        if (document.pointerLockElement === document.body) {
+            this.startGameplay();
+        }
     }
 
     handleCustomLevelSelect(event) {
@@ -4367,11 +4534,31 @@ export class Game {
         if (!data) {
             if (!url) throw new Error("loadLevel requires either a URL or data.");
             data = await this.levelLoader.load(url);
+        } else {
+            // Manually update the level loader's spawn points when loading from a data object.
+            this.levelLoader.spawnPoint = data.spawnPoint;
+            this.levelLoader.deathSpawnPoint = data.deathSpawnPoint;
         }
         const { levelObjects, enemies } = this.levelLoader.build(data);
         this.levelObjects = levelObjects;
         this.enemies = enemies;
+
+        this.initialEnemyCount = this.enemies.length;
+        this.enemiesKilled = 0;
+        this.hud.updateEnemyCount(this.enemiesKilled, this.initialEnemyCount);
+
         this.tutorialManager.loadTriggers(data.triggers || []);
+    }
+
+    onEnemyKilled() {
+        if (this.gameState !== 'PLAYING') return;
+
+        this.enemiesKilled++;
+        this.hud.updateEnemyCount(this.enemiesKilled, this.initialEnemyCount);
+
+        if (this.initialEnemyCount > 0 && this.enemiesKilled === this.initialEnemyCount) {
+            this.hud.showLevelCompleted();
+        }
     }
 
     clearLevel() {
@@ -4385,6 +4572,9 @@ export class Game {
         [...this.enemies].forEach(enemy => enemy.die(true));
         this.levelObjects = [];
         this.enemies = [];
+
+        this.hud.updateEnemyCount(0, 0);
+        this.hud.hideTutorialText(); // Also hide any lingering messages
     }
 
     animate() {
@@ -4399,6 +4589,7 @@ export class Game {
                 this.updatables[i]?.update(deltaTime);
             }
             this.player.update(deltaTime);
+            this.minimap.update(this.player, this.enemies);
         } else if (this.gameState === 'DEAD') {
             this.respawnTimer -= deltaTime;
             this.ui.respawnTimerText.textContent = `Respawning in ${Math.ceil(this.respawnTimer)}...`;
@@ -4406,8 +4597,10 @@ export class Game {
                 this.respawnPlayer();
             }
             this.hud.update(); // Update HUD to show empty bars
+            this.minimap.update(this.player, this.enemies);
         } else if (this.gameState === 'PAUSED') {
              this.hud.update();
+             this.minimap.update(this.player, this.enemies);
         }
         
         this.renderer.render();
@@ -4474,17 +4667,42 @@ export class Ability {
      * @returns {boolean}
      */
     canCast() {
+        if (this.caster.game.debugModeActive) return true; // Debug mode bypasses checks
+
         const isReady = this.cooldownTimer >= this.cooldown;
         const hasEnergy = this.caster.currentEnergy >= this.energyCost;
         return isReady && hasEnergy;
     }
 
     /**
-     * Executes the ability's logic. MUST be overridden by subclasses.
+     * Executes the ability's core logic. To be implemented by subclasses.
+     * @returns {boolean} True if the cast logic was successful, false otherwise.
+     * @protected
+     */
+    _executeCast() {
+        throw new Error("Ability._executeCast() must be implemented by subclasses.");
+    }
+    
+    /**
+     * Public-facing method to cast the ability. Handles resource consumption and cooldowns.
      * @returns {boolean} True if the cast was successful, false otherwise.
      */
     cast() {
-        throw new Error("Ability.cast() must be implemented by subclasses.");
+        if (!this.canCast()) return false;
+
+        const castSuccessful = this._executeCast();
+
+        if (castSuccessful) {
+            if (!this.caster.game.debugModeActive) {
+                this.caster.currentEnergy -= this.energyCost;
+                this.caster.lastAbilityTime = this.caster.world.time;
+                this.triggerCooldown();
+            }
+            console.log(`Casted ${this.name}.`);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -4877,18 +5095,11 @@ export class FireballAbility extends Ability {
 
     /**
      * @override
+     * @protected
      */
-    cast() {
-        if (this.canCast()) {
-            new Fireball(this.caster); // Creates the projectile
-            this.caster.currentEnergy -= this.energyCost;
-            this.caster.lastAbilityTime = this.caster.world.time; // For energy regen delay
-            this.triggerCooldown();
-            
-            console.log(`Casted ${this.name}. Energy: ${this.caster.currentEnergy}/${this.caster.maxEnergy}`);
-            return true;
-        }
-        return false;
+    _executeCast() {
+        new Fireball(this.caster); // Creates the projectile
+        return true;
     }
 }
 --------------------------------------------------
@@ -4909,43 +5120,35 @@ export class FirefliesAbility extends Ability {
             energyCost: 300, // 300 energy points to cast
         });
         this.numProjectiles = 5; // Number of fireflies to shoot
+        this.requiresLockOn = true; // This ability needs a locked target
     }
 
     /**
      * @override
-     * Executes the Fireflies ability.
+     * @protected
+     * Executes the Fireflies ability's core logic.
      * Launches multiple homing projectiles towards the enemy currently targeted by the player's crosshair.
      */
-    cast() {
-        if (this.canCast()) { // Check if ability is off cooldown and player has enough energy
-            // Use the pre-determined target from player's crosshair logic
-            const targetEnemy = this.caster.lockedTarget; 
+    _executeCast() {
+        // Use the pre-determined target from player's crosshair logic
+        const targetEnemy = this.caster.lockedTarget; 
 
-            if (!targetEnemy || targetEnemy.isDead) {
-                console.log("Fireflies: No valid enemy target found."); // Modified log message
-                // If no target, don't consume resources or trigger cooldown
-                return false; 
-            }
-
-            // Spawn the specified number of firefly projectiles, all targeting the same enemy
-            for (let i = 0; i < this.numProjectiles; i++) {
-                // Add a slight delay between projectiles for visual effect
-                setTimeout(() => {
-                    if (!this.caster.isDead) { // Ensure player is still alive before spawning
-                        new FireflyProjectile({ caster: this.caster, target: targetEnemy });
-                    }
-                }, i * 75); // 75ms delay between each projectile
-            }
-
-            // Consume energy and trigger the ability's cooldown
-            this.caster.currentEnergy -= this.energyCost;
-            this.caster.lastAbilityTime = this.caster.world.time; // Update last ability time for energy regen delay
-            this.triggerCooldown();
-            
-            console.log(`Casted ${this.name}. Energy: ${Math.floor(this.caster.currentEnergy)} / ${this.caster.maxEnergy}`);
-            return true;
+        if (!targetEnemy || targetEnemy.isDead) {
+            console.log("Fireflies: No valid enemy target found.");
+            return false; 
         }
-        return false;
+
+        // Spawn the specified number of firefly projectiles, all targeting the same enemy
+        for (let i = 0; i < this.numProjectiles; i++) {
+            // Add a slight delay between projectiles for visual effect
+            setTimeout(() => {
+                if (!this.caster.isDead) { // Ensure player is still alive before spawning
+                    new FireflyProjectile({ caster: this.caster, target: targetEnemy });
+                }
+            }, i * 75); // 75ms delay between each projectile
+        }
+
+        return true;
     }
 }
 --------------------------------------------------
@@ -4969,12 +5172,27 @@ export class FireflyProjectile {
 
         // --- Configuration ---
         this.damage = 100;
-        this.lifetime = 5.0;
+        this.lifetime = 6.0;
         this.speed = 18;
-        this.homingStrength = 2.5;
         this.isDead = false;
-        this.state = 'HOMING'; // State machine: 'HOMING', 'EXPLODING'
+        this.state = 'HOMING';
         this.preStepHandler = this.applyAntiGravity.bind(this);
+
+        // --- Steering & Avoidance (REWORKED) ---
+        this.homingForce = 4.0;
+        this.avoidanceForce = 25.0; // Increased force to react more sharply
+        this.avoidanceLookahead = 0.6;
+
+        // --- Multi-Feeler Obstacle Avoidance ---
+        this.feelers = [
+            // Primary forward feeler
+            { direction: new CANNON.Vec3(0, 0, 1), strength: 1.0 },
+            // Side feelers to detect corners
+            { direction: new CANNON.Vec3(0.6, 0, 0.8), strength: 0.7 }, // Right 37 deg
+            { direction: new CANNON.Vec3(-0.6, 0, 0.8), strength: 0.7 }, // Left 37 deg
+            // Vertical feelers to handle ledges
+            { direction: new CANNON.Vec3(0, 0.5, 0.866), strength: 0.6 }, // Up 30 deg
+        ];
 
         // --- Explosion parameters ---
         this.explosionRadius = 2.5;
@@ -4982,14 +5200,15 @@ export class FireflyProjectile {
         this.explosionDuration = 0.5;
         this.explosionTimer = 0;
         
-        // --- PERFORMANCE: Reusable objects for AOE and Homing ---
-        this._aoeExplosionCenter = new THREE.Vector3();
-        this._aoeEnemyPosition = new THREE.Vector3();
+        // --- PERFORMANCE: Reusable objects ---
         this._homingTargetBasePos = new CANNON.Vec3();
         this._homingEffectiveTargetPos = new CANNON.Vec3();
-        this._homingDirectionToTarget = new CANNON.Vec3();
-        this._homingDesiredVelocity = new CANNON.Vec3();
-        this._homingSteeringForce = new CANNON.Vec3();
+        this._steeringVector = new CANNON.Vec3();
+        this._desiredVelocity = new CANNON.Vec3();
+        this._raycastResult = new CANNON.RaycastResult();
+        this._tempObject3D = new THREE.Object3D();
+        this._aoeExplosionCenter = new THREE.Vector3();
+        this._aoeEnemyPosition = new THREE.Vector3();
 
         // --- Trajectory variation parameters ---
         this.wobblePhase = Math.random() * Math.PI * 2;
@@ -5021,7 +5240,7 @@ export class FireflyProjectile {
             collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY,
             type: CANNON.Body.DYNAMIC,
-            linearDamping: 0,
+            linearDamping: 0.1,
             angularDamping: 0,
         });
         this.body.allowSleep = false;
@@ -5070,36 +5289,12 @@ export class FireflyProjectile {
                     return;
                 }
                 this.wobblePhase += deltaTime * this.wobbleFrequency;
-                if (this.target && this.target.body && !this.target.isDead) {
-                    this._homingTargetBasePos.copy(this.target.body.position);
-                    this._homingTargetBasePos.vadd(this.targetPointOffset, this._homingEffectiveTargetPos);
+                
+                this.applySteering();
+                this.orientToVelocity(deltaTime);
 
-                    const currentWobbleX = Math.sin(this.wobblePhase) * this.wobbleAmplitude;
-                    const currentWobbleZ = Math.cos(this.wobblePhase) * this.wobbleAmplitude;
-                    this._homingEffectiveTargetPos.x += currentWobbleX;
-                    this._homingEffectiveTargetPos.z += currentWobbleZ;
-
-                    const distanceToEffectiveTarget = this.body.position.distanceTo(this._homingEffectiveTargetPos);
-                    if (distanceToEffectiveTarget <= this.explosionRadius) {
-                        this.detonate();
-                        return;
-                    }
-                    
-                    this._homingEffectiveTargetPos.vsub(this.body.position, this._homingDirectionToTarget);
-                    this._homingDirectionToTarget.normalize();
-                    this._homingDirectionToTarget.scale(this.speed, this._homingDesiredVelocity);
-
-                    this._homingDesiredVelocity.vsub(this.body.velocity, this._homingSteeringForce);
-                    this._homingSteeringForce.scale(this.homingStrength * deltaTime, this._homingSteeringForce);
-                    this.body.velocity.vadd(this._homingSteeringForce, this.body.velocity);
-
-                    if (this.body.velocity.length() > this.speed) {
-                        this.body.velocity.normalize();
-                        this.body.velocity.scale(this.speed, this.body.velocity);
-                    }
-                }
                 this.mesh.position.copy(this.body.position);
-                this.mesh.quaternion.copy(this.body.quaternion);
+                // Orientation is now handled by orientToVelocity, no need to copy quaternion
                 break;
 
             case 'EXPLODING':
@@ -5110,6 +5305,103 @@ export class FireflyProjectile {
                 }
                 break;
         }
+    }
+
+    applySteering() {
+        const avoidanceSteer = this.calculateAvoidanceVector();
+        
+        if (avoidanceSteer.lengthSquared() > 0) {
+            this._steeringVector.copy(avoidanceSteer);
+        } else {
+            const homingSteer = this.calculateHomingVector();
+            this._steeringVector.copy(homingSteer);
+        }
+
+        this.body.applyForce(this._steeringVector, this.body.position);
+        
+        if (this.body.velocity.length() > this.speed) {
+            this.body.velocity.normalize();
+            this.body.velocity.scale(this.speed, this.body.velocity);
+        }
+    }
+
+    calculateAvoidanceVector() {
+        const totalAvoidanceForce = new CANNON.Vec3();
+
+        // Use the projectile's actual orientation for feeler directions
+        const orientation = this.body.quaternion;
+
+        for (const feeler of this.feelers) {
+            // Transform the local feeler direction into world space
+            const worldFeelerDir = orientation.vmult(feeler.direction);
+            
+            const rayFrom = this.body.position;
+            const lookaheadDistance = this.avoidanceLookahead * this.speed * feeler.strength;
+            const rayTo = rayFrom.clone().vadd(worldFeelerDir.scale(lookaheadDistance));
+            
+            this._raycastResult.reset();
+            this.world.raycastClosest(
+                rayFrom, rayTo,
+                { collisionFilterMask: COLLISION_GROUPS.WORLD }, this._raycastResult
+            );
+            
+            if (this._raycastResult.hasHit) {
+                const hitNormal = this._raycastResult.hitNormalWorld;
+                const distanceToHit = this._raycastResult.distance;
+                
+                // The avoidance force is stronger for closer obstacles
+                const forceMagnitude = this.avoidanceForce * (1.0 - (distanceToHit / lookaheadDistance));
+
+                const avoidanceForce = hitNormal.scale(forceMagnitude);
+                totalAvoidanceForce.vadd(avoidanceForce, totalAvoidanceForce);
+            }
+        }
+        
+        return totalAvoidanceForce;
+    }
+
+    calculateHomingVector() {
+        const homing = new CANNON.Vec3();
+        if (!this.target || !this.target.body || this.target.isDead) return homing;
+
+        this._homingTargetBasePos.copy(this.target.body.position);
+        this._homingTargetBasePos.vadd(this.targetPointOffset, this._homingEffectiveTargetPos);
+        const currentWobbleX = Math.sin(this.wobblePhase) * this.wobbleAmplitude;
+        const currentWobbleZ = Math.cos(this.wobblePhase) * this.wobbleAmplitude;
+        this._homingEffectiveTargetPos.x += currentWobbleX;
+        this._homingEffectiveTargetPos.z += currentWobbleZ;
+
+        this._homingEffectiveTargetPos.vsub(this.body.position, this._desiredVelocity);
+
+        if (this._desiredVelocity.lengthSquared() < (this.explosionRadius * this.explosionRadius)) {
+            this.detonate();
+            return homing;
+        }
+
+        this._desiredVelocity.normalize();
+        this._desiredVelocity.scale(this.speed, this._desiredVelocity);
+
+        this._desiredVelocity.vsub(this.body.velocity, homing);
+
+        if (homing.lengthSquared() > this.homingForce * this.homingForce) {
+            homing.normalize();
+            homing.scale(this.homingForce, homing);
+        }
+        
+        return homing;
+    }
+
+    orientToVelocity(deltaTime) {
+        if (this.body.velocity.lengthSquared() > 0.1) {
+            const lookAtTarget = new CANNON.Vec3();
+            this.body.position.vadd(this.body.velocity, lookAtTarget);
+            
+            this._tempObject3D.position.copy(this.body.position);
+            this._tempObject3D.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+            
+            this.body.quaternion.slerp(this._tempObject3D.quaternion, 15 * deltaTime, this.body.quaternion);
+        }
+        this.mesh.quaternion.copy(this.body.quaternion);
     }
 
     detonate() {
@@ -5398,7 +5690,11 @@ export class Enemy {
     die(isEditorClear = false) {
         if (this.isDead) return;
         this.isDead = true;
-
+    
+        if (!isEditorClear) {
+            this.game.onEnemyKilled();
+        }
+    
         if (this.healthBar) {
             this.healthBar.setVisible(false);
             this.healthBar.dispose();
@@ -5411,10 +5707,10 @@ export class Enemy {
             this.mesh.geometry.dispose();
             this.mesh.material.dispose();
         }
-
+    
         const enemyIndex = this.game.enemies.indexOf(this);
-        if (enemyIndex > -1 && !isEditorClear) {
-             this.game.enemies.splice(enemyIndex, 1);
+        if (enemyIndex > -1) {
+            this.game.enemies.splice(enemyIndex, 1);
         }
         
         const updatableIndex = this.game.updatables.indexOf(this);
@@ -5732,6 +6028,7 @@ export class Player {
         this._losRayTo = new CANNON.Vec3();
         this._forward = new THREE.Vector3();
         this._right = new THREE.Vector3();
+        this._raycastResult = new CANNON.RaycastResult();
 
         // --- Weapon & Ability Systems ---
         this.weapon = new Katana(this);
@@ -5875,7 +6172,7 @@ export class Player {
     }
 
     takeDamage(amount) {
-        if (this.isDead) return;
+        if (this.isDead || this.game.debugModeActive) return;
         this.currentHealth -= amount;
         this.triggerVFX(this.vfx.damage);
         if (this.currentHealth <= 0) {
@@ -6040,23 +6337,34 @@ export class Player {
 
         for (const enemy of this.game.enemies) { 
             if (enemy.isDead || !enemy.body || !enemy.mesh) continue;
+            
             this._enemyPos.copy(enemy.body.position);
-            const enemyHeight = enemy.mesh.geometry?.parameters?.height || 2;
-            this._enemyPos.y += enemyHeight / 2;
+            this._enemyPos.y += 1.0; // Aim for the center of the body mass
+
             const distanceToEnemy = this._targetRayOrigin.distanceTo(this._enemyPos);
             if (distanceToEnemy > this.maxTargetingRange) continue;
+            
             this._oToP.subVectors(this._enemyPos, this._targetRayOrigin).normalize();
             const dotProduct = this._oToP.dot(this._targetRayDirection);
+            if (dotProduct < 0) continue; // Enemy is behind the player
+
             const angle = Math.acos(Math.min(1, Math.max(-1, dotProduct)));
             const angularDeviation = Math.tan(angle);
+
             if (angularDeviation < this.maxAngularDeviation) {
                 this._losRayFrom.copy(this._targetRayOrigin);
                 this._losRayTo.copy(this._enemyPos);
-                const hasLineOfSight = !this.world.raycastClosest(
-                    this._losRayFrom, this._losRayTo, { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true }
+                
+                this._raycastResult.reset();
+                this.world.raycastClosest(
+                    this._losRayFrom, this._losRayTo, 
+                    { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true }, 
+                    this._raycastResult
                 );
-                if (hasLineOfSight) {
-                    const score = (angularDeviation * angularDeviation * 100) + distanceToEnemy; 
+
+                if (!this._raycastResult.hasHit) {
+                    // New scoring: prioritize angle, then distance (normalized)
+                    const score = angularDeviation + (distanceToEnemy / this.maxTargetingRange);
                     if (score < minScore) {
                         minScore = score;
                         bestEnemy = enemy;
@@ -6088,24 +6396,20 @@ export class Player {
         this.handleMovementCooldowns(deltaTime);
         this.handleEnergyRegen(deltaTime);
         this.handleMovement(deltaTime);
-        this.updateTargetingLogic();
+        
+        const currentAbility = this.abilities[this.selectedAbilityIndex];
+        if (currentAbility?.requiresLockOn) {
+            this.updateTargetingLogic();
+        } else {
+            this.lockedTarget = null;
+        }
+
         this.weapon.update(deltaTime);
         this.updateVFX(deltaTime);
 
         for (let i = 0; i < this.abilities.length; i++) {
             const ability = this.abilities[i];
             if (ability) { ability.update(deltaTime); }
-            // ADDED: Update ability slot appearance based on selection
-            if (this.game.hud) { // Ensure HUD is initialized
-                const slotUI = this.game.hud.abilitySlots[i];
-                if (slotUI) {
-                    if (i === this.selectedAbilityIndex) {
-                        slotUI.element.classList.add('selected');
-                    } else {
-                        slotUI.element.classList.remove('selected');
-                    }
-                }
-            }
         }
 
         for (let i = 1; i <= 4; i++) {
@@ -6310,6 +6614,9 @@ export class HUD {
         this.targetHealthBarElement = document.getElementById('target-health-bar');
         this.targetHealthTextElement = document.getElementById('target-health-text');
         
+        // Enemy Counter
+        this.enemyCounterElement = document.getElementById('enemy-counter');
+        
         // 2D Target Frame Element
         this.targetFrameElement = document.getElementById('target-frame');
         this.targetVector = new THREE.Vector3(); // Re-use vector to avoid GC churn
@@ -6318,8 +6625,11 @@ export class HUD {
         this.tutorialTextContainer = document.getElementById('tutorial-text-container');
         this.tutorialTextElement = document.getElementById('tutorial-text');
         this.tutorialTimer = null;
+        
+        // Crosshair
+        this.crosshairElement = document.getElementById('crosshair');
 
-        if (!this.healthBarElement || !this.energyBarElement || !this.abilitySlots[3].element || !this.targetInfoElement || !this.targetFrameElement || !this.tutorialTextContainer) {
+        if (!this.healthBarElement || !this.energyBarElement || !this.abilitySlots[3].element || !this.targetInfoElement || !this.targetFrameElement || !this.tutorialTextContainer || !this.enemyCounterElement || !this.crosshairElement) {
             console.error("Required HUD elements not found in the DOM!");
         }
     }
@@ -6334,6 +6644,7 @@ export class HUD {
 
     showTutorialText(message, duration) {
         if (this.tutorialTimer) clearTimeout(this.tutorialTimer);
+        this.tutorialTextContainer.classList.remove('level-complete');
 
         this.tutorialTextElement.innerHTML = message; // Use innerHTML to support kbd tags if needed
         this.tutorialTextContainer.style.opacity = '1';
@@ -6343,13 +6654,32 @@ export class HUD {
             this.hideTutorialText();
         }, duration * 1000);
     }
+    
+    showLevelCompleted() {
+        if (this.tutorialTimer) clearTimeout(this.tutorialTimer);
+        this.tutorialTextElement.textContent = 'LEVEL COMPLETE';
+        this.tutorialTextContainer.classList.add('level-complete');
+        this.tutorialTextContainer.style.opacity = '1';
+        this.tutorialTextContainer.style.display = 'block';
+    }
 
     hideTutorialText() {
         this.tutorialTextContainer.style.opacity = '0';
-        // Use a timeout to hide the element after the transition ends
         setTimeout(() => {
-            this.tutorialTextContainer.style.display = 'none';
+            // Only hide if it's not the permanent level complete message
+            if (!this.tutorialTextContainer.classList.contains('level-complete')) {
+                 this.tutorialTextContainer.style.display = 'none';
+            }
         }, 500); // Must match the CSS transition duration
+    }
+
+    updateEnemyCount(killed, total) {
+        if (total > 0) {
+            this.enemyCounterElement.style.display = 'block';
+            this.enemyCounterElement.textContent = `Enemies: ${killed} / ${total}`;
+        } else {
+            this.enemyCounterElement.style.display = 'none';
+        }
     }
 
     updateResourceBars() {
@@ -6400,11 +6730,16 @@ export class HUD {
         }
     }
 
-    // REWORKED: Function to update target info panel and 2D frame
     updateTargetInfo() {
+        const currentAbility = this.player.abilities[this.player.selectedAbilityIndex];
+        const isLockOnMode = currentAbility?.requiresLockOn;
         const target = this.player.lockedTarget;
 
-        if (target && !target.isDead) {
+        // Hide crosshair if in lock-on mode, show otherwise
+        this.crosshairElement.style.display = isLockOnMode ? 'none' : 'block';
+
+        // Show target frame and info only if in lock-on mode AND a target is acquired
+        if (isLockOnMode && target && !target.isDead) {
             // --- Update Target Info Panel ---
             this.targetInfoElement.style.display = 'flex';
             this.targetNameElement.textContent = target.name || 'Enemy';
@@ -6423,14 +6758,11 @@ export class HUD {
 
             // --- Update 2D Target Frame ---
             const targetPosition = this.targetVector.copy(target.body.position);
-            // Aim for the center of the enemy's mesh
             const enemyHeight = target.mesh.geometry?.parameters?.height || 2;
             targetPosition.y += enemyHeight / 2;
             
-            // Project 3D world space to 2D screen space
             targetPosition.project(this.game.renderer.camera);
             
-            // Check if target is in front of the camera
             if (targetPosition.z < 1) {
                 const x = (targetPosition.x * 0.5 + 0.5) * window.innerWidth;
                 const y = (targetPosition.y * -0.5 + 0.5) * window.innerHeight;
@@ -6439,7 +6771,6 @@ export class HUD {
                 this.targetFrameElement.style.left = `${x}px`;
                 this.targetFrameElement.style.top = `${y}px`;
 
-                // Scale the frame based on distance from camera
                 const distance = this.player.camera.position.distanceTo(target.body.position);
                 const frameSize = Math.max(30, Math.min(150, 4000 / distance)); // Clamp size
                 this.targetFrameElement.style.width = `${frameSize}px`;
@@ -6448,7 +6779,7 @@ export class HUD {
                 this.targetFrameElement.style.display = 'none';
             }
         } else {
-            // Hide all target info if no target or target is dead
+            // Hide all target info if not in lock-on mode or no target
             this.targetInfoElement.style.display = 'none';
             this.targetFrameElement.style.display = 'none';
         }
@@ -6456,6 +6787,100 @@ export class HUD {
 }
 --------------------------------------------------
 === END OF FILE: src/game/ui/HUD.js ===
+
+
+=== FILE: src/game/ui/Minimap.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+export class Minimap {
+    constructor() {
+        this.canvas = document.getElementById('minimap-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.size = this.canvas.width;
+        this.worldScale = 30.0; // How many world units fit into the map's radius
+
+        // Colors
+        this.bgColor = 'rgba(10, 10, 10, 0.7)';
+        this.borderColor = 'rgba(255, 255, 255, 0.3)';
+        this.playerColor = '#2ed573';
+        this.enemyColor = '#ff4757';
+        
+        this.playerForward = new THREE.Vector3();
+    }
+
+    update(player, enemies) {
+        if (!player || player.isDead || !this.ctx) {
+            this.ctx?.clearRect(0, 0, this.size, this.size);
+            return;
+        };
+
+        const playerPos = player.body.position;
+        player.camera.getWorldDirection(this.playerForward);
+
+        // --- Clear and draw background ---
+        this.ctx.clearRect(0, 0, this.size, this.size);
+        this.ctx.fillStyle = this.bgColor;
+        this.ctx.beginPath();
+        this.ctx.arc(this.size / 2, this.size / 2, this.size / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // --- World to map scale ---
+        const mapRadius = this.size / 2;
+        const scale = mapRadius / this.worldScale;
+
+        // --- Draw Enemies ---
+        this.ctx.fillStyle = this.enemyColor;
+        for (const enemy of enemies) {
+            if (enemy.isDead) continue;
+
+            const dx = enemy.body.position.x - playerPos.x;
+            const dz = enemy.body.position.z - playerPos.z;
+
+            // Rotate enemy position around player to align with map orientation (player always faces up)
+            const angleToPlayerForward = Math.atan2(this.playerForward.x, this.playerForward.z);
+            const rotatedX = dx * Math.cos(angleToPlayerForward) - dz * Math.sin(angleToPlayerForward);
+            const rotatedZ = dx * Math.sin(angleToPlayerForward) + dz * Math.cos(angleToPlayerForward);
+
+            // Convert to map coordinates
+            const mapX = (this.size / 2) + rotatedX * scale;
+            const mapY = (this.size / 2) - rotatedZ * scale; // Y is inverted in canvas
+
+            // Draw if within map radius
+            const distFromCenter = Math.sqrt(Math.pow(mapX - mapRadius, 2) + Math.pow(mapY - mapRadius, 2));
+            if (distFromCenter < mapRadius - 5) { // -5 to keep dots from touching edge
+                 this.ctx.beginPath();
+                 this.ctx.arc(mapX, mapY, 4, 0, Math.PI * 2);
+                 this.ctx.fill();
+            }
+        }
+
+        // --- Draw Player ---
+        this.ctx.save();
+        this.ctx.translate(this.size / 2, this.size / 2);
+        this.ctx.fillStyle = this.playerColor;
+        this.ctx.strokeStyle = '#FFFFFF';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -8); // Tip of triangle
+        this.ctx.lineTo(6, 6);  // Bottom right
+        this.ctx.lineTo(-6, 6); // Bottom left
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+        this.ctx.restore();
+
+
+        // --- Draw border ---
+        this.ctx.strokeStyle = this.borderColor;
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.arc(this.size / 2, this.size / 2, mapRadius - 2, 0, Math.PI * 2);
+        this.ctx.stroke();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/ui/Minimap.js ===
 
 
 === FILE: src/game/ui/TutorialManager.js ===
@@ -6769,8 +7194,12 @@ export class Katana extends Weapon {
                 
                 // cos(50 degrees) ~= 0.64, a generous frontal cone for the swing
                 if (dot > 0.64) { 
-                    enemy.takeDamage(this.damage);
-                    // The 'break;' statement was removed to allow hitting multiple enemies.
+                    let finalDamage = this.damage;
+                    // Check if player is currently in the ground slam state
+                    if (this.wielder.isSlamming) {
+                        finalDamage *= 2;
+                    }
+                    enemy.takeDamage(finalDamage);
                 }
             }
         }

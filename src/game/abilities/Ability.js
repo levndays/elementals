@@ -14,17 +14,42 @@ export class Ability {
      * @returns {boolean}
      */
     canCast() {
+        if (this.caster.game.debugModeActive) return true; // Debug mode bypasses checks
+
         const isReady = this.cooldownTimer >= this.cooldown;
         const hasEnergy = this.caster.currentEnergy >= this.energyCost;
         return isReady && hasEnergy;
     }
 
     /**
-     * Executes the ability's logic. MUST be overridden by subclasses.
+     * Executes the ability's core logic. To be implemented by subclasses.
+     * @returns {boolean} True if the cast logic was successful, false otherwise.
+     * @protected
+     */
+    _executeCast() {
+        throw new Error("Ability._executeCast() must be implemented by subclasses.");
+    }
+    
+    /**
+     * Public-facing method to cast the ability. Handles resource consumption and cooldowns.
      * @returns {boolean} True if the cast was successful, false otherwise.
      */
     cast() {
-        throw new Error("Ability.cast() must be implemented by subclasses.");
+        if (!this.canCast()) return false;
+
+        const castSuccessful = this._executeCast();
+
+        if (castSuccessful) {
+            if (!this.caster.game.debugModeActive) {
+                this.caster.currentEnergy -= this.energyCost;
+                this.caster.lastAbilityTime = this.caster.world.time;
+                this.triggerCooldown();
+            }
+            console.log(`Casted ${this.name}.`);
+            return true;
+        }
+
+        return false;
     }
 
     /**
