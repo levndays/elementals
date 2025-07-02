@@ -1,0 +1,101 @@
+<!-- loadout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELEMENTALS - Loadout</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/loadout.css">
+    <link rel="icon" href="data:,">
+</head>
+<body class="loadout-page">
+
+    <div id="loadout-screen">
+
+        <header id="loadout-header">
+            <div id="loadout-manager" class="header-section">
+                <select id="loadout-select-dropdown"></select>
+                <input type="text" id="loadout-name-input" placeholder="New Loadout Name...">
+                <button id="save-loadout-btn">Save</button>
+            </div>
+            <h1 class="loadout-title">LOADOUT</h1>
+            <div id="nav-controls" class="header-section">
+                <button id="back-to-menu-btn">Main Menu</button>
+                <button id="play-game-btn" class="play-button" disabled>Play</button>
+            </div>
+        </header>
+
+        <main id="loadout-main-content">
+            <!-- Left Panel: Player & Equipped -->
+            <div id="player-panel">
+                 <div id="player-preview-container">
+                    <canvas id="player-preview-canvas"></canvas>
+                 </div>
+                 <div id="equipped-slots-container">
+                    <div class="equipped-slot" data-slot-index="0" data-slot-type="ability" title="Ability Slot 1"></div>
+                    <div class="equipped-slot" data-slot-index="1" data-slot-type="ability" title="Ability Slot 2"></div>
+                    <div class="equipped-slot" data-slot-index="2" data-slot-type="ability" title="Ability Slot 3"></div>
+                    <div class="equipped-slot" data-slot-index="3" data-slot-type="ability" title="Ability Slot 4"></div>
+                    <div class="slot-separator">+</div>
+                    <div class="equipped-slot weapon-slot" data-slot-type="weapon" title="Primary Weapon">
+                        <!-- This container will be populated by LoadoutUI.js -->
+                    </div>
+                </div>
+                <div id="synergy-display">
+                    <h3 id="synergy-name"></h3>
+                    <p id="synergy-description"></p>
+                </div>
+            </div>
+
+            <!-- Right Panel: Inventory & Details -->
+            <div id="inventory-panel">
+                <div class="panel-header">
+                    <h2>INVENTORY</h2>
+                </div>
+                <div id="inventory-grid">
+                    <!-- Dynamically populated inventory slots -->
+                </div>
+                <div id="card-details-panel">
+                    <div id="details-view-2d">
+                        <div id="details-content">
+                            <h3 id="details-name">SELECT A CARD</h3>
+                            <p id="details-element-tier">Click a card to see its details.</p>
+                            <div id="details-stats">
+                                <span id="details-cost"></span>
+                                <span id="details-cooldown"></span>
+                            </div>
+                            <hr>
+                            <p id="details-description"></p>
+                            <p id="details-flavor-text"></p>
+                        </div>
+                        <div id="details-footer">
+                            <button id="inspect-card-btn" disabled>Inspect</button>
+                        </div>
+                    </div>
+                    <!-- The 3D view is now a modal -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Inspector Modal -->
+    <div id="inspector-modal" class="inspector-modal-overlay">
+        <div class="inspector-modal-content">
+            <button id="inspector-modal-close-btn" class="inspector-modal-close">×</button>
+            <canvas id="inspection-canvas"></canvas>
+        </div>
+    </div>
+    
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="src/client/ui/loadout_main.js"></script>
+
+</body>
+</html>

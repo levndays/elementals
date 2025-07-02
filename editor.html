@@ -4,110 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elementals - Level Editor</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/editor.css">
     <link rel="icon" href="data:,">
 </head>
 <body>
-    <canvas id="game-canvas"></canvas>
-    
-    <div id="editor-ui">
-        <!-- TOP TOOLBAR -->
+    <div id="editor-container">
+        <!-- TOP MENU BAR -->
+        <div id="editor-menu-bar">
+            <details class="menu-dropdown">
+                <summary>File</summary>
+                <div class="menu-content">
+                    <button id="menu-file-new">New Level</button>
+                    <button id="menu-file-open">Open...</button>
+                    <input type="file" id="editor-file-input" accept=".json" style="display: none;">
+                    <button id="menu-file-save">Save</button>
+                    <hr>
+                    <button id="menu-file-play">Play Level (Debug)</button>
+                    <hr>
+                    <button id="menu-file-exit">Exit to Main Menu</button>
+                </div>
+            </details>
+            <details class="menu-dropdown">
+                <summary>Edit</summary>
+                <div class="menu-content">
+                    <button id="menu-edit-undo" disabled>Undo (Ctrl+Z)</button>
+                    <button id="menu-edit-redo" disabled>Redo (Ctrl+Y)</button>
+                    <hr>
+                    <button id="menu-edit-copy" disabled>Copy (Ctrl+C)</button>
+                    <button id="menu-edit-paste">Paste (Ctrl+V)</button>
+                    <button id="menu-edit-delete" disabled>Delete (Del)</button>
+                </div>
+            </details>
+            <details class="menu-dropdown">
+                <summary>View</summary>
+                <div class="menu-content checkbox-menu">
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-grid" checked><label for="view-toggle-grid">Grid</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-light-helpers" checked><label for="view-toggle-light-helpers">Light Helpers</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-spawn-helpers" checked><label for="view-toggle-spawn-helpers">Spawn Helpers</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-msg-triggers" checked><label for="view-toggle-msg-triggers">Message Triggers</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-death-triggers" checked><label for="view-toggle-death-triggers">Death Zones</label></div>
+                </div>
+            </details>
+             <details class="menu-dropdown">
+                <summary>Help</summary>
+                <div class="menu-content">
+                    <button id="menu-help-metrics">Player Metrics Info</button>
+                </div>
+            </details>
+        </div>
+
+        <!-- TOOLBAR -->
         <div id="editor-toolbar">
             <div class="toolbar-group">
-                <button id="editor-new-btn" title="New Level">New</button>
-                <button id="editor-load-btn" title="Load Level (.json)">Load</button>
-                <input type="file" id="editor-file-input" accept=".json" style="display: none;">
-                <button id="editor-save-btn" title="Save Level (.json)">Save</button>
-                <button id="editor-info-btn" title="Player Metrics Info">Info</button>
-                <button id="editor-play-debug-btn" title="Play current level in debug mode">Play Debug</button>
-                <button id="editor-back-to-menu">Back to Menu</button>
+                <button id="tool-translate" class="active" title="Translate (T)">T</button>
+                <button id="tool-rotate" title="Rotate (R)">R</button>
+                <button id="tool-scale" title="Scale (S)">S</button>
             </div>
             <div class="separator"></div>
             <div class="toolbar-group">
-                <button id="editor-mode-translate" class="active" title="Translate (T)">T</button>
-                <button id="editor-mode-rotate" title="Rotate (R)">R</button>
-                <button id="editor-mode-scale" title="Scale (S)">S</button>
+                 <button id="tool-space" title="Toggle Space (Q)">World</button>
+            </div>
+            <div class="separator"></div>
+            <div class="toolbar-group snap-group">
+                 <input type="checkbox" id="snap-toggle" title="Enable Snapping">
+                 <label for="snap-toggle">Enable Snapping</label>
+                 <input type="number" id="snap-translation-input" step="0.25" value="1" title="Grid Snap (m)">
+                 <input type="number" id="snap-rotation-input" step="5" value="15" title="Angle Snap (°)">
             </div>
         </div>
 
-        <!-- MAIN SCROLLABLE PANEL -->
-        <div id="editor-main-panel">
-            <!-- SCENE SETTINGS -->
-            <details class="editor-accordion" open>
-                <summary>Scene</summary>
-                <div class="accordion-content">
-                    <label>Skybox Color</label>
-                    <input type="color" id="skybox-color-input">
-                    <hr>
-                    <h4>Ambient Light</h4>
-                    <label>Color</label>
-                    <input type="color" id="ambient-color-input">
-                    <label>Intensity</label>
-                    <input type="range" id="ambient-intensity-input" min="0" max="5" step="0.1">
-                </div>
-            </details>
+        <!-- OUTLINER PANEL (Left) -->
+        <div id="editor-outliner" class="side-panel">
+            <div class="panel-header">OUTLINER</div>
+            <div class="panel-content" id="outliner-content">
+                <!-- Dynamically populated tree view -->
+            </div>
+        </div>
 
-            <!-- CREATE -->
-            <details class="editor-accordion" open>
-                <summary>Create</summary>
-                <div class="accordion-content">
-                    <h4>Geometry & Actors</h4>
-                    <button id="editor-add-box">Add Box</button>
-                    <button id="editor-add-enemy">Add Enemy</button>
-                    <button id="add-dirlight-btn">Add Directional Light</button>
-                    <h4>Volumes & Triggers</h4>
-                    <button id="editor-add-msg-trigger">Add Message Trigger</button>
-                    <button id="editor-add-death-trigger">Add Death Zone</button>
-                    <hr>
-                    <h4>Scene Points</h4>
-                    <button id="editor-set-spawn">Set Initial Spawn to Camera</button>
-                    <button id="editor-set-death-spawn">Set Death Spawn to Camera</button>
+        <!-- VIEWPORT (Center) -->
+        <div id="editor-viewport">
+            <canvas id="game-canvas"></canvas>
+            <!-- REWORKED: Single create button and context menu -->
+            <div id="create-button-container">
+                <button id="create-button" title="Create Object">+</button>
+                <div id="create-context-menu" class="context-menu" style="display: none;">
+                    <div class="context-menu-section">Primitives</div>
+                    <button data-action="addBox">Box</button>
+                    <div class="context-menu-section">Lights</div>
+                    <button data-action="addDirectionalLight">Directional Light</button>
+                    <div class="context-menu-section">Actors</div>
+                    <button data-action="addEnemy">Enemy</button>
+                    <div class="context-menu-section">Volumes</div>
+                    <button data-action="addMessageTrigger">Message Trigger</button>
+                    <button data-action="addDeathTrigger">Death Zone</button>
+                    <div class="context-menu-section">Scene Points</div>
+                    <button data-action="setSpawnPointToCamera">Set Initial Spawn</button>
+                    <button data-action="setDeathSpawnPointToCamera">Set Death Spawn</button>
                 </div>
-            </details>
-            
-            <!-- VIEW OPTIONS -->
-            <details class="editor-accordion">
-                <summary>View Options</summary>
-                <div class="accordion-content">
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="view-toggle-msg-triggers" checked>
-                        <label for="view-toggle-msg-triggers">Message Triggers</label>
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="view-toggle-death-triggers" checked>
-                        <label for="view-toggle-death-triggers">Death Zones</label>
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="view-toggle-light-helpers" checked>
-                        <label for="view-toggle-light-helpers">Light Helpers</label>
-                    </div>
-                     <div class="checkbox-row">
-                        <input type="checkbox" id="view-toggle-spawn-helpers" checked>
-                        <label for="view-toggle-spawn-helpers">Spawn Helpers</label>
-                    </div>
-                </div>
-            </details>
+            </div>
+        </div>
 
-            <!-- OUTLINER -->
-            <details class="editor-accordion" open>
-                <summary>Outliner</summary>
-                <div class="accordion-content" id="outliner-list">
-                    <!-- Dynamically populated -->
-                </div>
-            </details>
+        <!-- INSPECTOR PANEL (Right) -->
+        <div id="editor-inspector" class="side-panel">
+            <div class="panel-header">INSPECTOR</div>
+            <div class="panel-content" id="inspector-content">
+                <!-- Dynamically populated properties -->
+                <div class="placeholder-text">Select an object to view its properties.</div>
+            </div>
+        </div>
+        
+        <!-- ASSET BROWSER (Bottom) - REMOVED for new Create button -->
+        <div id="editor-asset-browser" style="display: none;"></div>
 
-            <!-- PROPERTIES -->
-            <details class="editor-accordion" id="properties-accordion" style="display: none;">
-                <summary>Properties</summary>
-                <div class="accordion-content" id="properties-content">
-                    <!-- Dynamically populated based on selection -->
-                </div>
-                <button id="editor-delete-btn" class="delete-button">Delete Selected</button>
-            </details>
+        <!-- STATUS BAR (Bottom Edge) -->
+        <div id="editor-status-bar">
+            <span id="status-message">Ready.</span>
         </div>
     </div>
 
-    <!-- INFO MODAL -->
+    <!-- INFO MODAL (Unchanged) -->
     <div id="editor-info-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <span class="modal-close-btn">×</span>
@@ -115,7 +131,6 @@
             <pre id="info-modal-text"></pre>
         </div>
     </div>
-
 
     <script type="importmap">
     {
@@ -127,6 +142,6 @@
     }
     </script>
     
-    <script type="module" src="src/editor_main.js"></script>
+    <script type="module" src="src/editor/editor_main.js"></script>
 </body>
 </html>

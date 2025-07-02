@@ -1,0 +1,22 @@
+{
+  "inventory": [
+    "WEAPON_001",
+    "FIRE_001",
+    "FIRE_002",
+    "EARTH_001",
+    "WATER_001"
+  ],
+  "savedLoadouts": {
+    "My First Build": {
+      "name": "My First Build",
+      "weapon": "WEAPON_001",
+      "cards": [
+        "FIRE_001",
+        "FIRE_002",
+        "EARTH_001",
+        "WATER_001"
+      ]
+    }
+  },
+  "activeLoadoutName": "My First Build"
+}

@@ -3,7 +3,7 @@ import datetime
 
 # --- Configuration ---
 DEFAULT_PROJECT_ROOT = os.getcwd()
-DEFAULT_OUTPUT_FILE = "project_snapshot_py.txt"
+DEFAULT_OUTPUT_FILE = "project_code_new.txt"
 
 # --- Folders and files to COMPLETELY EXCLUDE ---
 EXCLUDED_FOLDERS_AND_FILES = [

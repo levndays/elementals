@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELEMENTALS</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/game.css">
     <link rel="icon" href="data:,">
 </head>
-<body>
+<body class="">
     <!-- Menu System (wrapper) -->
     <div id="menu-system">
         <!-- Main Menu -->
@@ -15,7 +17,7 @@
             <h1>ELEMENTALS</h1>
             <div class="menu-options">
                 <button id="play-btn">Play</button>
-                <button id="tutorial-btn">How to Play</button>
+                <button id="loadout-btn">Loadout</button>
                 <button id="editor-btn">Level Editor</button>
             </div>
         </div>
@@ -49,64 +51,86 @@
         </div>
     </div>
 
-
     <!-- In-Game UI & VFX -->
-    <div id="screen-overlay"></div>
-    <div id="vfx-dash-forward"></div>
-    <div id="vfx-dash-sideways"></div>
-    <div id="vfx-jump-wind"></div>
-    <div id="vfx-ground-slam"></div>
+    <div id="screen-overlay" class="vfx-overlay"></div>
+    <div id="vfx-dash-forward" class="vfx-overlay"></div>
+    <div id="vfx-dash-sideways" class="vfx-overlay"></div>
+    <div id="vfx-jump-wind" class="vfx-overlay"></div>
+    <div id="vfx-ground-slam" class="vfx-overlay"></div>
+    <div id="vfx-earth-buff" class="vfx-overlay"></div>
     <div id="target-frame"></div>
     <div id="tutorial-text-container" style="display: none;">
         <p id="tutorial-text"></p>
     </div>
-    <div id="crosshair"></div>
+    
+    <!-- Crosshair & Movement Cooldowns -->
+    <div id="crosshair-container">
+        <div id="jump-cooldown-indicator" class="movement-cooldown">
+            <svg viewBox="-5 -5 110 110">
+                <path class="cooldown-track" d="M 50,0 A 50,50 0 0 0 50,100" />
+                <path class="cooldown-progress" d="M 50,0 A 50,50 0 0 0 50,100" />
+            </svg>
+        </div>
+        <div id="crosshair"></div>
+        <div id="dash-cooldown-indicator" class="movement-cooldown">
+            <svg viewBox="-5 -5 110 110">
+                <path class="cooldown-track" d="M 50,0 A 50,50 0 0 1 50,100" />
+                <path class="cooldown-progress" d="M 50,0 A 50,50 0 0 1 50,100" />
+            </svg>
+        </div>
+    </div>
 
     <canvas id="game-canvas"></canvas>
 
     <!-- Game HUD -->
     <div id="game-hud">
-        <div id="hud-top-left">
-            <canvas id="minimap-canvas" width="200" height="200"></canvas>
-        </div>
-        <div id="hud-top-right">
-            <div id="enemy-counter"></div>
-        </div>
-        <div id="hud-bottom-left">
+        <div id="hud-top-left" class="hud-corner">
             <div id="health-bar-container" class="resource-bar-container">
                 <div id="health-bar"></div>
-                <span id="health-text" class="resource-text"></span>
             </div>
-            <div id="ability-cooldowns">
-                <div class="cooldown-container">
-                    <div id="double-jump-bar" class="cooldown-bar"></div>
-                    <span class="cooldown-label">JUMP</span>
-                </div>
-                <div class="cooldown-container">
-                    <div id="dash-bar" class="cooldown-bar"></div>
-                    <span class="cooldown-label">DASH</span>
-                </div>
-            </div>
-        </div>
-        <div id="hud-bottom-center">
-            <div id="target-info">
-                <span id="target-name"></span>
-                <div id="target-health-bar-container" class="resource-bar-container">
-                    <div id="target-health-bar"></div>
-                    <span id="target-health-text" class="resource-text"></span>
-                </div>
-            </div>
-            <div id="abilities-container">
-                <div id="ability-0" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
-                <div id="ability-1" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
-                <div id="ability-2" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
-                <div id="ability-3" class="ability-slot"><span class="ability-icon"></span><div class="ability-cooldown-overlay"></div></div>
-            </div>
-        </div>
-        <div id="hud-bottom-right">
             <div id="energy-bar-container" class="resource-bar-container">
                 <div id="energy-bar"></div>
-                <span id="energy-text" class="resource-text"></span>
+            </div>
+        </div>
+
+        <div id="hud-top-center" class="hud-corner">
+            <div id="enemy-counter"></div>
+        </div>
+
+        <div id="hud-top-right" class="hud-corner">
+            <canvas id="minimap-canvas" width="180" height="180"></canvas>
+        </div>
+        
+        <div id="hud-bottom-center" class="hud-corner">
+            <div id="abilities-container">
+                <div id="ability-0" class="ability-slot">
+                    <svg class="cooldown-ring" viewBox="0 0 36 36">
+                        <circle class="cooldown-track" cx="18" cy="18" r="15.9155" />
+                        <circle class="cooldown-ring-circle" cx="18" cy="18" r="15.9155" />
+                    </svg>
+                    <span class="ability-icon"></span>
+                </div>
+                <div id="ability-1" class="ability-slot">
+                     <svg class="cooldown-ring" viewBox="0 0 36 36">
+                        <circle class="cooldown-track" cx="18" cy="18" r="15.9155" />
+                        <circle class="cooldown-ring-circle" cx="18" cy="18" r="15.9155" />
+                    </svg>
+                    <span class="ability-icon"></span>
+                </div>
+                <div id="ability-2" class="ability-slot">
+                     <svg class="cooldown-ring" viewBox="0 0 36 36">
+                        <circle class="cooldown-track" cx="18" cy="18" r="15.9155" />
+                        <circle class="cooldown-ring-circle" cx="18" cy="18" r="15.9155" />
+                    </svg>
+                    <span class="ability-icon"></span>
+                </div>
+                <div id="ability-3" class="ability-slot">
+                     <svg class="cooldown-ring" viewBox="0 0 36 36">
+                        <circle class="cooldown-track" cx="18" cy="18" r="15.9155" />
+                        <circle class="cooldown-ring-circle" cx="18" cy="18" r="15.9155" />
+                    </svg>
+                    <span class="ability-icon"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -121,6 +145,6 @@
     }
     </script>
     
-    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/client/client_main.js"></script>
 </body>
 </html>

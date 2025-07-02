@@ -1,70 +1,63 @@
+// src/game/abilities/EnemyProjectile.js
+
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { COLLISION_GROUPS } from '../../common/CollisionGroups.js';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { GAME_CONFIG } from '../../shared/config.js';
+import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
 
 /**
- * A projectile fired by an enemy entity. It is given an initial velocity and is affected by gravity.
+ * A projectile fired by an enemy entity. It is a simple physics object that deals damage on impact.
  */
 export class EnemyProjectile {
-    constructor({caster, initialVelocity}) {
-        this.game = caster.game;
-        this.scene = caster.scene;
-        this.world = caster.world;
-        
-        // --- Configuration ---
-        this.damage = 100;
+    constructor({ world, caster, initialVelocity }) {
+        this.id = THREE.MathUtils.generateUUID();
+        this.type = 'enemy_projectile';
+        this.world = world;
+        this.caster = caster;
+
+        const config = GAME_CONFIG.ENEMY.DUMMY;
+        this.damage = config.PROJECTILE_DAMAGE;
         this.lifetime = 3.0;
         this.isDead = false;
 
-        // --- Visuals ---
-        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 10 });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.light = new THREE.PointLight(0x00ffff, 200, 20, 2);
-        this.mesh.add(this.light);
-
-        // --- Physics ---
+        // Physics
         const shape = new CANNON.Sphere(0.2);
-        this.body = new CANNON.Body({
+        const body = new CANNON.Body({
             mass: 0.1,
             shape,
             collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER,
-            type: CANNON.Body.DYNAMIC,
-            linearDamping: 0,
-            angularDamping: 0,
         });
 
-        // --- Trajectory ---
-        // Spawn slightly in front of the caster.
         const spawnDirection = new CANNON.Vec3().copy(initialVelocity);
-        spawnDirection.normalize(); // This modifies the vector in-place. Do not chain it.
-        
-        const spawnPos = new CANNON.Vec3().copy(caster.body.position);
-        
-        // Create the offset vector and add it to the spawn position.
-        const offset = spawnDirection.scale(2);
+        spawnDirection.normalize(); // This modifies the vector in-place.
+        const spawnPos = new CANNON.Vec3().copy(caster.physics.body.position);
+        const offset = spawnDirection.scale(2); // .scale() returns a new, scaled vector.
         spawnPos.vadd(offset, spawnPos);
         
-        this.body.position.copy(spawnPos);
+        body.position.copy(spawnPos);
+        body.velocity.copy(initialVelocity);
         
-        // Use the pre-calculated velocity from the enemy AI.
-        this.body.velocity.copy(initialVelocity);
+        this.physics = new PhysicsBodyComponent(body);
         
-        this.body.addEventListener('collide', (event) => this.onCollide(event));
+        // FIX: Ensure userData object exists before assignment
+        if (!body.userData) body.userData = {};
+        body.userData.entity = this; // Link back for collision detection
 
-        // --- Finalize ---
-        this.scene.add(this.mesh);
-        this.world.addBody(this.body);
-        this.game.updatables.push(this);
+        body.addEventListener('collide', (e) => this.onCollide(e));
+        
+        this.world.physics.addBody(body);
+        this.world.add(this);
     }
 
     onCollide(event) {
-        if (event.body === this.game.player.body) {
-            this.game.player.takeDamage(this.damage);
+        if (this.isDead) return;
+        const targetEntity = event.body?.userData?.entity;
+        if (targetEntity?.type === 'player') {
+            targetEntity.takeDamage(this.damage);
         }
-        this.cleanup();
+        this.world.remove(this);
     }
 
     update(deltaTime) {
@@ -72,22 +65,13 @@ export class EnemyProjectile {
 
         this.lifetime -= deltaTime;
         if (this.lifetime <= 0) {
-            this.cleanup();
-            return;
+            this.world.remove(this);
         }
-        this.mesh.position.copy(this.body.position);
     }
     
-    cleanup() {
+    dispose() {
         if (this.isDead) return;
         this.isDead = true;
-        this.scene.remove(this.mesh);
-        this.mesh.geometry.dispose();
-        this.mesh.material.dispose();
-        this.game.physics.queueForRemoval(this.body);
-        const updatableIndex = this.game.updatables.indexOf(this);
-        if (updatableIndex > -1) {
-            this.game.updatables.splice(updatableIndex, 1);
-        }
+        this.world.physics.queueForRemoval(this.physics.body);
     }
 }

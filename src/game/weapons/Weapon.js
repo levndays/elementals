@@ -1,6 +1,9 @@
+/**
+ * Base class for all weapons. Handles shared logic like cooldowns.
+ */
 export class Weapon {
     constructor(wielder, { name, damage, cooldown }) {
-        this.wielder = wielder;
+        this.wielder = wielder; // Can be null initially
         this.name = name || 'Unnamed Weapon';
         this.damage = damage || 10;
         this.cooldown = cooldown || 0.5;

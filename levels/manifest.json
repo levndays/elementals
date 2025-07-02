@@ -1,10 +1,10 @@
 [
-    {
-        "name": "Tutorial",
-        "path": "./levels/level-tutorial.json"
-    },
-    {
-        "name": "Mangled Grove",
-        "path": "./levels/level-mangled-grove.json"
-    }
+  {
+    "name": "Mangled Grove (Dusk)",
+    "path": "./levels/level-mangled-grove.json"
+  },
+  {
+    "name": "Tutorial",
+    "path": "./levels/level-tutorial.json"
+  }
 ]

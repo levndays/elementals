@@ -1,28 +1,39 @@
-export class Ability {
-    constructor(caster, { name, icon, cooldown, energyCost }) {
-        this.caster = caster;
-        this.name = name || 'Unnamed Ability';
-        this.icon = icon || '?';
-        this.cooldown = cooldown || 0;
-        this.energyCost = energyCost || 0;
+// src/game/abilities/Ability.js
+import { GAME_CONFIG } from '../../shared/config.js';
 
-        this.cooldownTimer = this.cooldown; // Start ready to cast
+/**
+ * Base class for all player abilities. Handles shared logic like cooldowns and energy costs.
+ * Subclasses must implement the _executeCast method.
+ */
+export class Ability {
+    constructor(caster, abilityData) {
+        this.caster = caster;
+        this.data = abilityData;
+        this.name = abilityData.name || 'Unnamed Ability';
+        this.icon = abilityData.icon || '?';
+        this.cooldown = abilityData.cooldown || 0;
+        this.energyCost = abilityData.energyCost || 0;
+        this.element = abilityData.element || 'Utility';
+        this.isCasting = false;
+
+        // Start ready to cast
+        this.cooldownTimer = this.cooldown;
     }
 
     /**
-     * Checks if the ability can be cast based on cooldown and energy.
+     * Checks if the ability can be cast based on cooldown and caster's energy.
      * @returns {boolean}
      */
     canCast() {
-        if (this.caster.game.debugModeActive) return true; // Debug mode bypasses checks
+        if (this.caster.world.game && this.caster.world.game.debugModeActive) return true;
 
         const isReady = this.cooldownTimer >= this.cooldown;
-        const hasEnergy = this.caster.currentEnergy >= this.energyCost;
-        return isReady && hasEnergy;
+        const hasEnergy = this.caster.abilities.currentEnergy >= this.energyCost;
+        return isReady && hasEnergy && !this.isCasting;
     }
 
     /**
-     * Executes the ability's core logic. To be implemented by subclasses.
+     * Executes the ability's core logic. Must be implemented by subclasses.
      * @returns {boolean} True if the cast logic was successful, false otherwise.
      * @protected
      */
@@ -40,15 +51,13 @@ export class Ability {
         const castSuccessful = this._executeCast();
 
         if (castSuccessful) {
-            if (!this.caster.game.debugModeActive) {
-                this.caster.currentEnergy -= this.energyCost;
-                this.caster.lastAbilityTime = this.caster.world.time;
+            if (!this.caster.world.game || !this.caster.world.game.debugModeActive) {
+                this.caster.abilities.currentEnergy -= this.energyCost;
+                this.caster.abilities.lastAbilityTime = this.caster.world.physics.world.time;
                 this.triggerCooldown();
             }
-            console.log(`Casted ${this.name}.`);
             return true;
         }
-
         return false;
     }
 

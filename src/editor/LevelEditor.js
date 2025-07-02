@@ -18,11 +18,14 @@ export class LevelEditor {
         // Core State
         this.selectedObject = null;
         this.clipboard = null;
+        this.isSnapEnabled = false;
+        this.translationSnapValue = 1;
+        this.rotationSnapValue = 15;
         this.helperVisibility = {
-            msgTriggers: true,
-            deathTriggers: true,
-            lightHelpers: true,
-            spawnHelpers: true,
+            Trigger: true,
+            DeathTrigger: true,
+            DirectionalLight: true,
+            SpawnAndDeath: true,
         };
 
         // Internal state for rotation logic
@@ -60,6 +63,7 @@ export class LevelEditor {
                 case 'KeyT': this.controls.setTransformMode('translate'); break;
                 case 'KeyR': this.controls.setTransformMode('rotate'); break;
                 case 'KeyS': this.controls.setTransformMode('scale'); break;
+                case 'KeyQ': this.controls.toggleTransformSpace(); break;
                 case 'Delete':
                 case 'Backspace': this.actions.deleteSelected(); break;
             }
@@ -74,7 +78,7 @@ export class LevelEditor {
         
         this.selectedObject = entity;
         const entityType = entity.userData?.gameEntity?.type;
-        let objectToAttach = entity.mesh || entity.picker || entity;
+        let objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
 
         if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
 
@@ -82,19 +86,17 @@ export class LevelEditor {
         this.controls.selectionBox.setFromObject(objectToAttach);
         this.controls.selectionBox.visible = true;
         
-        this.ui.propertiesAccordion.style.display = 'block';
-        this.ui.propertiesAccordion.open = true;
-        
         this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
         
-        const isEnemy = entity.isDead !== undefined;
-        const isTrigger = entityType === 'Trigger' || entityType === 'DeathTrigger';
-        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isTrigger);
-        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isTrigger);
+        const isEnemy = entityType === 'Enemy';
+        const isLightTarget = entityType === 'LightTarget';
+
+        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isEnemy || isLightTarget);
+        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isLightTarget);
         
-        document.getElementById('editor-mode-rotate').disabled = !canRotate;
-        document.getElementById('editor-mode-scale').disabled = !canScale;
+        document.getElementById('tool-rotate').disabled = !canRotate;
+        document.getElementById('tool-scale').disabled = !canScale;
 
         if (!canRotate && this.controls.transformControls.getMode() === 'rotate') this.controls.setTransformMode('translate');
         if (!canScale && this.controls.transformControls.getMode() === 'scale') this.controls.setTransformMode('translate');
@@ -110,36 +112,38 @@ export class LevelEditor {
         this.selectedObject = null;
         this.controls.transformControls.detach();
         this.controls.selectionBox.visible = false;
-        this.ui.propertiesAccordion.style.display = 'none';
+        this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
         
-        document.getElementById('editor-mode-rotate').disabled = false;
-        document.getElementById('editor-mode-scale').disabled = false;
+        document.getElementById('tool-rotate').disabled = false;
+        document.getElementById('tool-scale').disabled = false;
     }
 
     selectByUUID(uuid) {
-        const allEntities = [
-            ...this.app.levelObjects, ...this.app.enemies, ...this.app.directionalLights,
-            ...this.app.triggers, ...this.app.deathTriggers,
-            this.app.spawnPointHelper, this.app.deathSpawnPointHelper,
-        ].filter(Boolean);
-
-        const entityToSelect = allEntities.find(e => (e.mesh || e.picker || e).uuid === uuid);
-        if (entityToSelect) this.select(entityToSelect);
+        const entityToSelect = [...this.app.entities].find(e => {
+            const mesh = e.mesh || e.picker || e.targetHelper || e;
+            return mesh?.uuid === uuid;
+        });
+        if (entityToSelect) {
+            this.select(entityToSelect);
+        }
     }
     
     // --- Data & Property Manipulation ---
 
     updateSelectedProp(prop, key, value) {
         if (!this.selectedObject) return;
-        const entity = this.selectedObject;
-        const entityType = entity.userData?.gameEntity?.type;
+        let entity = this.selectedObject;
         
+        // If a light target is selected, apply the change to the parent light's definition
+        if (entity.userData?.gameEntity?.type === 'LightTarget') {
+            entity = entity.userData.gameEntity.parentLight;
+        }
+
         const beforeState = entity.definition;
         const afterState = JSON.parse(JSON.stringify(beforeState)); // Create a working copy
         let target = afterState;
 
-        // Navigate to the correct property in the copied state
         const path = prop.split('.');
         for(let i = 0; i < path.length - 1; i++) {
             if(!target[path[i]]) target[path[i]] = {};
@@ -147,11 +151,10 @@ export class LevelEditor {
         }
         const finalKey = path[path.length - 1];
         
-        // Update the value in the copied state
-        if (key !== null) { // For vectors
+        if (key !== null) {
             if(!target[finalKey]) target[finalKey] = {};
             target[finalKey][key] = value;
-        } else { // For direct properties
+        } else {
             target[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
         }
 
@@ -164,12 +167,15 @@ export class LevelEditor {
         const def = obj.definition;
         const mesh = obj.mesh;
         const body = obj.body;
-
+    
+        if (!def || !type) return;
+    
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
+            this.syncObjectTransforms(obj); // Sync position from mesh to internal state
             this.controls.selectionBox.setFromObject(obj);
             return;
         }
-
+    
         if (type === 'DirectionalLight') {
             const light = obj.light;
             light.color.set(parseInt(def.color, 16));
@@ -179,16 +185,15 @@ export class LevelEditor {
                 light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
             }
             obj.picker.position.copy(light.position);
+            obj.targetHelper.position.copy(light.target.position);
             light.target.updateMatrixWorld(true);
             obj.helper.update();
             this.controls.selectionBox.setFromObject(obj.picker);
             return;
         }
-        
-        // Position
+    
         mesh.position.set(def.position.x, def.position.y, def.position.z);
-        
-        // Rotation
+    
         if (def.rotation && obj.isDead === undefined) {
              mesh.rotation.set(
                 THREE.MathUtils.degToRad(def.rotation.x || 0),
@@ -196,82 +201,65 @@ export class LevelEditor {
                 THREE.MathUtils.degToRad(def.rotation.z || 0)
             );
         }
-
-        // Material Color
-        if (type !== 'Trigger' && def.material && def.material.color && mesh.material) {
+    
+        if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial) {
             mesh.material.color.set(parseInt(def.material.color, 16));
         }
-
-        // Size & Geometry
-        if((type === 'Trigger' || type === 'DeathTrigger') && def.size) {
-            mesh.geometry.dispose();
-            mesh.geometry = new THREE.BoxGeometry(...def.size);
-            if(type === 'Trigger' && def.color) { // Handle trigger color
-                mesh.material.color.set(parseInt(def.color, 16));
+    
+        if (def.size) {
+            if (type === 'Trigger' || type === 'DeathTrigger') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
+                if (type === 'Trigger' && def.color) {
+                    mesh.material.color.set(parseInt(def.color, 16));
+                }
+            } else if (def.type === 'Box' && body?.shapes[0]) {
+                const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
+                body.shapes[0].halfExtents.copy(halfExtents);
+                body.shapes[0].updateConvexPolyhedronRepresentation();
+                body.updateBoundingRadius();
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
             }
-        } else if(def.size && def.type === 'Box' && body?.shapes[0]) {
-            const halfExtents = new CANNON.Vec3(def.size[0]/2, def.size[1]/2, def.size[2]/2);
-            body.shapes[0].halfExtents.copy(halfExtents);
-            body.shapes[0].updateConvexPolyhedronRepresentation();
-            body.updateBoundingRadius();
-            mesh.geometry.dispose();
-            mesh.geometry = new THREE.BoxGeometry(...def.size);
         }
-        
-        this.syncObjectTransforms();
+    
+        this.syncObjectTransforms(obj);
         this.controls.selectionBox.setFromObject(mesh);
     }
     
-    syncObjectTransforms() {
-        if (!this.selectedObject) return;
+    syncObjectTransforms(entityToSync) {
+        const entity = entityToSync || this.selectedObject;
+        if (!entity) return;
         
-        const entity = this.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         
-        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
-            entity.definition.position = { x: entity.mesh.position.x, y: entity.mesh.position.y, z: entity.mesh.position.z };
-        } else if (entityType === 'SpawnPoint') {
-            this.app.spawnPoint.x = entity.position.x;
-            this.app.spawnPoint.y = entity.position.y;
-            this.app.spawnPoint.z = entity.position.z;
+        if (entityType === 'SpawnPoint') {
+            this.app.spawnPoint.copy(entity.position);
         } else if (entityType === 'DeathSpawnPoint') {
-            this.app.deathSpawnPoint.x = entity.position.x;
-            this.app.deathSpawnPoint.y = entity.position.y;
-            this.app.deathSpawnPoint.z = entity.position.z;
+            this.app.deathSpawnPoint.copy(entity.position);
         } else if (entityType === 'DirectionalLight') {
             const picker = entity.picker;
             const light = entity.light;
-
-            if (this.controls.transformControls.mode === 'rotate' && this.controls.transformControls.dragging && this._initialLightPos) {
-                const deltaQuat = picker.quaternion.clone().multiply(this._initialPickerQuat.clone().invert());
-                light.position.copy(this._initialLightPos).applyQuaternion(deltaQuat);
-                picker.position.copy(light.position);
-            } else {
-                light.position.copy(picker.position);
-            }
-            
-            // light.target.position is now managed by its definition and the UI
+            light.position.copy(picker.position);
+            light.target.position.copy(entity.targetHelper.position);
             entity.helper.update();
-
             if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);
-        } else {
-            if (entity.body) {
-                entity.body.position.copy(entity.mesh.position);
-                entity.body.quaternion.copy(entity.mesh.quaternion);
-            }
+        } else if (entity.body) {
+            entity.body.position.copy(entity.mesh.position);
+            entity.body.quaternion.copy(entity.mesh.quaternion);
         }
     }
     
-    setLevelData() {
+    onLevelLoaded() {
         this.deselect();
         this.ui.updateOutliner();
-        this.ui.setInitialSceneSettings(this.app.settings);
+        this.ui.updatePropertiesPanel();
 
         // Apply initial visibility from UI checkboxes
-        this.ui.setHelpersVisibility('msgTriggers', document.getElementById('view-toggle-msg-triggers').checked);
-        this.ui.setHelpersVisibility('deathTriggers', document.getElementById('view-toggle-death-triggers').checked);
-        this.ui.setHelpersVisibility('lightHelpers', document.getElementById('view-toggle-light-helpers').checked);
-        this.ui.setHelpersVisibility('spawnHelpers', document.getElementById('view-toggle-spawn-helpers').checked);
+        this.ui.setHelpersVisibility('Trigger', document.getElementById('view-toggle-msg-triggers').checked);
+        this.ui.setHelpersVisibility('DeathTrigger', document.getElementById('view-toggle-death-triggers').checked);
+        this.ui.setHelpersVisibility('DirectionalLight', document.getElementById('view-toggle-light-helpers').checked);
+        this.ui.setHelpersVisibility('SpawnAndDeath', document.getElementById('view-toggle-spawn-helpers').checked);
     }
     
     update(deltaTime) {

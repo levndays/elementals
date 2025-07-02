@@ -1,3 +1,5 @@
+// ~ src/editor/EditorUI.js
+
 import * as THREE from 'three';
 
 export class EditorUI {
@@ -8,57 +10,101 @@ export class EditorUI {
     }
 
     init() {
-        // Toolbar
-        document.getElementById('editor-new-btn').onclick = () => this.editor.actions.newLevel();
-        document.getElementById('editor-load-btn').onclick = () => document.getElementById('editor-file-input').click();
+        // --- File Menu ---
+        document.getElementById('menu-file-new').onclick = () => this.editor.actions.newLevel();
+        document.getElementById('menu-file-open').onclick = () => document.getElementById('editor-file-input').click();
         document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
-        document.getElementById('editor-save-btn').onclick = () => this.editor.actions.saveFile();
-        document.getElementById('editor-info-btn').onclick = () => this.showInfoModal();
-        document.getElementById('editor-play-debug-btn').onclick = () => this.editor.actions.playInDebugMode();
-        document.getElementById('editor-back-to-menu').onclick = () => { window.location.href = 'index.html'; };
-        document.getElementById('editor-mode-translate').onclick = () => this.editor.controls.setTransformMode('translate');
-        document.getElementById('editor-mode-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
-        document.getElementById('editor-mode-scale').onclick = () => this.editor.controls.setTransformMode('scale');
+        document.getElementById('menu-file-save').onclick = () => this.editor.actions.saveFile();
+        document.getElementById('menu-file-play').onclick = () => this.editor.actions.playInDebugMode();
+        document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
 
-        // Scene Accordion
-        document.getElementById('skybox-color-input').oninput = (e) => this.editor.actions.updateSkyboxColor(e.target.value);
-        document.getElementById('ambient-color-input').oninput = (e) => this.editor.actions.updateAmbientLight('color', e.target.value);
-        document.getElementById('ambient-intensity-input').oninput = (e) => this.editor.actions.updateAmbientLight('intensity', e.target.value);
+        // --- Edit Menu ---
+        document.getElementById('menu-edit-undo').onclick = () => this.editor.undoManager.undo();
+        document.getElementById('menu-edit-redo').onclick = () => this.editor.undoManager.redo();
+        document.getElementById('menu-edit-copy').onclick = () => this.editor.actions.copySelected();
+        document.getElementById('menu-edit-paste').onclick = () => this.editor.actions.pasteFromClipboard();
+        document.getElementById('menu-edit-delete').onclick = () => this.editor.actions.deleteSelected();
+        
+        // --- View Menu ---
+        document.getElementById('view-toggle-grid').onchange = (e) => { if(this.app.gridHelper) this.app.gridHelper.visible = e.target.checked; };
+        document.getElementById('view-toggle-light-helpers').onchange = (e) => this.setHelpersVisibility('DirectionalLight', e.target.checked);
+        document.getElementById('view-toggle-spawn-helpers').onchange = (e) => this.setHelpersVisibility('SpawnAndDeath', e.target.checked);
+        document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('Trigger', e.target.checked);
+        document.getElementById('view-toggle-death-triggers').onchange = (e) => this.setHelpersVisibility('DeathTrigger', e.target.checked);
+        
+        // --- Help Menu ---
+        document.getElementById('menu-help-metrics').onclick = (event) => {
+            event.preventDefault(); // Prevents the <details> menu from closing
+            this.showInfoModal();
+        };
 
-        // Create Accordion
-        document.getElementById('editor-add-box').onclick = () => this.editor.actions.addBox();
-        document.getElementById('editor-add-enemy').onclick = () => this.editor.actions.addEnemy();
-        document.getElementById('add-dirlight-btn').onclick = () => this.editor.actions.addDirectionalLight();
-        document.getElementById('editor-add-msg-trigger').onclick = () => this.editor.actions.addMessageTrigger();
-        document.getElementById('editor-add-death-trigger').onclick = () => this.editor.actions.addDeathTrigger();
-        document.getElementById('editor-set-spawn').onclick = () => this.editor.actions.setSpawnPointToCamera();
-        document.getElementById('editor-set-death-spawn').onclick = () => this.editor.actions.setDeathSpawnPointToCamera();
+        // --- Toolbar ---
+        document.getElementById('tool-translate').onclick = () => this.editor.controls.setTransformMode('translate');
+        document.getElementById('tool-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
+        document.getElementById('tool-scale').onclick = () => this.editor.controls.setTransformMode('scale');
+        
+        // --- Create Button & Context Menu ---
+        const createButton = document.getElementById('create-button');
+        const createMenu = document.getElementById('create-context-menu');
+        createButton.onclick = (e) => {
+            e.stopPropagation(); // Prevent document click listener from firing immediately
+            createMenu.style.display = createMenu.style.display === 'none' ? 'flex' : 'none';
+        };
+        createMenu.onclick = (e) => {
+            const action = e.target.dataset.action;
+            if (action && typeof this.editor.actions[action] === 'function') {
+                this.editor.actions[action]();
+            }
+            createMenu.style.display = 'none'; // Hide menu after action
+        };
+        // Hide menu if clicking anywhere else
+        document.addEventListener('click', () => { createMenu.style.display = 'none'; });
 
-        // View Options Accordion
-        document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('msgTriggers', e.target.checked);
-        document.getElementById('view-toggle-death-triggers').onchange = (e) => this.setHelpersVisibility('deathTriggers', e.target.checked);
-        document.getElementById('view-toggle-light-helpers').onchange = (e) => this.setHelpersVisibility('lightHelpers', e.target.checked);
-        document.getElementById('view-toggle-spawn-helpers').onchange = (e) => this.setHelpersVisibility('spawnHelpers', e.target.checked);
-
-        // Outliner
-        this.outlinerList = document.getElementById('outliner-list');
-        this.outlinerList.onclick = (e) => {
+        // --- Outliner ---
+        this.outlinerContent = document.getElementById('outliner-content');
+        this.outlinerContent.onclick = (e) => {
             const item = e.target.closest('.outliner-item');
             if (item) this.editor.selectByUUID(item.dataset.uuid);
         };
-
-        // Properties Panel
-        this.propertiesAccordion = document.getElementById('properties-accordion');
-        this.propertiesContent = document.getElementById('properties-content');
-        document.getElementById('editor-delete-btn').onclick = () => this.editor.actions.deleteSelected();
         
-        // Modal Events
-        document.querySelector('#editor-info-modal .modal-close-btn').onclick = () => {
-            document.getElementById('editor-info-modal').style.display = 'none';
-        };
-        document.getElementById('editor-info-modal').onclick = (e) => {
-            if(e.target === e.currentTarget) e.currentTarget.style.display = 'none';
-        };
+        // --- Inspector ---
+        this.inspectorContent = document.getElementById('inspector-content');
+        this.inspectorPlaceholder = this.inspectorContent.querySelector('.placeholder-text');
+
+        // --- Modal Events ---
+        document.querySelector('#editor-info-modal .modal-close-btn').onclick = () => { document.getElementById('editor-info-modal').style.display = 'none'; };
+        document.getElementById('editor-info-modal').onclick = (e) => { if(e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+
+        // Top Menu Hover Logic to close other menus
+        const menuDropdowns = document.querySelectorAll('.menu-dropdown');
+        menuDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('mouseenter', () => dropdown.open = true);
+            dropdown.addEventListener('mouseleave', () => dropdown.open = false);
+            dropdown.addEventListener('pointerenter', () => {
+                 if (document.querySelector('.menu-dropdown[open]') && document.querySelector('.menu-dropdown[open]') !== dropdown) {
+                    document.querySelector('.menu-dropdown[open]').open = false;
+                 }
+            });
+        });
+    }
+
+    isClickOnUI(x, y) {
+        const uiAreas = [
+            document.getElementById('editor-menu-bar'),
+            document.getElementById('editor-toolbar'),
+            document.getElementById('editor-outliner'),
+            document.getElementById('editor-inspector'),
+            document.getElementById('create-button-container'),
+        ];
+    
+        for (const area of uiAreas) {
+            if (!area) continue;
+            const rect = area.getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                return true;
+            }
+        }
+        return false;
     }
 
     showInfoModal() {
@@ -86,12 +132,10 @@ export class EditorUI {
         const timeToFallFromH2 = Math.sqrt((2 * height2) / gravity);
         const airTime2_height = timeToPeak1 + timeToFallFromH2;
         const distance2_height = speed * airTime2_height;
-        
-        // Jump + Dash (Max Distance: dash at peak)
         const horizontalDistToPeak = speed * timeToPeak1;
-        const timeToFallFromH1 = timeToPeak1; // Symmetry
-        const horizontalDistAfterDash = speed * timeToFallFromH1;
-        const jumpDashDist = horizontalDistToPeak + groundDashDist + horizontalDistAfterDash;
+        
+        // Jump + Dash (for max distance)
+        const jumpDashDist = horizontalDistToPeak + groundDashDist + (speed * timeToPeak1);
 
         const infoText = `
 [Base Parameters]
@@ -126,45 +170,65 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
 
     updateTransformModeButtons(mode) {
         ['translate', 'rotate', 'scale'].forEach(m => {
-            document.getElementById(`editor-mode-${m}`).classList.toggle('active', m === mode);
+            document.getElementById(`tool-${m}`).classList.toggle('active', m === mode);
         });
     }
 
     updateOutliner() {
-        this.outlinerList.innerHTML = '';
-        const createItem = (entity, name, uuid, prefix = '') => {
+        this.outlinerContent.innerHTML = '';
+        const createItem = (parent, entity, name, uuid, prefix = '') => {
             const item = document.createElement('div');
             item.className = 'outliner-item';
             item.textContent = `${prefix} ${name}`;
             item.dataset.uuid = uuid;
             if (entity === this.editor.selectedObject) item.classList.add('selected');
-            this.outlinerList.appendChild(item);
+            parent.appendChild(item);
         };
-
-        if (this.app.spawnPointHelper) createItem(this.app.spawnPointHelper, 'Initial Spawn', this.app.spawnPointHelper.uuid, '[P]');
-        if (this.app.deathSpawnPointHelper) createItem(this.app.deathSpawnPointHelper, 'Death Spawn', this.app.deathSpawnPointHelper.uuid, '[P]');
-        this.app.directionalLights.forEach((l, i) => createItem(l, `Directional Light ${i+1}`, l.picker.uuid, '[L]'));
-        this.app.levelObjects.forEach(o => createItem(o, o.definition.name || 'Object', o.mesh.uuid, '[G]'));
-        this.app.enemies.forEach(e => createItem(e, e.name || 'Enemy', e.mesh.uuid, '[E]'));
-        this.app.triggers.forEach((t, i) => createItem(t, t.definition.name || `Trigger ${i+1}`, t.mesh.uuid, '[T]'));
-        this.app.deathTriggers.forEach((t, i) => createItem(t, t.definition.name || `Death Zone ${i+1}`, t.mesh.uuid, '[D]'));
+    
+        const createCategory = (title, entities, prefix, nameField = 'name') => {
+            if (!entities || entities.length === 0) return;
+            const details = document.createElement('details');
+            details.open = true;
+            const summary = document.createElement('summary');
+            summary.textContent = `${title} (${entities.length})`;
+            details.appendChild(summary);
+            entities.forEach(e => {
+                 const name = e.definition?.[nameField] || e.name || (e.userData?.gameEntity?.type) || 'Unnamed';
+                 // Use a consistent way to get a unique identifier (mesh, picker, or helper itself)
+                 const uuidProvider = e.mesh || e.picker || e;
+                 if(uuidProvider) {
+                    createItem(details, e, name, uuidProvider.uuid, prefix);
+                 }
+            });
+            this.outlinerContent.appendChild(details);
+        };
+    
+        const spawnPoints = [this.app.spawnPointHelper, this.app.deathSpawnPointHelper].filter(Boolean);
+        spawnPoints.forEach(sp => {
+            sp.name = sp.userData.gameEntity.type === 'SpawnPoint' ? 'Initial Spawn' : 'Death Respawn';
+        });
+    
+        createCategory('Scene Points', spawnPoints, '[P]', 'name');
+        createCategory('Lights', this.app.getDirectionalLights(), '[L]');
+        createCategory('Geometry', this.app.getLevelObjects(), '[G]');
+        createCategory('Enemies', this.app.getEnemies(), '[E]');
+        createCategory('Message Triggers', this.app.getTriggers(), '[T]');
+        createCategory('Death Zones', this.app.getDeathTriggers(), '[D]');
     }
 
     updatePropertiesPanel() {
+        this.inspectorContent.innerHTML = ''; // Clear previous content
         if (!this.editor.selectedObject) {
-            this.propertiesAccordion.style.display = 'none';
+            this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
             return;
         }
-        this.propertiesContent.innerHTML = '';
+    
         const entity = this.editor.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
-        
         if (!entityType) return;
-        
-        this.propertiesAccordion.style.display = 'block';
-        this.propertiesAccordion.open = true;
+    
         const fragment = document.createDocumentFragment();
-
+    
         const handleEnterKey = (e, updateFn) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -172,145 +236,160 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
                 e.target.blur();
             }
         };
-
-        const createVec3Inputs = (label, vector, callback) => {
-            fragment.appendChild(document.createElement('label')).textContent = label;
-            const group = fragment.appendChild(document.createElement('div'));
+    
+        const createPropGroup = (label) => {
+            const group = document.createElement('div');
             group.className = 'prop-group';
-            ['x', 'y', 'z'].forEach(axis => {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.step = label.toLowerCase().includes('rot') ? 1 : 0.1;
-                input.value = vector[axis].toFixed(2);
-                const updateValue = (val) => callback(axis, parseFloat(val));
-                input.onchange = (e) => updateValue(e.target.value);
-                input.onkeydown = (e) => handleEnterKey(e, updateValue);
-                group.appendChild(input);
-            });
+            const labelEl = document.createElement('label');
+            labelEl.textContent = label;
+            group.appendChild(labelEl);
+            fragment.appendChild(group);
+            return group;
         };
-        
-        const createSizeInputs = (label, sizeArr, callback) => {
-             fragment.appendChild(document.createElement('label')).textContent = label;
-             const group = fragment.appendChild(document.createElement('div'));
-             group.className = 'prop-group';
-             sizeArr.forEach((val, index) => {
-                 const input = document.createElement('input');
-                 input.type = 'number';
-                 input.step = 0.1;
-                 input.value = val.toFixed(2);
-                 const updateValue = (val) => callback(index, parseFloat(val));
-                 input.onchange = (e) => updateValue(e.target.value);
-                 input.onkeydown = (e) => handleEnterKey(e, updateValue);
-                 group.appendChild(input);
-             });
-        };
-        
-        const createColorInput = (label, color, callback) => {
-            fragment.appendChild(document.createElement('label')).textContent = label;
-            const input = fragment.appendChild(document.createElement('input'));
-            input.type = 'color';
-            input.value = '#' + color.getHexString();
-            input.oninput = (e) => callback(e.target.value);
-        };
-        
-        const createTextInput = (label, value, callback) => {
-            fragment.appendChild(document.createElement('label')).textContent = label;
-            const input = fragment.appendChild(document.createElement('input'));
+    
+        const createTextInput = (parent, value, callback) => {
+            const input = document.createElement('input');
             input.type = 'text';
             input.value = value;
             const updateValue = (val) => callback(val);
             input.onchange = (e) => updateValue(e.target.value);
             input.onkeydown = (e) => handleEnterKey(e, updateValue);
+            parent.appendChild(input);
         };
-        
-        const createNumberInput = (label, value, min, max, step, callback) => {
-            fragment.appendChild(document.createElement('label')).textContent = label;
-            const input = fragment.appendChild(document.createElement('input'));
+    
+        const createNumberInput = (parent, value, { min, max, step = 0.1 }, callback) => {
+            const input = document.createElement('input');
             input.type = 'number';
             if (min !== undefined) input.min = min;
             if (max !== undefined) input.max = max;
-            input.step = step || 1;
+            input.step = step;
             input.value = value;
-            const updateValue = (val) => callback(parseFloat(val));
+            const updateValue = (val) => callback(parseFloat(val) || 0);
             input.onchange = (e) => updateValue(e.target.value);
             input.onkeydown = (e) => handleEnterKey(e, updateValue);
+            parent.appendChild(input);
         };
-        
-        if (entityType === 'Trigger' || entityType === 'DeathTrigger') {
-            const def = entity.definition;
-            const mesh = entity.mesh;
-
-            createTextInput('Name', def.name || '', val => this.editor.updateSelectedProp('name', null, val));
-            createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
-            createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));
-            const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
-            const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.degToRad(eulerRot.y), z: THREE.MathUtils.degToRad(eulerRot.z) };
-            createVec3Inputs('Rotation', degRot, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
-            
-            if (entityType === 'Trigger') {
-                fragment.appendChild(document.createElement('hr'));
-                createTextInput('Message', def.message || '', val => this.editor.updateSelectedProp('message', null, val));
-                createNumberInput('Duration (s)', def.duration || 5, 0.1, 100, 0.1, val => this.editor.updateSelectedProp('duration', null, val));
-                const initialColor = def.color ? parseInt(def.color, 16) : 0x00ff00;
-                createColorInput('Helper Color', new THREE.Color(initialColor), val => this.editor.updateSelectedProp('color', null, val));
-            }
-        } else if (entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint') {
-             createVec3Inputs('Position', entity.position, (axis, val) => {
-                entity.position[axis] = val;
-                this.editor.syncObjectTransforms();
-             });
-        } else if (entityType === 'DirectionalLight') {
-             createColorInput('Color', entity.light.color, val => this.editor.updateSelectedProp('color', null, val));
-             createNumberInput('Intensity', entity.light.intensity, 0, 20, 0.1, val => this.editor.updateSelectedProp('intensity', null, val));
-             createVec3Inputs('Position', entity.light.position, (axis, val) => {
-                 entity.picker.position[axis] = val; // Move the picker
-                 this.editor.syncObjectTransforms(); // Sync picker to light
-                 this.updatePropertiesPanel(); // Redraw panel with new values
-             });
-             // NEW: Inputs for Target Position
-             createVec3Inputs('Target Position', entity.light.target.position, (axis, val) => {
-                 this.editor.updateSelectedProp('targetPosition', axis, val);
-             });
-        } else { // Generic Object or Enemy
-            const def = entity.definition;
-            const mesh = entity.mesh;
-            fragment.appendChild(document.createElement('label')).textContent = `Name: ${def.name || def.type}`;
-            createVec3Inputs('Position', mesh.position, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
-            if (entity.isDead === undefined && def.type !== 'Plane') { // isDead check for Enemies (not defined on objects), type check for Plane
-                 const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
-                 const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.degToRad(eulerRot.z) };
-                 createVec3Inputs('Rotation', degRot, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
-            }
-            if (def.size) createSizeInputs('Size', def.size, (index, val) => this.editor.updateSelectedProp('size', index, val));
-
-            if (def.material) {
-                fragment.appendChild(document.createElement('hr'));
-                const initialColor = def.material.color ? parseInt(def.material.color, 16) : 0xcccccc;
-                createColorInput('Material Color', new THREE.Color(initialColor), val => {
-                    this.editor.updateSelectedProp('material.color', null, val);
-                });
-            }
+    
+        const createColorInput = (parent, colorHex, callback) => {
+            const input = document.createElement('input');
+            input.type = 'color';
+            input.value = colorHex;
+            input.oninput = (e) => callback(e.target.value);
+            parent.appendChild(input);
+        };
+    
+        const createVec3Inputs = (parent, vector, step, callback) => {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'prop-input-group';
+            ['x', 'y', 'z'].forEach(axis => {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.step = step;
+                input.value = vector[axis].toFixed(3);
+                const updateValue = (val) => callback(axis, parseFloat(val) || 0);
+                input.onchange = (e) => updateValue(e.target.value);
+                input.onkeydown = (e) => handleEnterKey(e, updateValue);
+                inputGroup.appendChild(input);
+            });
+            parent.appendChild(inputGroup);
+        };
+    
+        // --- Build UI based on Entity Type ---
+        const def = entity.definition;
+        const mesh = entity.mesh || entity.picker || entity;
+    
+        if (def && def.name !== undefined) {
+            const group = createPropGroup('Name');
+            createTextInput(group, def.name, (val) => this.editor.updateSelectedProp('name', null, val));
         }
-        this.propertiesContent.appendChild(fragment);
+    
+        fragment.appendChild(document.createElement('hr'));
+    
+        const posGroup = createPropGroup('Position');
+        createVec3Inputs(posGroup, mesh.position, 0.25, (axis, val) => this.editor.updateSelectedProp('position', axis, val));
+    
+        if (def && def.rotation) {
+            const rotGroup = createPropGroup('Rotation (Deg)');
+            const eulerRot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
+            const degRot = { x: THREE.MathUtils.radToDeg(eulerRot.x), y: THREE.MathUtils.radToDeg(eulerRot.y), z: THREE.MathUtils.radToDeg(eulerRot.z) };
+            createVec3Inputs(rotGroup, degRot, 1, (axis, val) => this.editor.updateSelectedProp('rotation', axis, val));
+        }
+    
+        if (def && def.size) {
+            const sizeGroup = createPropGroup('Size');
+            const sizeVec = { x: def.size[0], y: def.size[1], z: def.size[2] };
+            createVec3Inputs(sizeGroup, sizeVec, 0.25, (axis, val) => {
+                const map = { x: 0, y: 1, z: 2 };
+                this.editor.updateSelectedProp('size', map[axis], val);
+            });
+        }
+    
+        if (def && def.material) {
+            fragment.appendChild(document.createElement('hr'));
+            const matGroup = createPropGroup('Material Color');
+            const initialColor = def.material.color ? '#' + new THREE.Color(parseInt(def.material.color, 16)).getHexString() : '#cccccc';
+            createColorInput(matGroup, initialColor, (val) => this.editor.updateSelectedProp('material.color', null, val));
+        }
+    
+        if (entityType === 'Trigger') {
+            fragment.appendChild(document.createElement('hr'));
+            const msgGroup = createPropGroup('Message');
+            createTextInput(msgGroup, def.message || '', val => this.editor.updateSelectedProp('message', null, val));
+    
+            const durGroup = createPropGroup('Duration (s)');
+            createNumberInput(durGroup, def.duration || 5, { min: 0.1, max: 100, step: 0.1 }, val => this.editor.updateSelectedProp('duration', null, val));
+    
+            const colorGroup = createPropGroup('Helper Color');
+            const initialColor = def.color ? '#' + new THREE.Color(parseInt(def.color, 16)).getHexString() : '#00ff00';
+            createColorInput(colorGroup, initialColor, val => this.editor.updateSelectedProp('color', null, val));
+        }
+    
+        if (entityType === 'DirectionalLight') {
+            fragment.appendChild(document.createElement('hr'));
+            const lightGroup = createPropGroup('Light Color');
+            const initialColor = def.color ? '#' + new THREE.Color(parseInt(def.color, 16)).getHexString() : '#ffffff';
+            createColorInput(lightGroup, initialColor, val => this.editor.updateSelectedProp('color', null, val));
+    
+            const intensityGroup = createPropGroup('Intensity');
+            createNumberInput(intensityGroup, entity.light.intensity, { min: 0, max: 20, step: 0.1 }, val => this.editor.updateSelectedProp('intensity', null, val));
+    
+            const targetGroup = createPropGroup('Target Position');
+            createVec3Inputs(targetGroup, entity.light.target.position, 0.25, (axis, val) => this.editor.updateSelectedProp('targetPosition', axis, val));
+        }
+    
+        this.inspectorContent.appendChild(fragment);
+    
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.textContent = 'Delete Selected';
+        deleteButton.onclick = () => this.editor.actions.deleteSelected();
+        this.inspectorContent.appendChild(deleteButton);
     }
     
-    setInitialSceneSettings(settings) {
-        if (!settings) return;
-        document.getElementById('skybox-color-input').value = '#' + new THREE.Color(parseInt(settings.backgroundColor || "0x000000", 16)).getHexString();
-        document.getElementById('ambient-color-input').value = '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString();
-        document.getElementById('ambient-intensity-input').value = settings.ambientLight.intensity;
-    }
-
     setHelpersVisibility(type, isVisible) {
         this.editor.helperVisibility[type] = isVisible;
-        switch (type) {
-            case 'msgTriggers':   this.app.triggers.forEach(t => t.mesh.visible = isVisible); break;
-            case 'deathTriggers': this.app.deathTriggers.forEach(t => t.mesh.visible = isVisible); break;
-            case 'lightHelpers':  this.app.directionalLights.forEach(l => l.helper.visible = isVisible); break;
-            case 'spawnHelpers':
-                if (this.app.spawnPointHelper) this.app.spawnPointHelper.visible = isVisible;
-                if (this.app.deathSpawnPointHelper) this.app.deathSpawnPointHelper.visible = isVisible;
-                break;
+    
+        if (type === 'SpawnAndDeath') {
+            if (this.app.spawnPointHelper) this.app.spawnPointHelper.visible = isVisible;
+            if (this.app.deathSpawnPointHelper) this.app.deathSpawnPointHelper.visible = isVisible;
+            return;
         }
+    
+        let entities;
+        switch (type) {
+            case 'DirectionalLight': entities = this.app.getDirectionalLights(); break;
+            case 'Trigger': entities = this.app.getTriggers(); break;
+            case 'DeathTrigger': entities = this.app.getDeathTriggers(); break;
+            default: entities = [];
+        }
+    
+        entities.forEach(e => {
+            if (type === 'DirectionalLight') {
+                if (e.helper) e.helper.visible = isVisible;
+                if (e.targetHelper) e.targetHelper.visible = isVisible;
+            } else if (e.mesh) {
+                e.mesh.visible = isVisible;
+            }
+        });
     }
 }

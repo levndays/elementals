@@ -1,0 +1,251 @@
+/* css/loadout.css */
+/* css/loadout.css */
+.loadout-page {
+    background-color: var(--color-bg-darkest);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#loadout-screen {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    color: var(--color-text-light);
+}
+
+/* --- HEADER --- */
+#loadout-header {
+    grid-row: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background-color: var(--color-bg-dark);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 10;
+}
+.header-section { flex: 1; display: flex; gap: 10px; align-items: center; }
+.header-section:last-child { justify-content: flex-end; }
+.header-section:first-child { justify-content: flex-start; }
+#loadout-header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--color-accent); flex: 0; white-space: nowrap; padding: 0 40px;}
+#loadout-manager select, #loadout-manager input { background: var(--color-bg-darkest); border: 1px solid var(--color-border); color: var(--color-text-light); padding: 8px 12px; border-radius: var(--border-radius-sm); font-family: inherit; }
+#loadout-manager button, #nav-controls button { padding: 8px 16px; font-size: 14px; font-weight: 600; border-radius: var(--border-radius-sm); cursor: pointer; border: none; transition: background-color 0.2s, transform 0.2s; }
+#save-loadout-btn, #play-game-btn.play-button { background-color: var(--color-accent); color: var(--color-accent-text); }
+#back-to-menu-btn { background-color: var(--color-bg-light); color: var(--color-text-light); }
+#play-game-btn:disabled { background-color: var(--color-bg-darkest); color: var(--color-text-dark); cursor: not-allowed; }
+
+/* --- MAIN 2-COLUMN LAYOUT --- */
+#loadout-main-content {
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+    overflow: hidden;
+}
+#player-panel {
+    background-color: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 20px; 
+    padding: 20px;
+}
+
+/* --- PLAYER PANEL (LEFT) --- */
+#player-preview-container { flex-grow: 1; position: relative; background-color: var(--color-bg-darkest); border-radius: var(--border-radius-md); overflow: hidden; }
+#player-preview-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#equipped-slots-container { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 10px 0; }
+
+.equipped-slot {
+    width: 85px;
+    height: 119px;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-bg-darkest);
+    border: 2px dashed var(--color-bg-light);
+    transition: all 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.equipped-slot:hover, .equipped-slot.drag-over { border-color: var(--color-accent); background-color: hsla(190, 100%, 50%, 0.1); transform: scale(1.05); }
+
+.equipped-slot:has(.card-item) {
+    border-color: transparent;
+    background-color: transparent;
+}
+.equipped-slot .card-item { width: 100%; height: 100%; }
+
+/* NEW: Separator Style */
+.slot-separator {
+    font-size: 2rem;
+    color: var(--color-text-dark);
+    font-weight: 200;
+    margin: 0 -5px; /* Pull it closer to the slots */
+}
+
+#synergy-display { padding: 15px; border-radius: var(--border-radius-sm); text-align: center; transition: all 0.3s; background-color: var(--color-bg-darkest); border: 1px solid var(--color-border); }
+#synergy-display.synergy-valid { background: hsla(150, 70%, 40%, 0.15); border-color: hsla(150, 70%, 40%, 0.8); }
+#synergy-display.synergy-invalid { background: hsla(0, 70%, 50%, 0.15); border-color: hsla(0, 70%, 50%, 0.8); }
+#synergy-name { margin: 0 0 5px 0; font-size: 18px; font-weight: bold; }
+#synergy-display.synergy-valid #synergy-name { color: hsl(150, 70%, 60%); }
+#synergy-display.synergy-invalid #synergy-name { color: hsl(0, 70%, 60%); }
+#synergy-description { margin: 0; font-size: 14px; color: var(--color-text-mid); }
+
+/* --- INVENTORY & DETAILS PANEL (RIGHT) --- */
+#inventory-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    transition: background-color 0.2s ease-out;
+}
+#inventory-panel.inventory-drag-over { background-color: var(--color-bg-mid); }
+#inventory-panel .panel-header { padding: 12px 15px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+#inventory-panel h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-mid); }
+#inventory-grid {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-auto-rows: 140px;
+    gap: 15px;
+    padding: 15px;
+}
+.inventory-slot { border: 1px solid var(--color-bg-light); border-radius: var(--border-radius-sm); background-color: var(--color-bg-darkest); display: flex; justify-content: center; align-items: center; }
+.inventory-slot .card-item { width: 100%; height: 100%; }
+
+/* --- CARD DETAILS SUB-PANEL --- */
+#card-details-panel {
+    flex-shrink: 0;
+    height: 280px;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-dark);
+    position: relative;
+}
+#details-view-2d { padding: 20px; display: flex; flex-direction: column; height: 100%; }
+#details-content { flex-grow: 1; overflow-y: auto; }
+#details-name { font-size: 1.5rem; margin: 0 0 5px 0; color: var(--color-text-light); text-shadow: 0 0 10px var(--color-accent); }
+#details-element-tier { font-size: 0.9rem; color: var(--color-text-mid); margin-bottom: 10px; }
+#details-stats { display: flex; gap: 20px; font-weight: bold; font-size: 0.9rem; color: var(--color-text-mid); }
+#details-description { font-size: 0.95rem; line-height: 1.6; color: var(--color-text-mid); }
+#details-flavor-text { font-style: italic; color: var(--color-text-dark); border-left: 3px solid var(--color-bg-light); padding-left: 10px; margin-top: 10px; font-size: 0.85rem; }
+#details-footer { margin-top: auto; padding-top: 15px; }
+#details-footer button { width: 100%; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: var(--color-bg-light); color: var(--color-text-light); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); transition: all 0.2s; }
+#details-footer button:not(:disabled):hover { background-color: var(--color-accent); color: var(--color-accent-text); }
+#details-footer button:disabled { background-color: var(--color-bg-darkest); color: var(--color-text-dark); cursor: not-allowed; }
+
+/* --- CARD ITEM STYLES --- */
+.card-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    overflow: hidden;
+    color: white;
+    box-shadow: inset 0 0 20px 10px hsla(0, 0%, 0%, 0.2);
+    border: 1px solid transparent;
+}
+.card-item.dragging { opacity: 0.5; transform: scale(0.95); }
+.card-item.selected, .inventory-slot:hover .card-item { transform: scale(1.05); border-color: var(--color-accent); }
+
+.card-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: var(--color-text-dark);
+    z-index: 2;
+}
+.card-item.tier-1::after { background-color: hsl(210, 80%, 60%); }
+.card-item.tier-2::after { background-color: hsl(290, 80%, 65%); }
+.card-item.tier-3::after { background-color: hsl(0, 80%, 60%); }
+
+.card-item-icon {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-size: 85%;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+    transition: all 0.3s;
+}
+.card-item:hover .card-item-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.card-item-text {
+    position: relative;
+    z-index: 1;
+    padding: 8px;
+    background: linear-gradient(to top, hsla(0, 0%, 0%, 0.8), transparent);
+}
+.card-item-name, .card-item-type {
+    display: block;
+    text-align: left;
+    text-shadow: 1px 1px 3px hsla(0, 0%, 0%, 0.6);
+    line-height: 1.2;
+}
+.card-item-name {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+.card-item-type {
+    font-weight: 400;
+    font-size: 0.65rem;
+    padding-bottom: 5px;
+}
+
+.card-item.element-fire    { background-color: hsl(25, 100%, 55%); }
+.card-item.element-water   { background-color: hsl(195, 100%, 50%); }
+.card-item.element-air     { background-color: hsl(180, 80%, 85%); }
+.card-item.element-earth   { background-color: hsl(35, 45%, 50%); }
+.card-item.element-utility { background-color: hsl(265, 90%, 65%); }
+
+/* --- INSPECTOR MODAL --- */
+.inspector-modal-overlay {
+    position: fixed; inset: 0; background-color: hsla(230, 20%, 5%, 0.6);
+    backdrop-filter: blur(8px); z-index: 2000;
+    justify-content: center; align-items: center;
+    display: none;
+}
+.inspector-modal-overlay.active {
+    display: flex;
+    animation: modal-fade-in 0.3s ease-out;
+}
+@keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.inspector-modal-content {
+    width: 90vw; height: 90vh; max-width: 1400px; max-height: 900px;
+    background-color: var(--color-bg-darkest); border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md); position: relative;
+    box-shadow: 0 10px 40px hsla(0, 0%, 0%, 0.5); overflow: hidden;
+    animation: modal-scale-up 0.3s ease-out forwards;
+}
+@keyframes modal-scale-up { from { transform: scale(0.95); } to { transform: scale(1); } }
+.inspector-modal-close {
+    position: absolute; top: 10px; right: 15px; width: 40px; height: 40px;
+    background: hsla(0, 0%, 100%, 0.1); border: none; border-radius: 50%;
+    color: var(--color-text-light); font-size: 28px; font-weight: 300;
+    line-height: 40px; text-align: center; cursor: pointer; z-index: 10;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.inspector-modal-close:hover { background: var(--color-accent); color: var(--color-accent-text); transform: rotate(90deg); }
+#inspection-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }

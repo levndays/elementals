@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELEMENTALS - Card Inspector</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/card-inspector.css">
+    <link rel="icon" href="data:,">
+</head>
+<body class="inspector-page">
+
+    <div id="inspector-container">
+        <header id="inspector-header">
+            <h1 id="card-name-title">Card Inspector</h1>
+            <button id="exit-btn" class="button-secondary">Back to Loadout</button>
+        </header>
+
+        <main id="inspector-main">
+            <canvas id="inspector-canvas"></canvas>
+            <div id="inspector-prompt">Loading Card...</div>
+        </main>
+    </div>
+    
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="src/client/ui/card_inspector_main.js"></script>
+
+</body>
+</html>

@@ -1,234 +1,128 @@
-// src/game/abilities/FireflyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { COLLISION_GROUPS } from '../../common/CollisionGroups.js';
-import { ParticleExplosion } from './ParticleExplosion.js';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
 
+/**
+ * The Firefly homing projectile entity. Handles its own steering and collision logic.
+ */
 export class FireflyProjectile {
-    constructor({ caster, target }) {
+    constructor({ world, caster, target }) {
+        this.id = THREE.MathUtils.generateUUID();
+        this.type = 'firefly_projectile';
+        this.world = world;
         this.caster = caster;
         this.target = target;
-        this.game = caster.game;
-        this.scene = caster.game.renderer.scene; // Use the main game scene
-        this.world = caster.world;
-
-        // --- Configuration ---
+        
         this.damage = 100;
         this.lifetime = 6.0;
         this.speed = 18;
         this.isDead = false;
-        this.state = 'HOMING';
-        this.preStepHandler = this.applyAntiGravity.bind(this);
-
-        // --- Steering ---
         this.homingForce = 4.0;
-
-        // --- Explosion parameters ---
-        this.explosionRadius = 2.5;
-        this.explosionDamageRadius = 3.5;
-        this.explosionDuration = 0.5;
-        this.explosionTimer = 0;
         
-        // --- PERFORMANCE: Reusable objects ---
-        this._homingTargetBasePos = new CANNON.Vec3();
-        this._homingEffectiveTargetPos = new CANNON.Vec3();
-        this._steeringVector = new CANNON.Vec3();
-        this._desiredVelocity = new CANNON.Vec3();
-        this._tempObject3D = new THREE.Object3D();
-        this._aoeExplosionCenter = new THREE.Vector3();
-        this._aoeEnemyPosition = new THREE.Vector3();
-
-        // --- Trajectory variation parameters ---
-        this.wobblePhase = Math.random() * Math.PI * 2;
-        this.wobbleAmplitude = 0.5;
-        this.wobbleFrequency = 8;
-        this.targetPointOffset = new CANNON.Vec3(
-            (Math.random() - 0.5) * 2,
-            (Math.random() - 0.5) * 1,
-            (Math.random() - 0.5) * 2
-        ).scale(1.5);
-
-        // --- Visuals (Three.js Mesh and Light) ---
-        const geometry = new THREE.SphereGeometry(0.15, 8, 8);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xffa500,
-            emissive: 0xffa500,
-            emissiveIntensity: 5,
-        });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = false;
-        this.light = new THREE.PointLight(0xffa500, 150, 10, 2);
-        this.mesh.add(this.light);
-
-        // --- Physics (Cannon.js Body) ---
         const shape = new CANNON.Sphere(0.15);
-        this.body = new CANNON.Body({
-            mass: 0.05,
-            shape,
+        const body = new CANNON.Body({
+            mass: 0.05, shape,
             collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY,
-            type: CANNON.Body.DYNAMIC,
             linearDamping: 0.1,
-            angularDamping: 0,
         });
-        this.body.allowSleep = false;
+        body.allowSleep = false;
         
-        const playerCamera = this.caster.camera;
         const initialDirection = new THREE.Vector3();
-        playerCamera.getWorldDirection(initialDirection);
-        const coneSpreadAngle = THREE.MathUtils.degToRad(15);
-        const randomAxis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
-        const randomQuaternion = new THREE.Quaternion().setFromAxisAngle(randomAxis, (Math.random() - 0.5) * 2 * coneSpreadAngle);
-        initialDirection.applyQuaternion(randomQuaternion);
+        caster.camera.getWorldDirection(initialDirection);
         const initialPosition = new THREE.Vector3();
-        playerCamera.getWorldPosition(initialPosition).add(initialDirection.clone().multiplyScalar(0.7));
-        this.body.position.copy(initialPosition);
+        caster.camera.getWorldPosition(initialPosition).add(initialDirection.clone().multiplyScalar(0.7));
+        body.position.copy(initialPosition);
+        body.velocity.copy(initialDirection.multiplyScalar(this.speed));
+
+        if (!body.userData) body.userData = {};
+        body.userData.entity = this;
+
+        this.physics = new PhysicsBodyComponent(body);
+
+        body.addEventListener('collide', (e) => this.detonate());
         
-        const initialVelocity = new CANNON.Vec3().copy(initialDirection).scale(this.speed);
-        this.body.velocity.copy(initialVelocity);
+        this.preStepHandler = () => { 
+            if (this.physics.body) {
+                const antiGravity = new CANNON.Vec3(0, -this.world.physics.world.gravity.y, 0).scale(this.physics.body.mass);
+                this.physics.body.applyForce(antiGravity, this.physics.body.position);
+            }
+        };
+        this.world.physics.world.addEventListener('preStep', this.preStepHandler);
 
-        this.body.addEventListener('collide', (event) => this.onCollide(event));
-
-        this.scene.add(this.mesh);
-        this.world.addBody(this.body);
-        this.world.addEventListener('preStep', this.preStepHandler);
-        this.game.updatables.push(this);
-    }
-
-    applyAntiGravity() {
-        if (!this.body || this.isDead || this.state !== 'HOMING') return;
-        const antiGravity = new CANNON.Vec3(0, -this.world.gravity.y, 0).scale(this.body.mass);
-        this.body.applyForce(antiGravity, this.body.position);
-    }
-
-    onCollide(event) {
-        if (this.state !== 'HOMING') return;
-        this.detonate();
+        this.world.physics.addBody(body);
+        this.world.add(this);
     }
 
     update(deltaTime) {
         if (this.isDead) return;
 
-        switch (this.state) {
-            case 'HOMING':
-                this.lifetime -= deltaTime;
-                if (this.lifetime <= 0) {
-                    this.detonate();
-                    return;
-                }
-                this.wobblePhase += deltaTime * this.wobbleFrequency;
-                
-                this.applySteering();
-                this.orientToVelocity(deltaTime);
-
-                this.mesh.position.copy(this.body.position);
-                // Orientation is now handled by orientToVelocity, no need to copy quaternion
-                break;
-
-            case 'EXPLODING':
-                this.explosionTimer += deltaTime;
-                this.light.intensity = THREE.MathUtils.lerp(150, 0, this.explosionTimer / this.explosionDuration);
-                if (this.explosionTimer >= this.explosionDuration) {
-                    this.cleanup();
-                }
-                break;
+        this.lifetime -= deltaTime;
+        if (this.lifetime <= 0) {
+            this.detonate();
+            return;
+        }
+        
+        this.applySteering();
+        this.orientToVelocity(deltaTime);
+    }
+    
+    orientToVelocity(deltaTime) {
+        const body = this.physics.body;
+        if (body.velocity.lengthSquared() > 0.1) {
+            const lookAtTarget = new CANNON.Vec3();
+            body.position.vadd(body.velocity, lookAtTarget);
+            
+            const tempObject3D = new THREE.Object3D();
+            tempObject3D.position.copy(body.position);
+            tempObject3D.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+            
+            body.quaternion.slerp(tempObject3D.quaternion, 15 * deltaTime, body.quaternion);
         }
     }
 
     applySteering() {
-        const homingSteer = this.calculateHomingVector();
-        this._steeringVector.copy(homingSteer);
+        if (!this.target || this.target.isDead || !this.target.physics?.body) return;
 
-        this.body.applyForce(this._steeringVector, this.body.position);
-        
-        if (this.body.velocity.length() > this.speed) {
-            this.body.velocity.normalize();
-            this.body.velocity.scale(this.speed, this.body.velocity);
-        }
-    }
+        const desiredVelocity = new CANNON.Vec3();
+        this.target.physics.body.position.vsub(this.physics.body.position, desiredVelocity);
 
-    calculateHomingVector() {
-        const homing = new CANNON.Vec3();
-        if (!this.target || !this.target.body || this.target.isDead) return homing;
-
-        this._homingTargetBasePos.copy(this.target.body.position);
-        this._homingTargetBasePos.vadd(this.targetPointOffset, this._homingEffectiveTargetPos);
-        const currentWobbleX = Math.sin(this.wobblePhase) * this.wobbleAmplitude;
-        const currentWobbleZ = Math.cos(this.wobblePhase) * this.wobbleAmplitude;
-        this._homingEffectiveTargetPos.x += currentWobbleX;
-        this._homingEffectiveTargetPos.z += currentWobbleZ;
-
-        this._homingEffectiveTargetPos.vsub(this.body.position, this._desiredVelocity);
-
-        if (this._desiredVelocity.lengthSquared() < (this.explosionRadius * this.explosionRadius)) {
+        if (desiredVelocity.lengthSquared() < 1) {
             this.detonate();
-            return homing;
+            return;
         }
 
-        this._desiredVelocity.normalize();
-        this._desiredVelocity.scale(this.speed, this._desiredVelocity);
-
-        this._desiredVelocity.vsub(this.body.velocity, homing);
-
-        if (homing.lengthSquared() > this.homingForce * this.homingForce) {
-            homing.normalize();
-            homing.scale(this.homingForce, homing);
-        }
+        desiredVelocity.normalize();
+        desiredVelocity.scale(this.speed, desiredVelocity);
         
-        return homing;
-    }
-
-    orientToVelocity(deltaTime) {
-        if (this.body.velocity.lengthSquared() > 0.1) {
-            const lookAtTarget = new CANNON.Vec3();
-            this.body.position.vadd(this.body.velocity, lookAtTarget);
-            
-            this._tempObject3D.position.copy(this.body.position);
-            this._tempObject3D.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
-            
-            this.body.quaternion.slerp(this._tempObject3D.quaternion, 15 * deltaTime, this.body.quaternion);
-        }
-        this.mesh.quaternion.copy(this.body.quaternion);
+        const steeringForce = new CANNON.Vec3();
+        desiredVelocity.vsub(this.physics.body.velocity, steeringForce);
+        steeringForce.normalize();
+        steeringForce.scale(this.homingForce, steeringForce);
+        
+        this.physics.body.applyForce(steeringForce, this.physics.body.position);
     }
 
     detonate() {
-        if (this.state !== 'HOMING') return;
+        if (this.isDead) return;
+
+        this.world.emit('projectileDetonated', { type: 'Firefly', position: this.physics.body.position });
         
-        this.state = 'EXPLODING';
-        this.explosionTimer = 0;
-
-        this.game.physics.queueForRemoval(this.body);
-        new ParticleExplosion(this.scene, this.mesh.position, this.game.updatables);
-        this.applyAoEDamage(this.mesh.position, this.explosionDamageRadius, this.damage);
-        this.mesh.visible = false;
-    }
-
-    applyAoEDamage(explosionCenter, radius, damageAmount) {
-        this._aoeExplosionCenter.copy(explosionCenter);
-        for (const enemy of [...this.game.enemies]) { 
-            if (enemy && enemy.body && !enemy.isDead) {
-                this._aoeEnemyPosition.copy(enemy.body.position);
-                const enemyRadius = enemy.body.shapes[0].radius;
-                if (this._aoeEnemyPosition.distanceTo(this._aoeExplosionCenter) < radius + enemyRadius) {
-                    enemy.takeDamage(damageAmount);
-                }
+        const radiusSq = 4 * 4;
+        for (const enemy of this.world.getEnemies()) {
+            if (enemy.physics?.body && enemy.physics.body.position.distanceSquared(this.physics.body.position) < radiusSq) {
+                enemy.takeDamage(this.damage);
             }
         }
+        
+        this.world.remove(this);
     }
-
-    cleanup() {
+    
+    dispose() {
         if (this.isDead) return;
         this.isDead = true;
-
-        this.world.removeEventListener('preStep', this.preStepHandler);
-
-        this.scene.remove(this.mesh);
-        this.mesh.geometry.dispose();
-        this.mesh.material.dispose();
-
-        const updatableIndex = this.game.updatables.indexOf(this);
-        if (updatableIndex > -1) {
-            this.game.updatables.splice(updatableIndex, 1);
-        }
+        this.world.physics.world.removeEventListener('preStep', this.preStepHandler);
+        if (this.physics.body) this.world.physics.queueForRemoval(this.physics.body);
     }
 }

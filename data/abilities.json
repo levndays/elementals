@@ -1,0 +1,55 @@
+{
+    "WEAPON_001": {
+        "id": "WEAPON_001",
+        "name": "Katana",
+        "type": "Weapon",
+        "element": "Utility",
+        "tier": 3,
+        "description": "A sharp, reliable blade for close-quarters combat. Does not consume energy.",
+        "flavor": "An elegant weapon for a more civilized age. A very, very close-range age."
+    },
+    "FIRE_001": {
+        "id": "FIRE_001",
+        "name": "Fireball",
+        "type": "Ability",
+        "element": "Fire",
+        "tier": 1,
+        "energyCost": 100,
+        "cooldown": 0.5,
+        "description": "Launch a sphere of raw flame that explodes on impact, leaving a burning area.",
+        "flavor": "Simple, effective, and very, very hot."
+    },
+    "FIRE_002": {
+        "id": "FIRE_002",
+        "name": "Fireflies",
+        "type": "Ability",
+        "element": "Fire",
+        "tier": 2,
+        "energyCost": 300,
+        "cooldown": 10.0,
+        "description": "Release a swarm of homing cinders that seek out a locked-on target.",
+        "flavor": "Why aim when they can do it for you?"
+    },
+    "EARTH_001": {
+        "id": "EARTH_001",
+        "name": "Stone Plating",
+        "type": "Ability",
+        "element": "Earth",
+        "tier": 2,
+        "energyCost": 500,
+        "cooldown": 30.0,
+        "description": "For 15s, reduce incoming damage by 80% and boost melee damage by 30%, but halve movement speed and disable dashing & double jumping.",
+        "flavor": "Patience is a virtue. So is being made of rock."
+    },
+    "WATER_001": {
+        "id": "WATER_001",
+        "name": "Wave Power",
+        "type": "Ability",
+        "element": "Water",
+        "tier": 2,
+        "energyCost": 400,
+        "cooldown": 8.0,
+        "description": "When used on the ground, release a forceful wave in front of you that knocks enemies back.",
+        "flavor": "Get out of the way."
+    }
+}

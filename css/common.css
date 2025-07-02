@@ -1,0 +1,145 @@
+/* --- Google Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* --- GLOBAL VARIABLES & DEFAULTS --- */
+:root {
+    --font-primary: 'Poppins', sans-serif;
+    
+    --color-bg-darkest: hsl(230, 10%, 8%);
+    --color-bg-dark:   hsl(230, 10%, 12%);
+    --color-bg-mid:    hsl(230, 10%, 18%);
+    --color-bg-light:  hsl(230, 10%, 25%);
+
+    --color-border:    hsl(230, 10%, 10%);
+    
+    --color-text-light:  hsl(230, 20%, 95%);
+    --color-text-mid:    hsl(230, 10%, 70%);
+    --color-text-dark:   hsl(230, 10%, 50%);
+    
+    --color-accent:      hsl(190, 100%, 50%); /* Bright Cyan/Blue */
+    --color-accent-hover:hsl(190, 100%, 60%);
+    --color-accent-text: hsl(230, 20%, 5%);
+    
+    /* REWORKED: New, more vibrant elemental colors */
+    --color-accent-fire:   hsl(25, 100%, 55%);  /* #FF771A */
+    --color-accent-water:  hsl(195, 100%, 50%); /* #00A3FF */
+    --color-accent-air:    hsl(180, 80%, 85%);  /* #B3FCFC */
+    --color-accent-earth:  hsl(35, 45%, 50%);   /* #B39159 */
+    --color-accent-utility:hsl(265, 90%, 65%);  /* #A16BFF */
+
+    --color-delete:      hsl(0, 80%, 60%);
+    --color-delete-hover:hsl(0, 80%, 70%);
+
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+}
+
+/* --- GLOBAL RESETS & BASE STYLES --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: var(--color-bg-darkest);
+    color: var(--color-text-light);
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    cursor: default;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- CUSTOM SCROLLBAR --- */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--color-bg-darkest);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-bg-light);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-bg-mid);
+}
+
+/* --- COMMON COMPONENT STYLES: MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: hsla(230, 20%, 5%, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: modal-fade-in 0.3s ease-out;
+}
+
+@keyframes modal-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: 24px;
+    width: 90%;
+    max-width: 550px;
+    color: var(--color-text-light);
+    position: relative;
+    box-shadow: 0 10px 30px hsla(0, 0%, 0%, 0.5);
+    transform: scale(0.95);
+    animation: modal-scale-up 0.3s ease-out forwards;
+}
+
+@keyframes modal-scale-up {
+    from { transform: scale(0.95); }
+    to { transform: scale(1); }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+.modal-close-btn:hover {
+    color: var(--color-text-light);
+    transform: scale(1.1);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--color-accent);
+    border-bottom: 1px solid var(--color-bg-light);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+}
+
+#info-modal-text {
+    font-family: 'Consolas', 'Courier New', monospace;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+    color: var(--color-text-mid);
+}

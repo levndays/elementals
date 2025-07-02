@@ -1,0 +1,305 @@
+/* css/game.css */
+/* --- GAMEPLAY STATE --- */
+body:not(.game-active) #game-hud,
+body:not(.game-active) #crosshair-container,
+body:not(.game-active) #target-frame,
+body:not(.game-active) #tutorial-text-container {
+    display: none !important;
+}
+
+/* --- IN-GAME VFX --- */
+.vfx-overlay {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 99; opacity: 0;
+}
+#screen-overlay.active {
+    opacity: 1; animation: damage-pulse 0.3s ease-out forwards;
+    background-image: radial-gradient(circle at 50% 50%, transparent 60%, hsla(0, 100%, 50%, 0.7) 95%);
+}
+@keyframes damage-pulse {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(1.2); }
+}
+#vfx-dash-forward.active {
+    opacity: 1;
+    background: radial-gradient(ellipse at center, transparent 30%, hsla(190, 100%, 70%, 0.2) 100%);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    animation: dash-forward-zoom 0.25s ease-out forwards;
+}
+@keyframes dash-forward-zoom {
+    from { transform: scale(0.5, 2); opacity: 1; }
+    to { transform: scale(2, 2); opacity: 0; }
+}
+#vfx-dash-sideways::before, #vfx-dash-sideways::after {
+    content: ''; position: absolute; top: 50%; height: 2px; width: 40vw;
+    background: linear-gradient(to right, transparent, hsla(190, 100%, 70%, 0.9) 70%, transparent);
+    opacity: 0; will-change: transform, opacity;
+}
+#vfx-dash-sideways.active.left-to-right::before, #vfx-dash-sideways.active.left-to-right::after { animation: whoosh-lr 0.25s ease-out forwards; }
+#vfx-dash-sideways.active.right-to-left::before, #vfx-dash-sideways.active.right-to-left::after { animation: whoosh-rl 0.25s ease-out forwards; }
+@keyframes whoosh-lr {
+    0%   { transform: translateX(-60vw) scaleX(0.3); opacity: 0.5; }
+    20%  { transform: translateX(-30vw) scaleX(1); opacity: 1; }
+    100% { transform: translateX(60vw) scaleX(0.3); opacity: 0; }
+}
+@keyframes whoosh-rl {
+    0%   { transform: translateX(60vw) scaleX(0.3); opacity: 0.5; }
+    20%  { transform: translateX(30vw) scaleX(1); opacity: 1; }
+    100% { transform: translateX(-60vw) scaleX(0.3); opacity: 0; }
+}
+#vfx-jump-wind.active {
+    opacity: 0.4;
+    background-image: radial-gradient(ellipse at 50% 150%, hsla(190, 100%, 80%, 0.5) 0%, transparent 60%);
+    animation: jump-wind-effect 0.4s ease-in-out forwards;
+}
+@keyframes jump-wind-effect {
+    from { opacity: 0.4; transform: scaleY(1); }
+    to { opacity: 0; transform: scaleY(1.5); }
+}
+#vfx-ground-slam.active {
+    opacity: 1;
+    background: radial-gradient(ellipse at 50% 100%, hsla(190, 100%, 80%, 0.4) 0%, transparent 60%);
+    animation: ground-slam-shockwave 0.4s ease-out forwards;
+}
+@keyframes ground-slam-shockwave {
+    from { transform: scale(0); opacity: 1; }
+    to { transform: scale(2); opacity: 0; }
+}
+
+#vfx-earth-buff.active {
+    opacity: 1;
+    background-image: radial-gradient(ellipse at center, transparent 70%, hsla(35, 45%, 50%, 0.6) 100%);
+    animation: earth-buff-pulse 3s infinite ease-in-out;
+    transition: opacity 0.5s ease-out;
+}
+@keyframes earth-buff-pulse {
+    0% { transform: scale(1.0); opacity: 0.8; }
+    50% { transform: scale(1.02); opacity: 1.0; }
+    100% { transform: scale(1.0); opacity: 0.8; }
+}
+
+
+/* REWORKED: CROSSHAIR & TARGETING */
+#crosshair-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#crosshair {
+    width: 4px; height: 4px;
+    background-color: hsla(0, 0%, 100%, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 5px hsla(0, 0%, 100%, 0.5);
+    flex-shrink: 0;
+}
+
+.movement-cooldown {
+    position: absolute; /* REWORKED: Position on top of each other */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px; height: 60px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.movement-cooldown.on-cooldown { opacity: 0.8; }
+.movement-cooldown svg { width: 100%; height: 100%; }
+.movement-cooldown path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 8;
+}
+.movement-cooldown .cooldown-track {
+    stroke: hsla(230, 10%, 12%, 0.7);
+}
+.movement-cooldown .cooldown-progress {
+    stroke: var(--color-accent);
+    stroke-dasharray: 157; /* pi * r (3.14 * 50) */
+    stroke-dashoffset: 157; /* Starts empty */
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+#target-frame {
+    position: absolute; border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--color-accent), inset 0 0 10px var(--color-accent);
+    display: none; transform: translate(-50%, -50%);
+    transition: width 0.1s linear, height 0.1s linear;
+    animation: target-frame-pulse 2s infinite ease-in-out;
+}
+@keyframes target-frame-pulse {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+}
+
+/* REWORKED GAME HUD LAYOUT */
+#game-hud {
+    position: absolute; inset: 0; pointer-events: none; z-index: 10;
+    font-family: var(--font-primary);
+}
+.hud-corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+#hud-top-left {
+    top: 0; left: 0;
+    gap: 8px;
+    padding: 30px;
+}
+#hud-top-center {
+    top: 0; left: 50%; transform: translateX(-50%);
+}
+#hud-top-right {
+    top: 0; right: 0; align-items: flex-end;
+}
+#hud-bottom-center {
+    bottom: 0; left: 50%; transform: translateX(-50%);
+}
+
+/* HUD WIDGETS */
+#minimap-canvas {
+    width: 180px; height: 180px;
+    background-color: hsla(230, 10%, 8%, 0.5);
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    box-shadow: 0 0 15px hsla(0, 0%, 0%, 0.5);
+}
+
+#enemy-counter {
+    background-color: hsla(230, 10%, 8%, 0.7);
+    padding: 8px 20px;
+    border-radius: var(--border-radius-sm);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-mid);
+    text-shadow: 1px 1px 2px black;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.resource-bar-container {
+    width: 320px; height: 12px;
+    background-color: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: 2px;
+    box-shadow: inset 0 1px 2px hsla(0,0%,0%,0.5);
+}
+#health-bar, #energy-bar {
+    height: 100%; border-radius: 2px;
+    transition: width 0.2s ease-out;
+}
+#health-bar { background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(0, 100%, 75%)); }
+#energy-bar { background: linear-gradient(to right, hsl(190, 100%, 45%), hsl(190, 100%, 65%)); }
+.resource-text { display: none; }
+
+/* REWORKED: Abilities Container & Slots */
+#abilities-container {
+    display: flex; gap: 16px;
+}
+.ability-slot {
+    width: 64px; height: 64px;
+    background-color: var(--color-bg-darkest);
+    border: 2px solid var(--color-bg-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    box-shadow: inset 0 0 10px hsla(0,0%,0%,0.6);
+}
+.ability-slot.ready { border-color: var(--color-text-light); }
+
+.ability-icon {
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* For loading state */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-text-dark);
+}
+
+.cooldown-ring {
+    position: absolute; width: 100%; height: 100%;
+    transform: rotate(-90deg); z-index: 1;
+}
+.cooldown-ring .cooldown-track {
+    stroke-width: 4;
+    stroke: hsla(230, 10%, 18%, 0.8);
+    fill: none;
+}
+.cooldown-ring-circle {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: 100; /* Starts empty */
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Elemental Slot Styling */
+.ability-slot.selected { transform: scale(1.1); }
+.ability-slot.element-fire .cooldown-ring-circle { stroke: var(--color-accent-fire); }
+.ability-slot.element-fire.selected { border-color: var(--color-accent-fire); box-shadow: 0 0 15px var(--color-accent-fire); }
+.ability-slot.element-water .cooldown-ring-circle { stroke: var(--color-accent-water); }
+.ability-slot.element-water.selected { border-color: var(--color-accent-water); box-shadow: 0 0 15px var(--color-accent-water); }
+.ability-slot.element-air .cooldown-ring-circle { stroke: var(--color-accent-air); }
+.ability-slot.element-air.selected { border-color: var(--color-accent-air); box-shadow: 0 0 15px var(--color-accent-air); }
+.ability-slot.element-earth .cooldown-ring-circle { stroke: var(--color-accent-earth); }
+.ability-slot.element-earth.selected { border-color: var(--color-accent-earth); box-shadow: 0 0 15px var(--color-accent-earth); }
+.ability-slot.element-utility .cooldown-ring-circle { stroke: var(--color-accent-utility); }
+.ability-slot.element-utility.selected { border-color: var(--color-accent-utility); box-shadow: 0 0 15px var(--color-accent-utility); }
+
+.ability-slot:not([class*='element-']) .cooldown-ring-circle {
+    stroke: var(--color-accent);
+}
+.ability-slot:not([class*='element-']).selected {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 15px var(--color-accent);
+}
+
+/* --- PAUSE & DEATH SCREENS --- */
+#pause-menu h2 { color: var(--color-text-light); }
+#death-screen h2 { color: var(--color-accent-fire); text-shadow: 0 0 20px var(--color-accent-fire); }
+#respawn-timer-text { font-size: 1.5rem; color: var(--color-text-mid); }
+
+/* --- TUTORIAL TEXT --- */
+#tutorial-text-container {
+    position: absolute; bottom: 25%; left: 50%;
+    transform: translateX(-50%); width: 90%; max-width: 600px;
+    background-color: hsla(230, 10%, 12%, 0.8);
+    border-left: 4px solid var(--color-accent);
+    padding: 20px 25px; border-radius: var(--border-radius-sm);
+    z-index: 50; transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    backdrop-filter: blur(5px);
+}
+#tutorial-text {
+    color: var(--color-text-light); font-size: 1.1rem; line-height: 1.6; margin: 0;
+}
+#tutorial-text kbd {
+    background-color: var(--color-text-light); color: var(--color-bg-darkest);
+    border-radius: var(--border-radius-sm); padding: 2px 6px;
+    font-weight: bold; font-size: 0.9em;
+    border-bottom: 2px solid var(--color-text-mid);
+}
+#tutorial-text-container.level-complete {
+    border-left-color: gold;
+    background-color: hsla(45, 100%, 50%, 0.1);
+}
+#tutorial-text-container.level-complete #tutorial-text {
+    font-size: 2.5rem; text-align: center; color: gold;
+    font-weight: 700; text-shadow: 0 0 15px gold;
+}

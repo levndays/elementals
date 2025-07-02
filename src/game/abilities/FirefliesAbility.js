@@ -1,43 +1,54 @@
 import { Ability } from './Ability.js';
-import { FireflyProjectile } from './FireflyProjectile.js';
 
 export class FirefliesAbility extends Ability {
-    constructor(caster) {
-        super(caster, {
-            name: 'Fireflies',
-            icon: 'FF', // Icon for the HUD
-            cooldown: 10.0, // 10-second cooldown
-            energyCost: 300, // 300 energy points to cast
-        });
-        this.numProjectiles = 5; // Number of fireflies to shoot
-        this.requiresLockOn = true; // This ability needs a locked target
+    constructor(caster, abilityData) {
+        super(caster, abilityData);
+        this.numProjectiles = 5;
+        this.requiresLockOn = true;
+
+        // State for update-based casting
+        this.castTimer = 0;
+        this.projectilesFired = 0;
+        this.targetWhileCasting = null;
+        this.CAST_INTERVAL = 0.075; // 75ms
     }
 
-    /**
-     * @override
-     * @protected
-     * Executes the Fireflies ability's core logic.
-     * Launches multiple homing projectiles towards the enemy currently targeted by the player's crosshair.
-     */
     _executeCast() {
-        // Use the pre-determined target from player's crosshair logic
         const targetEnemy = this.caster.lockedTarget; 
+        if (!targetEnemy || targetEnemy.isDead) return false;
 
-        if (!targetEnemy || targetEnemy.isDead) {
-            console.log("Fireflies: No valid enemy target found.");
-            return false; 
-        }
-
-        // Spawn the specified number of firefly projectiles, all targeting the same enemy
-        for (let i = 0; i < this.numProjectiles; i++) {
-            // Add a slight delay between projectiles for visual effect
-            setTimeout(() => {
-                if (!this.caster.isDead) { // Ensure player is still alive before spawning
-                    new FireflyProjectile({ caster: this.caster, target: targetEnemy });
-                }
-            }, i * 75); // 75ms delay between each projectile
-        }
+        this.isCasting = true;
+        this.castTimer = 0;
+        this.projectilesFired = 0;
+        this.targetWhileCasting = targetEnemy;
 
         return true;
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime); // Handles the main cooldown
+
+        if (!this.isCasting) return;
+
+        this.castTimer += deltaTime;
+
+        // Check if it's time to fire the next projectile
+        if (this.castTimer >= this.projectilesFired * this.CAST_INTERVAL) {
+            if (this.projectilesFired < this.numProjectiles) {
+                if (!this.caster.isDead && this.targetWhileCasting && !this.targetWhileCasting.isDead) {
+                    this.caster.world.createFireflyProjectile({ 
+                        caster: this.caster, 
+                        target: this.targetWhileCasting 
+                    });
+                }
+                this.projectilesFired++;
+            }
+        }
+
+        // End casting sequence
+        if (this.projectilesFired >= this.numProjectiles) {
+            this.isCasting = false;
+            this.targetWhileCasting = null;
+        }
     }
 }

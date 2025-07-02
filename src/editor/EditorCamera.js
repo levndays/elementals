@@ -1,5 +1,11 @@
+// src/editor/EditorCamera.js
+
 import * as THREE from 'three';
 
+/**
+ * Implements the editor's first-person fly-camera controls.
+ * It reads from the InputManager to move and rotate the camera.
+ */
 export class EditorCamera {
     constructor(editor) {
         this.editor = editor;
@@ -8,7 +14,7 @@ export class EditorCamera {
     }
 
     update(deltaTime) {
-        // Prevent camera movement while transform controls are active or if input is disabled
+        // Prevent camera movement while transform controls are active or input is disabled
         if (this.editor.controls.transformControls.dragging || !this.input.enabled) {
             this.input.update();
             return;
@@ -26,8 +32,8 @@ export class EditorCamera {
         if (this.input.keys['Space']) this.camera.position.y += moveSpeed;
         if (this.input.keys['ShiftLeft']) this.camera.position.y -= moveSpeed;
         
-        // Right-click look
-        if (this.input.mouse.rightClick && !this.input.isClickOnUI(this.input.mouse.screenX, this.input.mouse.screenY)) {
+        // REVISED: Left-click to look around
+        if (this.input.mouse.leftClick && !this.editor.ui.isClickOnUI(this.input.mouse.screenX, this.input.mouse.screenY)) {
             const euler = new THREE.Euler(0, 0, 0, 'YXZ');
             euler.setFromQuaternion(this.camera.quaternion);
             euler.y -= this.input.mouse.movementX * 0.002;

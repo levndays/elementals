@@ -1,0 +1,119 @@
+/* --- MENU SYSTEM --- */
+#menu-system {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none; /* Wrapper is non-interactive */
+}
+
+.menu-screen {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: hsla(230, 10%, 8%, 0.7);
+    backdrop-filter: blur(10px);
+    color: var(--color-text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: auto; /* Individual screens are interactive */
+    animation: menu-fade-in 0.5s ease-out;
+}
+
+@keyframes menu-fade-in {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.menu-screen h1, .menu-screen h2 {
+    margin: 0 0 50px 0;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.menu-screen h1 {
+    font-size: 6rem;
+    color: var(--color-accent);
+    text-shadow: 0 0 20px hsla(190, 100%, 50%, 0.5), 0 0 40px hsla(190, 100%, 50%, 0.3);
+}
+
+.menu-screen h2 {
+    font-size: 4rem;
+    color: var(--color-text-light);
+    text-shadow: 0 0 10px hsla(0, 0%, 100%, 0.2);
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.menu-screen button {
+    padding: 14px 30px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-family: inherit;
+    background-color: var(--color-bg-mid);
+    color: var(--color-text-light);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    min-width: 300px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-screen button:not(:disabled):hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent-hover);
+    color: var(--color-accent-text);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px hsla(190, 100%, 50%, 0.2);
+}
+
+.menu-screen button:disabled {
+    background-color: var(--color-bg-light);
+    color: var(--color-text-dark);
+    cursor: not-allowed;
+}
+
+/* --- LEVEL SELECT SPECIFICS --- */
+#level-list {
+    width: 90%;
+    max-width: 450px;
+    max-height: 50vh;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: 10px;
+    background-color: var(--color-bg-dark);
+    margin-bottom: 20px;
+}
+
+#level-list button {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+#level-list button:last-child {
+    margin-bottom: 0;
+}
+
+.back-button {
+    margin-top: 20px;
+    background-color: var(--color-bg-light) !important;
+}
+
+.back-button:hover {
+    background-color: var(--color-text-dark) !important;
+    border-color: var(--color-text-dark) !important;
+    color: var(--color-text-light) !important;
+    box-shadow: none !important;
+}
