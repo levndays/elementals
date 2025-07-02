@@ -47,7 +47,7 @@ export class WavePowerAbility extends Ability {
 
             // Check if the enemy is within the rectangle's bounds
             if (Math.abs(this._enemyLocalPos.x) <= halfWidth && Math.abs(this._enemyLocalPos.z) <= halfLength) {
-                this.applyForce(enemy);
+                this.applyEffect(enemy);
                 enemiesHit++;
             }
         }
@@ -58,7 +58,14 @@ export class WavePowerAbility extends Ability {
         return true;
     }
 
-    applyForce(enemy) {
+    applyEffect(enemy) {
+        // Apply damage
+        enemy.takeDamage(this.config.DAMAGE);
+
+        // Apply knockback state and force
+        enemy.ai.isKnockedBack = true;
+        enemy.ai.knockbackTimer = this.config.KNOCKBACK_DURATION;
+
         const impulseDirection = new CANNON.Vec3().copy(this._forward);
         impulseDirection.y = this.config.IMPULSE_UPWARD / this.config.IMPULSE_FORWARD;
         impulseDirection.normalize();

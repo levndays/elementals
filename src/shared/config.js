@@ -1,3 +1,4 @@
+// src/shared/config.js
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 
@@ -47,6 +48,8 @@ export const GAME_CONFIG = {
         LENGTH: 15.0, // meters
         IMPULSE_FORWARD: 2000, // in kg*m/s
         IMPULSE_UPWARD: 800, // in kg*m/s
+        DAMAGE: 200,
+        KNOCKBACK_DURATION: 1.0, // seconds
     },
 
     // Enemy base parameters

@@ -1,5 +1,4 @@
 // src/game/components/AIComponent.js
-
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
@@ -40,11 +39,13 @@ export class AIComponent {
             reposition: 3.0,
         };
 
-        // --- Movement ---
+        // --- Movement & States---
         this.strafeDirection = 1;
         this.isDashing = false;
         this.dashDuration = 0.2;
         this.dashStateTimer = 0;
         this.dashDirection = new THREE.Vector3();
+        this.isKnockedBack = false;
+        this.knockbackTimer = 0;
     }
 }

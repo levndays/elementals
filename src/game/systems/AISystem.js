@@ -1,3 +1,4 @@
+// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -37,6 +38,14 @@ export class AISystem {
 
         for (const enemy of world.getEnemies()) {
             if (enemy.isDead) continue;
+
+            if (enemy.ai.isKnockedBack) {
+                enemy.ai.knockbackTimer -= deltaTime;
+                if (enemy.ai.knockbackTimer <= 0) {
+                    enemy.ai.isKnockedBack = false;
+                }
+                continue; // Skip AI logic while knocked back
+            }
             
             enemy.ai.aiUpdateTimer += deltaTime;
             if (enemy.ai.aiUpdateTimer >= enemy.ai.aiUpdateInterval) {
