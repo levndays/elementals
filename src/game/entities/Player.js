@@ -70,7 +70,12 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
-        if (this.activeBuffs.has('stonePlating')) return;
+        if (this.activeBuffs.has('stonePlating')) {
+            // Allow first jump from the ground, but not subsequent (double) jumps.
+            if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
+                return; // Block double jump
+            }
+        }
         this.input.jumpRequested = true;
     }
     

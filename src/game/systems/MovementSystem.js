@@ -117,7 +117,7 @@ export class MovementSystem {
     _applyStandardMovement(player, moveDirection) {
         let speed = GAME_CONFIG.PLAYER.SPEED;
         if (player.activeBuffs.has('stonePlating')) {
-            speed /= 2;
+            speed *= 0.8; // Reduce speed by 30%
         }
         
         const velocity = player.physics.body.velocity;

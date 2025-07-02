@@ -38,7 +38,7 @@
         "tier": 2,
         "energyCost": 500,
         "cooldown": 30.0,
-        "description": "For 15s, reduce incoming damage by 80% and boost melee damage by 30%, but halve movement speed and disable dashing & double jumping.",
+        "description": "Hit hard and absorb damage at the cost of slower movement",
         "flavor": "Patience is a virtue. So is being made of rock."
     },
     "WATER_001": {
