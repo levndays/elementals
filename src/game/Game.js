@@ -96,7 +96,7 @@ export class Game {
             this.core.renderer.setupPostProcessing(
                 this.world.scene,
                 this.core.renderer.camera,
-                this.game.viewModelScene
+                this.viewModelScene
             );
 
             this.playerController.attach(this.world.player);
