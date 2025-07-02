@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-02T20:42:15.132607
+Snapshot created on: 2025-07-02T21:05:16.053275
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1813,6 +1813,91 @@ body:not(.game-active) #tutorial-text-container {
 === END OF FILE: data/player-profile.json ===
 
 
+=== FILE: levels/level-fallen-colossus.json ===
+--------------------------------------------------
+{
+    "name": "Fallen Colossus",
+    "spawnPoint": { "x": -85, "y": 3, "z": 0 },
+    "deathSpawnPoint": { "x": -85, "y": 3, "z": 0 },
+    "settings": {
+        "backgroundColor": "0x3B2D2C",
+        "fogColor": "0x3B2D2C",
+        "fogNear": 40,
+        "fogFar": 250,
+        "ambientLight": {
+            "color": "0x5A4C4A",
+            "intensity": 0.6
+        },
+        "directionalLights": [
+            {
+                "color": "0xFF9966",
+                "intensity": 7.0,
+                "position": { "x": -180, "y": 60, "z": -30 },
+                "targetPosition": { "x": 0, "y": 0, "z": 0 }
+            }
+        ]
+    },
+    "objects": [
+        { "type": "Plane", "name": "Ground_Plane", "size": [500, 500], "position": { "x": 0, "y": -50, "z": 0 }, "rotation": { "x": -90, "y": 0, "z": 0 }, "material": { "color": "0x1A1A1A" }, "editorSelectable": false },
+
+        { "type": "Box", "name": "LockerRoom_Floor", "size": [15, 2, 20], "position": { "x": -85, "y": 1, "z": 0 }, "material": { "color": "0x333333" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "LockerRoom_BackWall", "size": [2, 10, 20], "position": { "x": -92, "y": 6, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "LockerRoom_Ceiling", "size": [15, 2, 20], "position": { "x": -85, "y": 11, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+        
+        { "type": "Box", "name": "Concourse_Floor", "size": [25, 2, 120], "position": { "x": -65, "y": 1, "z": 0 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Concourse_OuterWall", "size": [2, 20, 120], "position": { "x": -77, "y": 11, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Concourse_Ceiling", "size": [25, 2, 120], "position": { "x": -65, "y": 21, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
+        
+        { "type": "Box", "name": "Field_Base", "size": [100, 4, 100], "position": { "x": 0, "y": -2, "z": 0 }, "material": { "color": "0x3D4935" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Grandstand_Tier1_Base", "size": [30, 4, 120], "position": { "x": -38, "y": 2, "z": 0 }, "material": { "color": "0x546E7A" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier1_SeatA", "size": [6, 1, 120], "position": { "x": -35, "y": 5, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier1_SeatB", "size": [6, 1, 120], "position": { "x": -39, "y": 7, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier1_SeatC", "size": [6, 1, 120], "position": { "x": -43, "y": 9, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Grandstand_Tier2_Base", "size": [30, 4, 120], "position": { "x": -38, "y": 13, "z": 0 }, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier2_SeatA", "size": [6, 1, 120], "position": { "x": -35, "y": 16, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier2_SeatB", "size": [6, 1, 120], "position": { "x": -39, "y": 18, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Grandstand_Tier2_SeatC", "size": [6, 1, 120], "position": { "x": -43, "y": 20, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Collapsed_Stand_Ramp", "size": [25, 2, 30], "position": { "x": 30, "y": 10, "z": -40 }, "rotation": {"x": -25, "y": 10, "z": 0}, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Opposite_Stands_Wall", "size": [30, 40, 4], "position": { "x": 65, "y": 20, "z": 0 }, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Scoreboard_Remains", "size": [20, 15, 2], "position": { "x": 0, "y": 25, "z": 60 }, "material": { "color": "0x111111" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Fallen_LightRig", "size": [80, 3, 3], "position": { "x": 10, "y": 1.5, "z": 0 }, "rotation": {"x": 0, "y": 0, "z": 15}, "material": { "color": "0x78909C" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "Field_Cover_A", "size": [10, 5, 4], "position": { "x": 15, "y": 2.5, "z": 25 }, "material": { "color": "0x4E342E" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Field_Cover_B", "size": [4, 6, 12], "position": { "x": -10, "y": 3, "z": -30 }, "material": { "color": "0x4E342E" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "Field_Crater_Edge", "size": [20, 2, 2], "position": { "x": 0, "y": -1, "z": 20 }, "rotation": {"x": 20, "y": 0, "z": 0}, "material": { "color": "0x5D4037" }, "physics": { "mass": 0 } },
+
+        { "type": "Box", "name": "VIP_Box_Floor", "size": [12, 1, 15], "position": { "x": -65, "y": 22, "z": 40 }, "material": { "color": "0x212121" }, "physics": { "mass": 0 } },
+        { "type": "Box", "name": "VIP_Box_Wall", "size": [12, 8, 1], "position": { "x": -65, "y": 26, "z": 47 }, "material": { "color": "0x424242" }, "physics": { "mass": 0 } }
+
+    ],
+    "enemies": [
+        { "type": "Dummy", "position": { "x": -65, "y": 3, "z": 20 } },
+        { "type": "Dummy", "position": { "x": -65, "y": 3, "z": -20 } },
+        
+        { "type": "Dummy", "position": { "x": 15, "y": 5, "z": 25 } },
+        { "type": "Dummy", "position": { "x": -10, "y": 5, "z": -30 } },
+        { "type": "Dummy", "position": { "x": 5, "y": 0, "z": 0 } },
+
+        { "type": "Dummy", "position": { "x": -39, "y": 9, "z": -40 } },
+        { "type": "Dummy", "position": { "x": -43, "y": 22, "z": 0 } },
+        { "type": "Dummy", "position": { "x": -65, "y": 24, "z": 40 } }
+    ],
+    "triggers": [
+        { "type": "Trigger", "name": "Intro_Trigger", "position": {"x": -75, "y": 5, "z": 0}, "size": [4, 8, 18], "message": "The roar of the crowd has been replaced by silence... and something else.", "duration": 8, "color": "0x2ed573"}
+    ],
+    "deathTriggers": [
+        { "type": "DeathTrigger", "name": "Abyss", "position": { "x": 0, "y": -40, "z": 0 }, "size": [200, 2, 200] }
+    ]
+}
+--------------------------------------------------
+=== END OF FILE: levels/level-fallen-colossus.json ===
+
+
 === FILE: levels/level-mangled-grove.json ===
 --------------------------------------------------
 {
@@ -1942,6 +2027,10 @@ body:not(.game-active) #tutorial-text-container {
 === FILE: levels/manifest.json ===
 --------------------------------------------------
 [
+  {
+    "name": "Fallen Colossus",
+    "path": "./levels/level-fallen-colossus.json"
+  },
   {
     "name": "Mangled Grove (Dusk)",
     "path": "./levels/level-mangled-grove.json"
@@ -7141,7 +7230,7 @@ export class Game {
             this.core.renderer.setupPostProcessing(
                 this.world.scene,
                 this.core.renderer.camera,
-                this.game.viewModelScene
+                this.viewModelScene
             );
 
             this.playerController.attach(this.world.player);

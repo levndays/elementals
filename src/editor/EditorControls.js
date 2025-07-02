@@ -40,6 +40,8 @@ export class EditorControls {
         this.selectionBox.visible = false;
         this.scene.add(this.selectionBox);
         
+        this.applySnapSettings();
+        
         this.renderer.domElement.addEventListener('mousedown', this._onMouseDownHandler, false);
         this.renderer.domElement.addEventListener('contextmenu', this._onContextMenuHandler, false);
     }

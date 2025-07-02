@@ -43,6 +43,22 @@ export class EditorUI {
         document.getElementById('tool-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('tool-scale').onclick = () => this.editor.controls.setTransformMode('scale');
         
+        // --- Snapping Controls ---
+        const snapToggle = document.getElementById('snap-toggle');
+        const transSnapInput = document.getElementById('snap-translation-input');
+        const rotSnapInput = document.getElementById('snap-rotation-input');
+        const snapLabel = document.querySelector('label[for="snap-toggle"]');
+
+        snapToggle.onchange = (e) => this.editor.setSnapEnabled(e.target.checked);
+        transSnapInput.onchange = (e) => this.editor.setTranslationSnap(parseFloat(e.target.value));
+        rotSnapInput.onchange = (e) => this.editor.setRotationSnap(parseFloat(e.target.value));
+        if (snapLabel) snapLabel.onclick = () => snapToggle.click();
+
+        // Set initial UI values from editor state
+        snapToggle.checked = this.editor.isSnapEnabled;
+        transSnapInput.value = this.editor.translationSnapValue;
+        rotSnapInput.value = this.editor.rotationSnapValue;
+        
         // --- Create Button & Context Menu ---
         const createButton = document.getElementById('create-button');
         const createMenu = document.getElementById('create-context-menu');

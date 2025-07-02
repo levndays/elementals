@@ -128,6 +128,22 @@ export class LevelEditor {
             this.select(entityToSelect);
         }
     }
+
+    // --- Snap Control ---
+    setSnapEnabled(isEnabled) {
+        this.isSnapEnabled = isEnabled;
+        this.controls.applySnapSettings();
+    }
+    
+    setTranslationSnap(value) {
+        this.translationSnapValue = value || 1;
+        this.controls.applySnapSettings();
+    }
+    
+    setRotationSnap(value) {
+        this.rotationSnapValue = value || 15;
+        this.controls.applySnapSettings();
+    }
     
     // --- Data & Property Manipulation ---
 
