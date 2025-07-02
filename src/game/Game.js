@@ -11,9 +11,9 @@ import { GAME_CONFIG } from '../shared/config.js';
  * Acts as a state machine (MENU, LOADING, PLAYING) and orchestrates the core modules,
  * the game world, and the UI manager.
  */
-export class Game extends EventEmitter {
+export class Game {
     constructor(core, ui) {
-        super();
+        this.emitter = new EventEmitter(); // Composition
         this.core = core;
         this.ui = ui;
         this.viewModelScene = new THREE.Scene();
@@ -27,6 +27,12 @@ export class Game extends EventEmitter {
         this.respawnTimer = 0;
         this.currentLevelConfig = null;
     }
+
+    // --- Event Emitter Delegation ---
+    on(eventName, listener) { this.emitter.on(eventName, listener); }
+    emit(eventName, data) { this.emitter.emit(eventName, data); }
+    off(eventName, listener) { this.emitter.off(eventName, listener); }
+    removeAllListeners() { this.emitter.removeAllListeners(); }
 
     async init() {
         await AbilityFactory.init();
@@ -90,7 +96,7 @@ export class Game extends EventEmitter {
             this.core.renderer.setupPostProcessing(
                 this.world.scene,
                 this.core.renderer.camera,
-                this.viewModelScene
+                this.game.viewModelScene
             );
 
             this.playerController.attach(this.world.player);

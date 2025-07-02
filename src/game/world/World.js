@@ -1,3 +1,4 @@
+// src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -17,9 +18,9 @@ import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
 /**
  * Represents a single level instance, containing all entities, systems, and game state.
  */
-export class World extends EventEmitter {
+export class World {
     constructor(core, game) {
-        super();
+        this.emitter = new EventEmitter(); // Composition
         this.core = core;
         this.game = game;
         this.scene = core.renderer.scene;
@@ -48,6 +49,12 @@ export class World extends EventEmitter {
         
         this.on('enemyDied', () => this.onEnemyDied());
     }
+
+    // --- Event Emitter Delegation ---
+    on(eventName, listener) { this.emitter.on(eventName, listener); }
+    emit(eventName, data) { this.emitter.emit(eventName, data); }
+    off(eventName, listener) { this.emitter.off(eventName, listener); }
+    removeAllListeners() { this.emitter.removeAllListeners(); }
 
     async loadLevel(config) {
         let levelData;

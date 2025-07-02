@@ -46,8 +46,8 @@ export const GAME_CONFIG = {
     WAVE_POWER: {
         WIDTH: 8.0, // meters
         LENGTH: 15.0, // meters
-        IMPULSE_FORWARD: 2000, // in kg*m/s
-        IMPULSE_UPWARD: 800, // in kg*m/s
+        IMPULSE_FORWARD: 3000, // in kg*m/s
+        IMPULSE_UPWARD: 1000, // in kg*m/s
         DAMAGE: 200,
         KNOCKBACK_DURATION: 1.0, // seconds
     },
