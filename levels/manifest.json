@@ -1,5 +1,9 @@
 [
   {
+    "name": "Fallen Colossus",
+    "path": "./levels/level-fallen-colossus.json"
+  },
+  {
     "name": "Mangled Grove (Dusk)",
     "path": "./levels/level-mangled-grove.json"
   },
