@@ -1,14 +1,10 @@
 [
   {
-    "name": "Fallen Colossus",
-    "path": "./levels/level-fallen-colossus.json"
-  },
-  {
-    "name": "Mangled Grove (Dusk)",
-    "path": "./levels/level-mangled-grove.json"
-  },
-  {
     "name": "Tutorial",
     "path": "./levels/level-tutorial.json"
+  },
+  {
+    "name": "Corrupt Arena",
+    "path": "./levels/level-stadium.json"
   }
 ]

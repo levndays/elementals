@@ -1,0 +1,684 @@
+{
+  "name": "Corrupt Arena",
+  "spawnPoint": {
+    "x": 0,
+    "y": 3,
+    "z": 0
+  },
+  "deathSpawnPoint": {
+    "x": 0,
+    "y": 3,
+    "z": 0
+  },
+  "settings": {
+    "backgroundColor": "0x1d2938",
+    "fogColor": "0x1d2938",
+    "fogNear": 50,
+    "fogFar": 250,
+    "ambientLight": {
+      "color": "0x607080",
+      "intensity": 0.8
+    },
+    "directionalLights": [
+      {
+        "color": "0xffffff",
+        "intensity": 1.5,
+        "position": {
+          "x": 0,
+          "y": 100,
+          "z": 0
+        },
+        "targetPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    ]
+  },
+  "objects": [
+    {
+      "type": "Plane",
+      "name": "Ground Plane",
+      "size": [
+        250,
+        250
+      ],
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": -90,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x334455"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "editorSelectable": false
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Playfield",
+      "size": [
+        110,
+        1,
+        70
+      ],
+      "position": {
+        "x": 0,
+        "y": 0.5,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x4CAF50"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_Z_Positive",
+      "size": [
+        130,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 8,
+        "z": 45
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_Z_Negative",
+      "size": [
+        130,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 8,
+        "z": -45
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_X_Positive",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": 65,
+        "y": 8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_X_Negative",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": -65,
+        "y": 8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_Z_Positive",
+      "size": [
+        150,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": 55
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_Z_Negative",
+      "size": [
+        150,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": -55
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_X_Positive",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": 75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_X_Negative",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": -75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_Z_Positive",
+      "size": [
+        190,
+        64,
+        4
+      ],
+      "position": {
+        "x": 0,
+        "y": 32,
+        "z": 80
+      },
+      "rotation": {
+        "x": 45.00000000000001,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_Z_Negative",
+      "size": [
+        190,
+        64,
+        4
+      ],
+      "position": {
+        "x": 0,
+        "y": 32,
+        "z": -80
+      },
+      "rotation": {
+        "x": -45.00000000000001,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_X_Positive",
+      "size": [
+        4,
+        64,
+        160
+      ],
+      "position": {
+        "x": 95,
+        "y": 32,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -45.00000000000001
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_X_Negative",
+      "size": [
+        4,
+        64,
+        160
+      ],
+      "position": {
+        "x": -95,
+        "y": 32,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 45.00000000000001
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Roof",
+      "size": [
+        192,
+        4,
+        162
+      ],
+      "position": {
+        "x": 0,
+        "y": 50,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x1A2228"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_Z_Positive",
+      "size": [
+        2,
+        25,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": 55
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_Z_Negative",
+      "size": [
+        2,
+        25,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": -55
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_X_Positive",
+      "size": [
+        20,
+        25,
+        2
+      ],
+      "position": {
+        "x": 75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_X_Negative",
+      "size": [
+        20,
+        25,
+        2
+      ],
+      "position": {
+        "x": -75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Center_Cover",
+      "size": [
+        20,
+        4,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_PZ_PX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": 40,
+        "y": 1.5,
+        "z": 25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_PZ_NX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": -40,
+        "y": 1.5,
+        "z": 25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_NZ_PX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": 40,
+        "y": 1.5,
+        "z": -25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_NZ_NX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": -40,
+        "y": 1.5,
+        "z": -25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 20,
+        "y": 3,
+        "z": 0
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -20,
+        "y": 3,
+        "z": 0
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 50,
+        "y": 12,
+        "z": 25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -50,
+        "y": 12,
+        "z": 25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 50,
+        "y": 12,
+        "z": -25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -50,
+        "y": 12,
+        "z": -25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 22,
+        "z": 45
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 22,
+        "z": -45
+      }
+    }
+  ],
+  "triggers": [],
+  "deathTriggers": []
+}

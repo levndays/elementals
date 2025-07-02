@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-02T21:05:16.053275
+Snapshot created on: 2025-07-02T22:47:04.634025
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1813,160 +1813,694 @@ body:not(.game-active) #tutorial-text-container {
 === END OF FILE: data/player-profile.json ===
 
 
-=== FILE: levels/level-fallen-colossus.json ===
+=== FILE: levels/level-stadium.json ===
 --------------------------------------------------
 {
-    "name": "Fallen Colossus",
-    "spawnPoint": { "x": -85, "y": 3, "z": 0 },
-    "deathSpawnPoint": { "x": -85, "y": 3, "z": 0 },
-    "settings": {
-        "backgroundColor": "0x3B2D2C",
-        "fogColor": "0x3B2D2C",
-        "fogNear": 40,
-        "fogFar": 250,
-        "ambientLight": {
-            "color": "0x5A4C4A",
-            "intensity": 0.6
-        },
-        "directionalLights": [
-            {
-                "color": "0xFF9966",
-                "intensity": 7.0,
-                "position": { "x": -180, "y": 60, "z": -30 },
-                "targetPosition": { "x": 0, "y": 0, "z": 0 }
-            }
-        ]
+  "name": "Corrupt Arena",
+  "spawnPoint": {
+    "x": 0,
+    "y": 3,
+    "z": 0
+  },
+  "deathSpawnPoint": {
+    "x": 0,
+    "y": 3,
+    "z": 0
+  },
+  "settings": {
+    "backgroundColor": "0x1d2938",
+    "fogColor": "0x1d2938",
+    "fogNear": 50,
+    "fogFar": 250,
+    "ambientLight": {
+      "color": "0x607080",
+      "intensity": 0.8
     },
-    "objects": [
-        { "type": "Plane", "name": "Ground_Plane", "size": [500, 500], "position": { "x": 0, "y": -50, "z": 0 }, "rotation": { "x": -90, "y": 0, "z": 0 }, "material": { "color": "0x1A1A1A" }, "editorSelectable": false },
-
-        { "type": "Box", "name": "LockerRoom_Floor", "size": [15, 2, 20], "position": { "x": -85, "y": 1, "z": 0 }, "material": { "color": "0x333333" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "LockerRoom_BackWall", "size": [2, 10, 20], "position": { "x": -92, "y": 6, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "LockerRoom_Ceiling", "size": [15, 2, 20], "position": { "x": -85, "y": 11, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-        
-        { "type": "Box", "name": "Concourse_Floor", "size": [25, 2, 120], "position": { "x": -65, "y": 1, "z": 0 }, "material": { "color": "0x3A3A3A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Concourse_OuterWall", "size": [2, 20, 120], "position": { "x": -77, "y": 11, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Concourse_Ceiling", "size": [25, 2, 120], "position": { "x": -65, "y": 21, "z": 0 }, "material": { "color": "0x444444" }, "physics": { "mass": 0 } },
-        
-        { "type": "Box", "name": "Field_Base", "size": [100, 4, 100], "position": { "x": 0, "y": -2, "z": 0 }, "material": { "color": "0x3D4935" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Grandstand_Tier1_Base", "size": [30, 4, 120], "position": { "x": -38, "y": 2, "z": 0 }, "material": { "color": "0x546E7A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier1_SeatA", "size": [6, 1, 120], "position": { "x": -35, "y": 5, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier1_SeatB", "size": [6, 1, 120], "position": { "x": -39, "y": 7, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier1_SeatC", "size": [6, 1, 120], "position": { "x": -43, "y": 9, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Grandstand_Tier2_Base", "size": [30, 4, 120], "position": { "x": -38, "y": 13, "z": 0 }, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier2_SeatA", "size": [6, 1, 120], "position": { "x": -35, "y": 16, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier2_SeatB", "size": [6, 1, 120], "position": { "x": -39, "y": 18, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Grandstand_Tier2_SeatC", "size": [6, 1, 120], "position": { "x": -43, "y": 20, "z": 0 }, "material": { "color": "0x607D8B" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Collapsed_Stand_Ramp", "size": [25, 2, 30], "position": { "x": 30, "y": 10, "z": -40 }, "rotation": {"x": -25, "y": 10, "z": 0}, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Opposite_Stands_Wall", "size": [30, 40, 4], "position": { "x": 65, "y": 20, "z": 0 }, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Scoreboard_Remains", "size": [20, 15, 2], "position": { "x": 0, "y": 25, "z": 60 }, "material": { "color": "0x111111" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Fallen_LightRig", "size": [80, 3, 3], "position": { "x": 10, "y": 1.5, "z": 0 }, "rotation": {"x": 0, "y": 0, "z": 15}, "material": { "color": "0x78909C" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Field_Cover_A", "size": [10, 5, 4], "position": { "x": 15, "y": 2.5, "z": 25 }, "material": { "color": "0x4E342E" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Field_Cover_B", "size": [4, 6, 12], "position": { "x": -10, "y": 3, "z": -30 }, "material": { "color": "0x4E342E" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Field_Crater_Edge", "size": [20, 2, 2], "position": { "x": 0, "y": -1, "z": 20 }, "rotation": {"x": 20, "y": 0, "z": 0}, "material": { "color": "0x5D4037" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "VIP_Box_Floor", "size": [12, 1, 15], "position": { "x": -65, "y": 22, "z": 40 }, "material": { "color": "0x212121" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "VIP_Box_Wall", "size": [12, 8, 1], "position": { "x": -65, "y": 26, "z": 47 }, "material": { "color": "0x424242" }, "physics": { "mass": 0 } }
-
-    ],
-    "enemies": [
-        { "type": "Dummy", "position": { "x": -65, "y": 3, "z": 20 } },
-        { "type": "Dummy", "position": { "x": -65, "y": 3, "z": -20 } },
-        
-        { "type": "Dummy", "position": { "x": 15, "y": 5, "z": 25 } },
-        { "type": "Dummy", "position": { "x": -10, "y": 5, "z": -30 } },
-        { "type": "Dummy", "position": { "x": 5, "y": 0, "z": 0 } },
-
-        { "type": "Dummy", "position": { "x": -39, "y": 9, "z": -40 } },
-        { "type": "Dummy", "position": { "x": -43, "y": 22, "z": 0 } },
-        { "type": "Dummy", "position": { "x": -65, "y": 24, "z": 40 } }
-    ],
-    "triggers": [
-        { "type": "Trigger", "name": "Intro_Trigger", "position": {"x": -75, "y": 5, "z": 0}, "size": [4, 8, 18], "message": "The roar of the crowd has been replaced by silence... and something else.", "duration": 8, "color": "0x2ed573"}
-    ],
-    "deathTriggers": [
-        { "type": "DeathTrigger", "name": "Abyss", "position": { "x": 0, "y": -40, "z": 0 }, "size": [200, 2, 200] }
+    "directionalLights": [
+      {
+        "color": "0xffffff",
+        "intensity": 1.5,
+        "position": {
+          "x": 0,
+          "y": 100,
+          "z": 0
+        },
+        "targetPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
     ]
+  },
+  "objects": [
+    {
+      "type": "Plane",
+      "name": "Ground Plane",
+      "size": [
+        250,
+        250
+      ],
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": -90,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x334455"
+      },
+      "physics": {
+        "mass": 0
+      },
+      "editorSelectable": false
+    },
+    {
+      "type": "Box",
+      "name": "Arena_Playfield",
+      "size": [
+        110,
+        1,
+        70
+      ],
+      "position": {
+        "x": 0,
+        "y": 0.5,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x4CAF50"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_Z_Positive",
+      "size": [
+        130,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 8,
+        "z": 45
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_Z_Negative",
+      "size": [
+        130,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 8,
+        "z": -45
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_X_Positive",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": 65,
+        "y": 8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier1_X_Negative",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": -65,
+        "y": 8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x607D8B"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_Z_Positive",
+      "size": [
+        150,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": 55
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_Z_Negative",
+      "size": [
+        150,
+        2,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": -55
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_X_Positive",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": 75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Stand_Tier2_X_Negative",
+      "size": [
+        20,
+        2,
+        70
+      ],
+      "position": {
+        "x": -75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x455A64"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_Z_Positive",
+      "size": [
+        190,
+        64,
+        4
+      ],
+      "position": {
+        "x": 0,
+        "y": 32,
+        "z": 80
+      },
+      "rotation": {
+        "x": 45.00000000000001,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_Z_Negative",
+      "size": [
+        190,
+        64,
+        4
+      ],
+      "position": {
+        "x": 0,
+        "y": 32,
+        "z": -80
+      },
+      "rotation": {
+        "x": -45.00000000000001,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_X_Positive",
+      "size": [
+        4,
+        64,
+        160
+      ],
+      "position": {
+        "x": 95,
+        "y": 32,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -45.00000000000001
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "OuterWall_X_Negative",
+      "size": [
+        4,
+        64,
+        160
+      ],
+      "position": {
+        "x": -95,
+        "y": 32,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 45.00000000000001
+      },
+      "material": {
+        "color": "0x263238"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Roof",
+      "size": [
+        192,
+        4,
+        162
+      ],
+      "position": {
+        "x": 0,
+        "y": 50,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x1A2228"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_Z_Positive",
+      "size": [
+        2,
+        25,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": 55
+      },
+      "rotation": {
+        "x": -29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_Z_Negative",
+      "size": [
+        2,
+        25,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 18,
+        "z": -55
+      },
+      "rotation": {
+        "x": 29.999999999999996,
+        "y": 0,
+        "z": 0
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_X_Positive",
+      "size": [
+        20,
+        25,
+        2
+      ],
+      "position": {
+        "x": 75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 29.999999999999993
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Divider_X_Negative",
+      "size": [
+        20,
+        25,
+        2
+      ],
+      "position": {
+        "x": -75,
+        "y": 18,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -29.999999999999993
+      },
+      "material": {
+        "color": "0x37474F"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Center_Cover",
+      "size": [
+        20,
+        4,
+        20
+      ],
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_PZ_PX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": 40,
+        "y": 1.5,
+        "z": 25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_PZ_NX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": -40,
+        "y": 1.5,
+        "z": 25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_NZ_PX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": 40,
+        "y": 1.5,
+        "z": -25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    },
+    {
+      "type": "Box",
+      "name": "Corner_Cover_NZ_NX",
+      "size": [
+        8,
+        3,
+        8
+      ],
+      "position": {
+        "x": -40,
+        "y": 1.5,
+        "z": -25
+      },
+      "material": {
+        "color": "0x546E7A"
+      },
+      "physics": {
+        "mass": 0
+      }
+    }
+  ],
+  "enemies": [
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 20,
+        "y": 3,
+        "z": 0
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -20,
+        "y": 3,
+        "z": 0
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 50,
+        "y": 12,
+        "z": 25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -50,
+        "y": 12,
+        "z": 25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 50,
+        "y": 12,
+        "z": -25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": -50,
+        "y": 12,
+        "z": -25
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 22,
+        "z": 45
+      }
+    },
+    {
+      "type": "Dummy",
+      "position": {
+        "x": 0,
+        "y": 22,
+        "z": -45
+      }
+    }
+  ],
+  "triggers": [],
+  "deathTriggers": []
 }
 --------------------------------------------------
-=== END OF FILE: levels/level-fallen-colossus.json ===
-
-
-=== FILE: levels/level-mangled-grove.json ===
---------------------------------------------------
-{
-    "name": "Mangled Grove (Dusk)",
-    "spawnPoint": { "x": 0, "y": 2, "z": 0 },
-    "deathSpawnPoint": { "x": 0, "y": 2, "z": 0 },
-    "settings": {
-        "backgroundColor": "0x19142B",
-        "fogColor": "0x19142B",
-        "fogNear": 30,
-        "fogFar": 200,
-        "ambientLight": {
-            "color": "0x6A4C8A",
-            "intensity": 0.8
-        },
-        "directionalLights": [
-            {
-                "color": "0xFF8C4C",
-                "intensity": 6.0,
-                "position": { "x": -150, "y": 80, "z": -50 },
-                "targetPosition": { "x": 0, "y": 0, "z": 0 }
-            }
-        ]
-    },
-    "objects": [
-        {
-            "type": "Plane",
-            "name": "Ground_Plane",
-            "size": [500, 500],
-            "position": { "x": 0, "y": -20, "z": 0 },
-            "rotation": { "x": -90, "y": 0, "z": 0 },
-            "material": { "color": "0x1A2B1A", "roughness": 0.95 },
-            "editorSelectable": false
-        },
-        { "type": "Box", "name": "Start_Platform", "size": [10, 2, 10], "position": { "x": 0, "y": 0, "z": 0 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Jump_1A", "size": [5, 2, 5], "position": { "x": 0, "y": 1, "z": 10 }, "material": { "color": "0x5A5A5A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Jump_1B", "size": [4, 2, 4], "position": { "x": 4, "y": 3, "z": 15 }, "material": { "color": "0x5A5A5A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Dash_Platform_A", "size": [8, 2, 8], "position": { "x": 4, "y": 3, "z": 22 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-        
-        { "type": "Box", "name": "Dash_Platform_B", "size": [8, 2, 8], "position": { "x": 4, "y": 3, "z": 34 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Vertical_Climb_Base", "size": [15, 20, 15], "position": { "x": -10, "y": 10, "z": 45 }, "material": { "color": "0x424242" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Ledge_2A", "size": [4, 2, 4], "position": { "x": -15, "y": 6, "z": 45 }, "material": { "color": "0x555555" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Ledge_2B", "size": [4, 2, 4], "position": { "x": -10, "y": 12.5, "z": 52 }, "material": { "color": "0x555555" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Ledge_2C_Top", "size": [6, 2, 6], "position": { "x": -2, "y": 19, "z": 45 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-        
-        { "type": "Box", "name": "Long_Jump_Platform_A", "size": [10, 2, 10], "position": { "x": -2, "y": 19, "z": 30 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Long_Jump_Platform_B", "size": [10, 2, 10], "position": { "x": -2, "y": 19, "z": 18 }, "material": { "color": "0x445566" }, "physics": { "mass": 0 } },
-
-        { "type": "Box", "name": "Final_Arena_Platform", "size": [40, 4, 40], "position": { "x": 30, "y": 17, "z": 18 }, "material": { "color": "0x455A64" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Arena_Pillar_1", "size": [6, 20, 6], "position": { "x": 20, "y": 27, "z": 8 }, "material": { "color": "0x546E7A" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Arena_Pillar_2", "size": [6, 15, 6], "position": { "x": 40, "y": 24.5, "z": 28 }, "material": { "color": "0x546E7A" }, "physics": { "mass": 0 } },
-        
-        { "type": "Box", "name": "Scenery_Tree_1", "size": [4, 60, 4], "position": { "x": 30, "y": 30, "z": -20 }, "material": { "color": "0x3C2A1E" }, "physics": { "mass": 0 } },
-        { "type": "Box", "name": "Scenery_Rock_1", "size": [12, 12, 12], "position": { "x": -30, "y": 6, "z": 15 }, "material": { "color": "0x4E4E4E" }, "physics": { "mass": 0 } }
-    ],
-    "enemies": [
-        { "type": "Dummy", "position": { "x": 4, "y": 6, "z": 34 } },
-        
-        { "type": "Dummy", "position": { "x": -10, "y": 22, "z": 45 } },
-        
-        { "type": "Dummy", "position": { "x": 35, "y": 20, "z": 20 } },
-        { "type": "Dummy", "position": { "x": 25, "y": 20, "z": 15 } },
-        { "type": "Dummy", "position": { "x": 40, "y": 33, "z": 28 } }
-    ]
-}
---------------------------------------------------
-=== END OF FILE: levels/level-mangled-grove.json ===
+=== END OF FILE: levels/level-stadium.json ===
 
 
 === FILE: levels/level-tutorial.json ===
@@ -6218,6 +6752,8 @@ export class EditorControls {
         this.selectionBox.visible = false;
         this.scene.add(this.selectionBox);
         
+        this.applySnapSettings();
+        
         this.renderer.domElement.addEventListener('mousedown', this._onMouseDownHandler, false);
         this.renderer.domElement.addEventListener('contextmenu', this._onContextMenuHandler, false);
     }
@@ -6404,6 +6940,22 @@ export class EditorUI {
         document.getElementById('tool-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('tool-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('tool-scale').onclick = () => this.editor.controls.setTransformMode('scale');
+        
+        // --- Snapping Controls ---
+        const snapToggle = document.getElementById('snap-toggle');
+        const transSnapInput = document.getElementById('snap-translation-input');
+        const rotSnapInput = document.getElementById('snap-rotation-input');
+        const snapLabel = document.querySelector('label[for="snap-toggle"]');
+
+        snapToggle.onchange = (e) => this.editor.setSnapEnabled(e.target.checked);
+        transSnapInput.onchange = (e) => this.editor.setTranslationSnap(parseFloat(e.target.value));
+        rotSnapInput.onchange = (e) => this.editor.setRotationSnap(parseFloat(e.target.value));
+        if (snapLabel) snapLabel.onclick = () => snapToggle.click();
+
+        // Set initial UI values from editor state
+        snapToggle.checked = this.editor.isSnapEnabled;
+        transSnapInput.value = this.editor.translationSnapValue;
+        rotSnapInput.value = this.editor.rotationSnapValue;
         
         // --- Create Button & Context Menu ---
         const createButton = document.getElementById('create-button');
@@ -6922,6 +7474,22 @@ export class LevelEditor {
         if (entityToSelect) {
             this.select(entityToSelect);
         }
+    }
+
+    // --- Snap Control ---
+    setSnapEnabled(isEnabled) {
+        this.isSnapEnabled = isEnabled;
+        this.controls.applySnapSettings();
+    }
+    
+    setTranslationSnap(value) {
+        this.translationSnapValue = value || 1;
+        this.controls.applySnapSettings();
+    }
+    
+    setRotationSnap(value) {
+        this.rotationSnapValue = value || 15;
+        this.controls.applySnapSettings();
     }
     
     // --- Data & Property Manipulation ---
