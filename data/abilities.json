@@ -8,6 +8,15 @@
         "description": "A sharp, reliable blade for close-quarters combat. Does not consume energy.",
         "flavor": "An elegant weapon for a more civilized age. A very, very close-range age."
     },
+    "WEAPON_REVOLVER": {
+        "id": "WEAPON_REVOLVER",
+        "name": "Revolver",
+        "type": "Weapon",
+        "element": "Fire",
+        "tier": 2,
+        "description": "A powerful handgun with 6 rounds. Press [R] to reload.",
+        "flavor": "Six shots. More than enough to kill anything that moves."
+    },
     "FIRE_001": {
         "id": "FIRE_001",
         "name": "Fireball",

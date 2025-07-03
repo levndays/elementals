@@ -45,7 +45,7 @@ export const GAME_CONFIG = {
     // Ability-specific parameters
     WAVE_POWER: {
         WIDTH: 8.0, // meters
-        LENGTH: 15.0, // meters
+        LENGTH: 25.0, // meters
         IMPULSE_FORWARD: 3000, // in kg*m/s
         IMPULSE_UPWARD: 1000, // in kg*m/s
         DAMAGE: 200,

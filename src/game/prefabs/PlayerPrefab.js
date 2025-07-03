@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';
-import { Katana } from '../weapons/Katana.js';
+import { WeaponFactory } from '../weapons/WeaponFactory.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -31,12 +31,16 @@ export class PlayerPrefab {
         );
         physics.addContactMaterial(playerWorldContactMaterial);
         
-        const weapon = new Katana();
+        const weaponId = loadoutData?.weapon || 'WEAPON_001';
+        const weapon = WeaponFactory.create(weaponId);
+
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
         directionalLight.position.set(0.5, 0.8, -0.2).normalize();
         
-        camera.add(weapon.mesh);
+        if (weapon?.mesh) {
+            camera.add(weapon.mesh);
+        }
         viewModelScene.add(ambientLight, directionalLight, camera);
         
         const entity = new Player(world, camera, weapon, body);

@@ -31,6 +31,9 @@ export class HUD {
             tutorialText: document.getElementById('tutorial-text'),
             minimapCanvas: document.getElementById('minimap-canvas'),
             enemyCounter: document.getElementById('enemy-counter'),
+            ammoCounter: document.getElementById('ammo-counter'),
+            ammoMag: document.getElementById('ammo-mag'),
+            ammoReserve: document.getElementById('ammo-reserve'),
         };
         
         this.targetVector = new THREE.Vector3();
@@ -113,6 +116,20 @@ export class HUD {
             
             slotUI.element.classList.toggle('selected', i === selectedIndex);
         });
+    }
+
+    updateAmmo(weapon) {
+        const ammoCounter = this.elements.ammoCounter;
+        if (!ammoCounter) return;
+
+        if (weapon && typeof weapon.magazineAmmo !== 'undefined') {
+            ammoCounter.style.display = 'block';
+            this.elements.ammoMag.textContent = weapon.magazineAmmo;
+            this.elements.ammoReserve.textContent = weapon.reserveAmmo;
+            ammoCounter.classList.toggle('reloading', weapon.isReloading);
+        } else {
+            ammoCounter.style.display = 'none';
+        }
     }
     
     updateTargeting(isLockOn, target, camera) {

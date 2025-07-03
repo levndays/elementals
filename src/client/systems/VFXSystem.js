@@ -28,6 +28,7 @@ export class VFXSystem {
         this.world.on('playerBuffActivated', data => this.onPlayerBuffActivated(data));
         this.world.on('playerBuffDeactivated', data => this.onPlayerBuffDeactivated(data));
         this.world.on('wavePowerUsed', data => this.onWavePowerUsed(data));
+        this.world.on('weaponFired', data => this.onWeaponFired(data));
     }
 
     _onEntityAdded({ entity }) {
@@ -73,6 +74,13 @@ export class VFXSystem {
     onProjectileDetonated({ type, position }) {
         // Here you could switch on `type` for different explosion effects
         this.vfxManager.createParticleExplosion(position);
+    }
+    
+    onWeaponFired(data) {
+        this.vfxManager.createWeaponFireVFX({
+            ...data,
+            camera: this.world.core.renderer.camera
+        });
     }
 
     onPlayerBuffActivated({ buffName }) {

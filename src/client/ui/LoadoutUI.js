@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CardObject } from '../rendering/CardObject.js';
 import { CardParticleSystem } from '../rendering/CardParticleSystem.js';
-import { Katana } from '../../game/weapons/Katana.js';
+import { WeaponFactory } from '../../game/weapons/WeaponFactory.js';
 
 export class LoadoutUI {
     constructor(manager, abilityIconService) {
@@ -159,14 +159,19 @@ export class LoadoutUI {
         const tierColor = tierColors[cardData.tier] || tierColors.default;
 
         if (cardData.type === 'Weapon') {
-            const katana = new Katana();
-            this.inspector.activeMesh = katana.mesh;
+            const weapon = WeaponFactory.create(cardId);
+            if (weapon?.mesh) {
+                this.inspector.activeMesh = weapon.mesh;
+            }
         } else {
             this.inspector.activeCardObject = await CardObject.create(cardData);
             this.inspector.activeMesh = this.inspector.activeCardObject.mesh;
             this.inspector.particleSystem = new CardParticleSystem(this.inspector.scene, cardData.element);
         }
-        this.inspector.scene.add(this.inspector.activeMesh);
+        
+        if (this.inspector.activeMesh) {
+            this.inspector.scene.add(this.inspector.activeMesh);
+        }
 
         this._createGodRayPlane(tierColor);
         this.inspector.tierLight = new THREE.PointLight(tierColor, 10, 20, 1.5);

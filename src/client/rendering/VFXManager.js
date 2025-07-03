@@ -6,6 +6,8 @@ import { FireballVisual } from './FireballVisual.js';
 import { EnemyProjectileVisual } from './EnemyProjectileVisual.js';
 import { FireflyProjectileVisual } from './FireflyProjectileVisual.js';
 import { WaveVFX } from './WaveVFX.js';
+import { MuzzleFlash } from './MuzzleFlash.js';
+import { BulletTracer } from './BulletTracer.js';
 
 /**
  * Manages the creation and lifecycle of all visual effects,
@@ -91,6 +93,17 @@ export class VFXManager {
         this.updatableEffects.push(damageNumber);
     }
     
+    /**
+     * Creates muzzle flash and tracer effects for a weapon firing.
+     * @param {object} data
+     */
+    createWeaponFireVFX({ weapon, hitPoint, camera }) {
+        const muzzleFlash = new MuzzleFlash({ scene: this.scene, weapon, camera });
+        this.updatableEffects.push(muzzleFlash);
+        const tracer = new BulletTracer({ scene: this.scene, weapon, hitPoint });
+        this.updatableEffects.push(tracer);
+    }
+
     /**
      * Activates a sustained DOM-based visual effect by adding a CSS class.
      * @param {string} elementName - The key for the DOM element.

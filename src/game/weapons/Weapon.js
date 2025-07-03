@@ -19,6 +19,10 @@ export class Weapon {
         throw new Error("Weapon.attack() must be implemented by subclasses.");
     }
 
+    inspect() {
+        // Base implementation does nothing. Can be overridden by subclasses.
+    }
+
     triggerCooldown() {
         this.cooldownTimer = 0;
     }

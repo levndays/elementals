@@ -1,6 +1,7 @@
 {
   "inventory": [
     "WEAPON_001",
+    "WEAPON_REVOLVER",
     "FIRE_001",
     "FIRE_002",
     "EARTH_001",
@@ -15,6 +16,16 @@
         "FIRE_002",
         "EARTH_001",
         "WATER_001"
+      ]
+    },
+    "Gunslinger": {
+      "name": "Gunslinger",
+      "weapon": "WEAPON_REVOLVER",
+      "cards": [
+        "FIRE_001",
+        null,
+        null,
+        null
       ]
     }
   },

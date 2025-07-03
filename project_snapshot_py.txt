@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-02T22:47:04.634025
+Snapshot created on: 2025-07-03T13:44:45.886474
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -309,6 +309,12 @@ Snapshot created on: 2025-07-02T22:47:04.634025
 
         <div id="hud-top-right" class="hud-corner">
             <canvas id="minimap-canvas" width="180" height="180"></canvas>
+        </div>
+        
+        <div id="hud-bottom-right" class="hud-corner">
+            <div id="ammo-counter" style="display: none;">
+                <span id="ammo-mag"></span> / <span id="ammo-reserve"></span>
+            </div>
         </div>
         
         <div id="hud-bottom-center" class="hud-corner">
@@ -1196,6 +1202,11 @@ body:not(.game-active) #tutorial-text-container {
 }
 #hud-bottom-center {
     bottom: 0; left: 50%; transform: translateX(-50%);
+    align-items: center;
+}
+#hud-bottom-right {
+    bottom: 0; right: 0; align-items: flex-end;
+    justify-content: flex-end;
 }
 
 /* HUD WIDGETS */
@@ -1304,6 +1315,27 @@ body:not(.game-active) #tutorial-text-container {
 .ability-slot:not([class*='element-']).selected {
     border-color: var(--color-accent);
     box-shadow: 0 0 15px var(--color-accent);
+}
+
+/* NEW: Ammo Counter */
+#ammo-counter {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text-light);
+    text-shadow: 2px 2px 5px hsla(0, 0%, 0%, 0.7);
+    text-align: right;
+    margin-bottom: 20px;
+}
+#ammo-counter.reloading #ammo-mag {
+    color: var(--color-accent-fire);
+    animation: ammo-reloading-pulse 1s infinite;
+}
+@keyframes ammo-reloading-pulse {
+    50% { opacity: 0.6; }
+}
+#ammo-mag {
+    font-size: 3rem;
+    color: var(--color-accent);
 }
 
 /* --- PAUSE & DEATH SCREENS --- */
@@ -1736,6 +1768,15 @@ body:not(.game-active) #tutorial-text-container {
         "description": "A sharp, reliable blade for close-quarters combat. Does not consume energy.",
         "flavor": "An elegant weapon for a more civilized age. A very, very close-range age."
     },
+    "WEAPON_REVOLVER": {
+        "id": "WEAPON_REVOLVER",
+        "name": "Revolver",
+        "type": "Weapon",
+        "element": "Fire",
+        "tier": 2,
+        "description": "A powerful handgun with 6 rounds. Press [R] to reload.",
+        "flavor": "Six shots. More than enough to kill anything that moves."
+    },
     "FIRE_001": {
         "id": "FIRE_001",
         "name": "Fireball",
@@ -1766,7 +1807,7 @@ body:not(.game-active) #tutorial-text-container {
         "tier": 2,
         "energyCost": 500,
         "cooldown": 30.0,
-        "description": "For 15s, reduce incoming damage by 80% and boost melee damage by 30%, but halve movement speed and disable dashing & double jumping.",
+        "description": "Hit hard and absorb damage at the cost of slower movement",
         "flavor": "Patience is a virtue. So is being made of rock."
     },
     "WATER_001": {
@@ -1790,6 +1831,7 @@ body:not(.game-active) #tutorial-text-container {
 {
   "inventory": [
     "WEAPON_001",
+    "WEAPON_REVOLVER",
     "FIRE_001",
     "FIRE_002",
     "EARTH_001",
@@ -1804,6 +1846,16 @@ body:not(.game-active) #tutorial-text-container {
         "FIRE_002",
         "EARTH_001",
         "WATER_001"
+      ]
+    },
+    "Gunslinger": {
+      "name": "Gunslinger",
+      "weapon": "WEAPON_REVOLVER",
+      "cards": [
+        "FIRE_001",
+        null,
+        null,
+        null
       ]
     }
   },
@@ -2562,16 +2614,12 @@ body:not(.game-active) #tutorial-text-container {
 --------------------------------------------------
 [
   {
-    "name": "Fallen Colossus",
-    "path": "./levels/level-fallen-colossus.json"
-  },
-  {
-    "name": "Mangled Grove (Dusk)",
-    "path": "./levels/level-mangled-grove.json"
-  },
-  {
     "name": "Tutorial",
     "path": "./levels/level-tutorial.json"
+  },
+  {
+    "name": "Corrupt Arena",
+    "path": "./levels/level-stadium.json"
   }
 ]
 --------------------------------------------------
@@ -2817,6 +2865,14 @@ export class PlayerController {
         if (event.code === 'Space') {
             this.player.jump();
         }
+        
+        if (event.code === 'KeyR') {
+            this.player.reloadWeapon();
+        }
+
+        if (event.code === 'KeyF') {
+            this.player.inspectWeapon();
+        }
     }
 
     /**
@@ -2840,6 +2896,58 @@ export class PlayerController {
 }
 --------------------------------------------------
 === END OF FILE: src/client/entities/PlayerController.js ===
+
+
+=== FILE: src/client/rendering/BulletTracer.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+export class BulletTracer {
+    constructor({ scene, weapon, hitPoint }) {
+        this.scene = scene;
+        this.lifetime = 0.2; // Very short-lived
+        this.elapsedTime = 0;
+
+        const startPoint = new THREE.Vector3(0, 0, -0.27);
+        weapon.mesh.localToWorld(startPoint);
+        
+        const distance = startPoint.distanceTo(hitPoint);
+        const direction = new THREE.Vector3().subVectors(hitPoint, startPoint).normalize();
+        
+        const material = new THREE.MeshBasicMaterial({ color: 0xffffaf, transparent: true, opacity: 0.8 });
+        const geometry = new THREE.CylinderGeometry(0.01, 0.01, distance, 4);
+        
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.copy(startPoint).add(direction.clone().multiplyScalar(distance / 2));
+        
+        const orientation = new THREE.Matrix4();
+        const offsetRotation = new THREE.Matrix4();
+        orientation.lookAt(startPoint, hitPoint, new THREE.Object3D().up);
+        offsetRotation.makeRotationX(Math.PI / 2);
+        orientation.multiply(offsetRotation);
+        this.mesh.quaternion.setFromRotationMatrix(orientation);
+
+        this.scene.add(this.mesh);
+    }
+
+    update(deltaTime) {
+        this.elapsedTime += deltaTime;
+        if (this.elapsedTime >= this.lifetime) {
+            this.cleanup();
+            return false; // Signal to VFXManager to remove
+        }
+        this.mesh.material.opacity = 1.0 - (this.elapsedTime / this.lifetime);
+        return true;
+    }
+
+    cleanup() {
+        this.scene.remove(this.mesh);
+        this.mesh.geometry.dispose();
+        this.mesh.material.dispose();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/BulletTracer.js ===
 
 
 === FILE: src/client/rendering/CardObject.js ===
@@ -3429,6 +3537,72 @@ export class Minimap {
 === END OF FILE: src/client/rendering/Minimap.js ===
 
 
+=== FILE: src/client/rendering/MuzzleFlash.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+export class MuzzleFlash {
+    constructor({ scene, weapon, camera }) {
+        this.scene = scene;
+        this.lifetime = 0.1;
+        this.elapsedTime = 0;
+        
+        const canvas = this.createCanvas();
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+        
+        this.sprite = new THREE.Sprite(material);
+        const scale = 0.4 + Math.random() * 0.2;
+        this.sprite.scale.set(scale, scale, 1.0);
+        this.sprite.material.rotation = Math.random() * Math.PI * 2;
+        
+        // Position it at the end of the weapon's barrel
+        const barrelEndPosition = new THREE.Vector3(0, 0, -0.27); // Local offset from weapon mesh center
+        weapon.mesh.localToWorld(barrelEndPosition);
+        this.sprite.position.copy(barrelEndPosition);
+        
+        camera.add(this.sprite); // Add to camera to ensure it's always in viewmodel space
+    }
+
+    createCanvas() {
+        const canvas = document.createElement('canvas');
+        const size = 128;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+        gradient.addColorStop(0, 'rgba(255, 220, 180, 1)');
+        gradient.addColorStop(0.3, 'rgba(255, 180, 50, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 150, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        return canvas;
+    }
+
+    update(deltaTime) {
+        this.elapsedTime += deltaTime;
+        if (this.elapsedTime >= this.lifetime) {
+            this.cleanup();
+            return false; // Signal to VFXManager to remove
+        }
+        
+        const progress = this.elapsedTime / this.lifetime;
+        this.sprite.material.opacity = 1.0 - progress;
+        this.sprite.scale.x = this.sprite.scale.y = (1.0 - progress) * 0.6;
+
+        return true;
+    }
+
+    cleanup() {
+        this.sprite.removeFromParent();
+        this.sprite.material.map.dispose();
+        this.sprite.material.dispose();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/MuzzleFlash.js ===
+
+
 === FILE: src/client/rendering/ParticleExplosion.js ===
 --------------------------------------------------
 import * as THREE from 'three';
@@ -3522,6 +3696,8 @@ import { FireballVisual } from './FireballVisual.js';
 import { EnemyProjectileVisual } from './EnemyProjectileVisual.js';
 import { FireflyProjectileVisual } from './FireflyProjectileVisual.js';
 import { WaveVFX } from './WaveVFX.js';
+import { MuzzleFlash } from './MuzzleFlash.js';
+import { BulletTracer } from './BulletTracer.js';
 
 /**
  * Manages the creation and lifecycle of all visual effects,
@@ -3607,6 +3783,17 @@ export class VFXManager {
         this.updatableEffects.push(damageNumber);
     }
     
+    /**
+     * Creates muzzle flash and tracer effects for a weapon firing.
+     * @param {object} data
+     */
+    createWeaponFireVFX({ weapon, hitPoint, camera }) {
+        const muzzleFlash = new MuzzleFlash({ scene: this.scene, weapon, camera });
+        this.updatableEffects.push(muzzleFlash);
+        const tracer = new BulletTracer({ scene: this.scene, weapon, hitPoint });
+        this.updatableEffects.push(tracer);
+    }
+
     /**
      * Activates a sustained DOM-based visual effect by adding a CSS class.
      * @param {string} elementName - The key for the DOM element.
@@ -4161,6 +4348,7 @@ export class VFXSystem {
         this.world.on('playerBuffActivated', data => this.onPlayerBuffActivated(data));
         this.world.on('playerBuffDeactivated', data => this.onPlayerBuffDeactivated(data));
         this.world.on('wavePowerUsed', data => this.onWavePowerUsed(data));
+        this.world.on('weaponFired', data => this.onWeaponFired(data));
     }
 
     _onEntityAdded({ entity }) {
@@ -4206,6 +4394,13 @@ export class VFXSystem {
     onProjectileDetonated({ type, position }) {
         // Here you could switch on `type` for different explosion effects
         this.vfxManager.createParticleExplosion(position);
+    }
+    
+    onWeaponFired(data) {
+        this.vfxManager.createWeaponFireVFX({
+            ...data,
+            camera: this.world.core.renderer.camera
+        });
     }
 
     onPlayerBuffActivated({ buffName }) {
@@ -4768,6 +4963,9 @@ export class HUD {
             tutorialText: document.getElementById('tutorial-text'),
             minimapCanvas: document.getElementById('minimap-canvas'),
             enemyCounter: document.getElementById('enemy-counter'),
+            ammoCounter: document.getElementById('ammo-counter'),
+            ammoMag: document.getElementById('ammo-mag'),
+            ammoReserve: document.getElementById('ammo-reserve'),
         };
         
         this.targetVector = new THREE.Vector3();
@@ -4850,6 +5048,20 @@ export class HUD {
             
             slotUI.element.classList.toggle('selected', i === selectedIndex);
         });
+    }
+
+    updateAmmo(weapon) {
+        const ammoCounter = this.elements.ammoCounter;
+        if (!ammoCounter) return;
+
+        if (weapon && typeof weapon.magazineAmmo !== 'undefined') {
+            ammoCounter.style.display = 'block';
+            this.elements.ammoMag.textContent = weapon.magazineAmmo;
+            this.elements.ammoReserve.textContent = weapon.reserveAmmo;
+            ammoCounter.classList.toggle('reloading', weapon.isReloading);
+        } else {
+            ammoCounter.style.display = 'none';
+        }
     }
     
     updateTargeting(isLockOn, target, camera) {
@@ -5065,7 +5277,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CardObject } from '../rendering/CardObject.js';
 import { CardParticleSystem } from '../rendering/CardParticleSystem.js';
-import { Katana } from '../../game/weapons/Katana.js';
+import { WeaponFactory } from '../../game/weapons/WeaponFactory.js';
 
 export class LoadoutUI {
     constructor(manager, abilityIconService) {
@@ -5221,14 +5433,19 @@ export class LoadoutUI {
         const tierColor = tierColors[cardData.tier] || tierColors.default;
 
         if (cardData.type === 'Weapon') {
-            const katana = new Katana();
-            this.inspector.activeMesh = katana.mesh;
+            const weapon = WeaponFactory.create(cardId);
+            if (weapon?.mesh) {
+                this.inspector.activeMesh = weapon.mesh;
+            }
         } else {
             this.inspector.activeCardObject = await CardObject.create(cardData);
             this.inspector.activeMesh = this.inspector.activeCardObject.mesh;
             this.inspector.particleSystem = new CardParticleSystem(this.inspector.scene, cardData.element);
         }
-        this.inspector.scene.add(this.inspector.activeMesh);
+        
+        if (this.inspector.activeMesh) {
+            this.inspector.scene.add(this.inspector.activeMesh);
+        }
 
         this._createGodRayPlane(tierColor);
         this.inspector.tierLight = new THREE.PointLight(tierColor, 10, 20, 1.5);
@@ -5794,6 +6011,7 @@ export class UIManager {
             player.dashOnCooldown
         );
         this.hud.updateAbilities(player.abilities.abilities, player.abilities.selectedAbilityIndex);
+        this.hud.updateAmmo(player.weapon);
         this.hud.updateTargeting(
             player.abilities.abilities[player.abilities.selectedAbilityIndex]?.requiresLockOn, 
             player.lockedTarget,
@@ -8986,7 +9204,12 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
-        if (this.activeBuffs.has('stonePlating')) return;
+        if (this.activeBuffs.has('stonePlating')) {
+            // Allow first jump from the ground, but not subsequent (double) jumps.
+            if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
+                return; // Block double jump
+            }
+        }
         this.input.jumpRequested = true;
     }
     
@@ -8996,6 +9219,18 @@ export class Player {
         this.dashDirection.copy(direction);
     }
     
+    reloadWeapon() {
+        if (this.weapon && typeof this.weapon.reload === 'function') {
+            this.weapon.reload();
+        }
+    }
+
+    inspectWeapon() {
+        if (this.weapon && typeof this.weapon.inspect === 'function') {
+            this.weapon.inspect();
+        }
+    }
+
     requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
     selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
     useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
@@ -9112,7 +9347,7 @@ export class EnemyPrefab {
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';
-import { Katana } from '../weapons/Katana.js';
+import { WeaponFactory } from '../weapons/WeaponFactory.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -9141,12 +9376,16 @@ export class PlayerPrefab {
         );
         physics.addContactMaterial(playerWorldContactMaterial);
         
-        const weapon = new Katana();
+        const weaponId = loadoutData?.weapon || 'WEAPON_001';
+        const weapon = WeaponFactory.create(weaponId);
+
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
         directionalLight.position.set(0.5, 0.8, -0.2).normalize();
         
-        camera.add(weapon.mesh);
+        if (weapon?.mesh) {
+            camera.add(weapon.mesh);
+        }
         viewModelScene.add(ambientLight, directionalLight, camera);
         
         const entity = new Player(world, camera, weapon, body);
@@ -9660,7 +9899,7 @@ export class MovementSystem {
     _applyStandardMovement(player, moveDirection) {
         let speed = GAME_CONFIG.PLAYER.SPEED;
         if (player.activeBuffs.has('stonePlating')) {
-            speed /= 2;
+            speed *= 0.8; // Reduce speed by 30%
         }
         
         const velocity = player.physics.body.velocity;
@@ -10128,6 +10367,261 @@ export class Katana extends Weapon {
 === END OF FILE: src/game/weapons/Katana.js ===
 
 
+=== FILE: src/game/weapons/Revolver.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+import { Weapon } from './Weapon.js';
+import { GAME_CONFIG } from '../../shared/config.js';
+
+export class Revolver extends Weapon {
+    constructor() {
+        super(null, {
+            name: 'Revolver',
+            damage: 100,
+            cooldown: 0.5,
+        });
+
+        this.range = 200;
+        this.magazineSize = 6;
+        this.magazineAmmo = 6;
+        this.reserveAmmo = 24;
+
+        this.state = 'idle'; // idle, firing, reloading, inspecting
+        this.animationProgress = 0;
+        this.animationDuration = 0;
+
+        this._defineKeyframes();
+        this.createMesh();
+        
+        this.mesh.position.copy(this.p_idle);
+        this.mesh.quaternion.copy(this.q_idle);
+    }
+
+    _defineKeyframes() {
+        // --- Base Positions & Rotations ---
+        this.p_idle = new THREE.Vector3(0.3, -0.4, -0.8);
+        this.q_idle = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.5, 0));
+        
+        // --- ADS (Aim Down Sights) - Future Use ---
+        this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
+        this.q_ads = new THREE.Quaternion();
+
+        // --- Reloading Keyframes ---
+        this.p_reload_start = new THREE.Vector3(0.3, -0.5, -0.7);
+        this.q_reload_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, -0.4, 0.2));
+        
+        // --- Inspecting Keyframes ---
+        this.p_inspect_center = new THREE.Vector3(0.1, -0.35, -0.6);
+        this.q_inspect_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.2, 0.5));
+        this.q_inspect_roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, -0.2, -1.5));
+    }
+
+    createMesh() {
+        this.mesh = new THREE.Group();
+        const darkMetal = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.4 });
+        const gripRubber = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+
+        // --- Frame ---
+        const frameGeo = new THREE.BoxGeometry(0.045, 0.1, 0.14);
+        const frame = new THREE.Mesh(frameGeo, darkMetal);
+        frame.position.set(0, -0.01, -0.05);
+
+        // --- Barrel Assembly ---
+        const barrelAssembly = new THREE.Group();
+        barrelAssembly.position.set(0, 0.045, -0.12);
+        const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.055, 0.22), darkMetal);
+        shroud.position.z = -0.09;
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 8), darkMetal);
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.z = -0.08;
+        barrelAssembly.add(shroud, barrel);
+
+        // --- Top Rail & Sights ---
+        const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.18), darkMetal);
+        topRail.position.set(0, 0.08, -0.11);
+        const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), darkMetal);
+        rearSight.position.set(0, 0.05, 0.02);
+
+        // --- Grip ---
+        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.16, 8), gripRubber);
+        grip.position.set(0, -0.1, 0.01);
+        grip.rotation.x = -0.2;
+        grip.scale.x = 1.3;
+
+        // --- Cylinder & Crane (for reload animation) ---
+        this.crane = new THREE.Group();
+        this.crane.position.set(-0.0225, -0.01, -0.05); // Pivot point on the frame
+        this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.07, 6), darkMetal);
+        this.cylinder.rotation.x = Math.PI / 2;
+        this.crane.add(this.cylinder);
+
+        // --- Hammer ---
+        this.hammer = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.02), darkMetal);
+        this.hammer.position.set(0, 0.05, 0.02);
+        this.hammer.geometry.translate(0, -0.02, 0); // Set pivot to bottom
+
+        this.mesh.add(frame, barrelAssembly, topRail, rearSight, grip, this.crane, this.hammer);
+        this.mesh.scale.setScalar(1.1);
+        return this.mesh;
+    }
+
+    attack() {
+        if (this.state !== 'idle' || !this.canAttack()) return false;
+        
+        if (this.magazineAmmo <= 0) {
+            this.reload();
+            return false;
+        }
+
+        this.state = 'firing';
+        this.animationDuration = this.cooldown * 0.9;
+        this.animationProgress = 0;
+        this.magazineAmmo--;
+        this.triggerCooldown();
+
+        const raycaster = new THREE.Raycaster();
+        const camera = this.wielder.camera;
+        raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+        
+        const entitiesToTest = this.wielder.world.getEnemies().map(e => e.mesh).filter(Boolean);
+        const intersects = raycaster.intersectObjects(entitiesToTest, true);
+
+        let hitPoint = null;
+        if (intersects.length > 0) {
+            const hit = intersects[0];
+            if (hit.distance < this.range) {
+                const enemy = hit.object.userData.gameEntity.entity;
+                if (enemy) {
+                    enemy.takeDamage(this.damage);
+                    hitPoint = hit.point;
+                }
+            }
+        }
+        
+        if (!hitPoint) {
+            hitPoint = raycaster.ray.at(this.range, new THREE.Vector3());
+        }
+
+        this.wielder.world.emit('weaponFired', { weapon: this, hitPoint });
+
+        if (this.magazineAmmo === 0) {
+            setTimeout(() => this.reload(), 500);
+        }
+
+        return true;
+    }
+
+    reload() {
+        if (this.state !== 'idle' || this.magazineAmmo === this.magazineSize || this.reserveAmmo <= 0) return;
+
+        this.state = 'reloading';
+        this.animationDuration = 2.8;
+        this.animationProgress = 0;
+    }
+
+    inspect() {
+        if (this.state !== 'idle') return;
+        this.state = 'inspecting';
+        this.animationDuration = 3.5;
+        this.animationProgress = 0;
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime);
+        if (this.state === 'idle') {
+            this.mesh.position.lerp(this.p_idle, 10 * deltaTime);
+            this.mesh.quaternion.slerp(this.q_idle, 10 * deltaTime);
+            this.crane.rotation.y = THREE.MathUtils.lerp(this.crane.rotation.y, 0, 15 * deltaTime);
+            this.hammer.rotation.z = THREE.MathUtils.lerp(this.hammer.rotation.z, 0, 15 * deltaTime);
+            return;
+        }
+
+        this.animationProgress += deltaTime;
+        const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
+
+        switch(this.state) {
+            case 'firing': this.updateFireAnimation(p, deltaTime); break;
+            case 'reloading': this.updateReloadAnimation(p, deltaTime); break;
+            case 'inspecting': this.updateInspectAnimation(p); break;
+        }
+        
+        if (p >= 1.0) {
+            if (this.state === 'reloading') {
+                const ammoNeeded = this.magazineSize - this.magazineAmmo;
+                const ammoToReload = Math.min(ammoNeeded, this.reserveAmmo);
+                this.magazineAmmo += ammoToReload;
+                this.reserveAmmo -= ammoToReload;
+            }
+            this.state = 'idle';
+        }
+    }
+
+    updateFireAnimation(p, deltaTime) {
+        // Kickback
+        const kickbackAmount = 0.2;
+        this.mesh.position.z = this.p_idle.z + Math.sin(p * Math.PI) * kickbackAmount;
+        
+        // Muzzle flip
+        const flipAmount = -0.5;
+        this.mesh.rotation.x = Math.sin(p * Math.PI) * flipAmount;
+        
+        // Hammer animation
+        const hammerCockBack = -Math.PI / 4;
+        if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
+        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p-0.1) / 0.9);
+        
+        // Cylinder rotation
+        this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);
+    }
+
+    updateReloadAnimation(p, deltaTime) {
+        // Phase 1: Bring to center and start opening (0.0 -> 0.2)
+        const p1 = Math.min(1, p / 0.2);
+        this.mesh.position.lerpVectors(this.p_idle, this.p_reload_start, p1);
+        this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_reload_start, p1);
+
+        // Phase 2: Swing cylinder out (0.1 -> 0.4)
+        const p2 = Math.min(1, Math.max(0, (p - 0.1) / 0.3));
+        const swingOutAngle = -Math.PI / 2.5;
+        this.crane.rotation.y = THREE.MathUtils.lerp(0, swingOutAngle, p2);
+
+        // Phase 3: Eject shells (0.4 -> 0.6) - a quick spin
+        if (p > 0.4 && p < 0.6) {
+            this.cylinder.rotation.y -= deltaTime * 50;
+        }
+
+        // Phase 4: Swing cylinder in (0.7 -> 0.9)
+        const p4 = Math.min(1, Math.max(0, (p - 0.7) / 0.2));
+        this.crane.rotation.y = THREE.MathUtils.lerp(swingOutAngle, 0, p4);
+
+        // Phase 5: Return to idle (0.8 -> 1.0)
+        const p5 = Math.min(1, Math.max(0, (p - 0.8) / 0.2));
+        this.mesh.position.lerpVectors(this.p_reload_start, this.p_idle, p5);
+        this.mesh.quaternion.slerpQuaternions(this.q_reload_start, this.q_idle, p5);
+    }
+    
+    updateInspectAnimation(p) {
+        const p1_end = 0.2, p2_end = 0.7, p3_end = 1.0;
+        
+        if (p < p1_end) { // Move to center
+            const progress = p / p1_end;
+            this.mesh.position.lerpVectors(this.p_idle, this.p_inspect_center, progress);
+            this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_inspect_start, progress);
+        } else if (p < p2_end) { // Roll
+            const progress = (p - p1_end) / (p2_end - p1_end);
+            this.mesh.quaternion.slerpQuaternions(this.q_inspect_start, this.q_inspect_roll, progress);
+            this.cylinder.rotation.y += 0.05 * (1.0 - progress);
+        } else { // Return to idle
+            const progress = (p - p2_end) / (p3_end - p2_end);
+            this.mesh.position.lerpVectors(this.p_inspect_center, this.p_idle, progress);
+            this.mesh.quaternion.slerpQuaternions(this.q_inspect_roll, this.q_idle, progress);
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/weapons/Revolver.js ===
+
+
 === FILE: src/game/weapons/Weapon.js ===
 --------------------------------------------------
 /**
@@ -10151,6 +10645,10 @@ export class Weapon {
         throw new Error("Weapon.attack() must be implemented by subclasses.");
     }
 
+    inspect() {
+        // Base implementation does nothing. Can be overridden by subclasses.
+    }
+
     triggerCooldown() {
         this.cooldownTimer = 0;
     }
@@ -10163,6 +10661,40 @@ export class Weapon {
 }
 --------------------------------------------------
 === END OF FILE: src/game/weapons/Weapon.js ===
+
+
+=== FILE: src/game/weapons/WeaponFactory.js ===
+--------------------------------------------------
+import { Katana } from './Katana.js';
+import { Revolver } from './Revolver.js';
+
+const WeaponMap = {
+    'WEAPON_001': Katana,
+    'WEAPON_REVOLVER': Revolver,
+};
+
+/**
+ * A factory for creating weapon instances from their IDs.
+ */
+export class WeaponFactory {
+    /**
+     * Creates a weapon instance for a given weapon ID.
+     * @param {string} weaponId - The ID of the weapon (e.g., 'WEAPON_001').
+     * @returns {import('./Weapon.js').Weapon | null} An instance of the weapon, or null if the ID is not found.
+     */
+    static create(weaponId) {
+        const WeaponClass = WeaponMap[weaponId];
+
+        if (WeaponClass) {
+            return new WeaponClass();
+        }
+
+        console.warn(`WeaponFactory: No class found for weapon ID: ${weaponId}`);
+        return null;
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/weapons/WeaponFactory.js ===
 
 
 === FILE: src/game/world/LevelManager.js ===
@@ -10531,7 +11063,7 @@ export const GAME_CONFIG = {
     // Ability-specific parameters
     WAVE_POWER: {
         WIDTH: 8.0, // meters
-        LENGTH: 15.0, // meters
+        LENGTH: 25.0, // meters
         IMPULSE_FORWARD: 3000, // in kg*m/s
         IMPULSE_UPWARD: 1000, // in kg*m/s
         DAMAGE: 200,

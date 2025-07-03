@@ -130,6 +130,14 @@ export class PlayerController {
         if (event.code === 'Space') {
             this.player.jump();
         }
+        
+        if (event.code === 'KeyR') {
+            this.player.reloadWeapon();
+        }
+
+        if (event.code === 'KeyF') {
+            this.player.inspectWeapon();
+        }
     }
 
     /**

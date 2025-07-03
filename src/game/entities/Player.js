@@ -85,6 +85,18 @@ export class Player {
         this.dashDirection.copy(direction);
     }
     
+    reloadWeapon() {
+        if (this.weapon && typeof this.weapon.reload === 'function') {
+            this.weapon.reload();
+        }
+    }
+
+    inspectWeapon() {
+        if (this.weapon && typeof this.weapon.inspect === 'function') {
+            this.weapon.inspect();
+        }
+    }
+
     requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
     selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
     useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }

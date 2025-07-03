@@ -161,6 +161,11 @@ body:not(.game-active) #tutorial-text-container {
 }
 #hud-bottom-center {
     bottom: 0; left: 50%; transform: translateX(-50%);
+    align-items: center;
+}
+#hud-bottom-right {
+    bottom: 0; right: 0; align-items: flex-end;
+    justify-content: flex-end;
 }
 
 /* HUD WIDGETS */
@@ -269,6 +274,27 @@ body:not(.game-active) #tutorial-text-container {
 .ability-slot:not([class*='element-']).selected {
     border-color: var(--color-accent);
     box-shadow: 0 0 15px var(--color-accent);
+}
+
+/* NEW: Ammo Counter */
+#ammo-counter {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text-light);
+    text-shadow: 2px 2px 5px hsla(0, 0%, 0%, 0.7);
+    text-align: right;
+    margin-bottom: 20px;
+}
+#ammo-counter.reloading #ammo-mag {
+    color: var(--color-accent-fire);
+    animation: ammo-reloading-pulse 1s infinite;
+}
+@keyframes ammo-reloading-pulse {
+    50% { opacity: 0.6; }
+}
+#ammo-mag {
+    font-size: 3rem;
+    color: var(--color-accent);
 }
 
 /* --- PAUSE & DEATH SCREENS --- */

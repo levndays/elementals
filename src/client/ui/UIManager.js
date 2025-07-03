@@ -157,6 +157,7 @@ export class UIManager {
             player.dashOnCooldown
         );
         this.hud.updateAbilities(player.abilities.abilities, player.abilities.selectedAbilityIndex);
+        this.hud.updateAmmo(player.weapon);
         this.hud.updateTargeting(
             player.abilities.abilities[player.abilities.selectedAbilityIndex]?.requiresLockOn, 
             player.lockedTarget,
