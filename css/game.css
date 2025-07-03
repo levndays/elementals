@@ -306,8 +306,11 @@ body:not(.game-active) #tutorial-text-container {
 }
 
 @keyframes flash-stroke-error {
-    0%, 49.9% { stroke: hsl(0, 80%, 60%); }
-    /* From 50% to 100%, the stroke reverts to its original computed color */
+    0%, 49.9% {
+        stroke: hsl(0, 80%, 60%);
+        stroke-dashoffset: 0; /* Show a full red ring */
+    }
+    /* From 50% to 100%, the stroke reverts to its original computed color and offset */
 }
 
 /* NEW: Ammo Counter */

@@ -1,4 +1,3 @@
-// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -26,6 +25,7 @@ export class UIManager {
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
             energyBarContainer: document.getElementById('energy-bar-container'),
+            abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
         };
 
         this.hud = new HUD(abilityIconService);
@@ -165,11 +165,16 @@ export class UIManager {
     }
 
     flashAbilitySlotError(index) {
-        const slot = this.hud.elements.abilitySlots[index]?.element;
-        if (!slot || slot.classList.contains('flash-cooldown-error')) return;
-        slot.classList.add('flash-cooldown-error');
-        slot.addEventListener('animationend', () => {
-            slot.classList.remove('flash-cooldown-error');
+        const slotUI = this.hud.elements.abilitySlots[index];
+        if (!slotUI || slotUI.isFlashing) return;
+
+        const slotElement = slotUI.element;
+        slotElement.classList.add('flash-cooldown-error');
+        slotUI.isFlashing = true;
+        
+        slotElement.addEventListener('animationend', () => {
+            slotElement.classList.remove('flash-cooldown-error');
+            slotUI.isFlashing = false;
         }, { once: true });
     }
 

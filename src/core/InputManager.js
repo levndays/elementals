@@ -1,5 +1,3 @@
-// src/core/InputManager.js
-
 import { EventEmitter } from '../shared/EventEmitter.js';
 
 export class InputManager extends EventEmitter {
@@ -15,6 +13,8 @@ export class InputManager extends EventEmitter {
             screenY: 0,
         };
         this.enabled = true;
+
+        this.mousePreviousState = {};
 
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onKeyUp = this._onKeyUp.bind(this);
@@ -36,7 +36,7 @@ export class InputManager extends EventEmitter {
     _onKeyDown(e) {
         // Emit a singlePress event only on the initial press
         if (!this.keys[e.code]) {
-            this.emit('singlePress', e);
+            this.emit('singlePress', { code: e.code });
         }
         this.keys[e.code] = true;
     }
@@ -45,11 +45,17 @@ export class InputManager extends EventEmitter {
     _onMouseDown(e) {
         if (e.button === 0) this.mouse.leftClick = true;
         if (e.button === 2) this.mouse.rightClick = true;
+        
+        if (!this.mousePreviousState[e.button]) {
+            this.emit('singlePress', { button: e.button });
+        }
+        this.mousePreviousState[e.button] = true;
     }
 
     _onMouseUp(e) {
         if (e.button === 0) this.mouse.leftClick = false;
         if (e.button === 2) this.mouse.rightClick = false;
+        this.mousePreviousState[e.button] = false;
     }
 
     _onMouseMove(e) {

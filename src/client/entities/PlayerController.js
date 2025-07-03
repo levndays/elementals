@@ -1,5 +1,3 @@
-// src/client/entities/PlayerController.js
-
 import * as THREE from 'three';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -125,7 +123,7 @@ export class PlayerController {
     }
     
     _onSinglePress(event) {
-        if (!this.player || this.player.isDead) return;
+        if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
             this.player.jump();
@@ -138,6 +136,10 @@ export class PlayerController {
         if (event.code === 'KeyF') {
             this.player.inspectWeapon();
         }
+
+        if (event.button === 2) { // Right mouse button
+            this.player.useSelectedAbility();
+        }
     }
 
     /**
@@ -146,10 +148,6 @@ export class PlayerController {
     _handleActions() {
         if (this.input.mouse.leftClick) {
             this.player.weapon?.attack();
-        }
-
-        if (this.input.mouse.rightClick) {
-            this.player.useSelectedAbility();
         }
 
         for (let i = 1; i <= 4; i++) {

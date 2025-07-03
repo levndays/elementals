@@ -1,4 +1,3 @@
-// src/client/ui/HUD.js
 import * as THREE from 'three';
 
 /**
@@ -24,6 +23,7 @@ export class HUD {
                 icon: document.getElementById(`ability-${i}`).querySelector('.ability-icon'),
                 cooldownRing: document.getElementById(`ability-${i}`).querySelector('.cooldown-ring-circle'),
                 currentElementClass: null,
+                isFlashing: false, // State to prevent updates during error animation
             })),
             
             targetFrame: document.getElementById('target-frame'),
@@ -112,8 +112,12 @@ export class HUD {
                 const cooldownProgress = ability.getCooldownProgress();
                 const isReady = cooldownProgress >= 1.0;
                 slotUI.element.classList.toggle('ready', isReady);
-                const offset = this.RING_CIRCUMFERENCE * (1 - cooldownProgress);
-                slotUI.cooldownRing.style.strokeDashoffset = offset;
+
+                // Freeze cooldown progress animation during error flash
+                if (!slotUI.isFlashing) {
+                    const offset = this.RING_CIRCUMFERENCE * (1 - cooldownProgress);
+                    slotUI.cooldownRing.style.strokeDashoffset = offset;
+                }
             } else {
                 slotUI.icon.style.backgroundImage = 'none';
                 slotUI.icon.style.backgroundColor = '';
