@@ -22,6 +22,7 @@ export class InputManager extends EventEmitter {
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseUp = this._onMouseUp.bind(this);
         this._onWheel = this._onWheel.bind(this);
+        this._onContextMenu = this._onContextMenu.bind(this);
         
         this.addEventListeners();
     }
@@ -33,6 +34,7 @@ export class InputManager extends EventEmitter {
         document.addEventListener('mousedown', this._onMouseDown);
         document.addEventListener('mouseup', this._onMouseUp);
         document.addEventListener('wheel', this._onWheel, { passive: false });
+        document.addEventListener('contextmenu', this._onContextMenu);
     }
 
     _onKeyDown(e) {
@@ -74,6 +76,10 @@ export class InputManager extends EventEmitter {
         }
     }
 
+    _onContextMenu(e) {
+        e.preventDefault();
+    }
+
     update() {
         this.mouse.movementX = 0;
         this.mouse.movementY = 0;
@@ -86,5 +92,6 @@ export class InputManager extends EventEmitter {
         document.removeEventListener('mousedown', this._onMouseDown);
         document.removeEventListener('mouseup', this._onMouseUp);
         document.removeEventListener('wheel', this._onWheel);
+        document.removeEventListener('contextmenu', this._onContextMenu);
     }
 }

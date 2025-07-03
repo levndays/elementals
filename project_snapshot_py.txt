@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-03T19:52:05.160429
+Snapshot created on: 2025-07-03T20:26:05.468607
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -268,6 +268,7 @@ Snapshot created on: 2025-07-03T19:52:05.160429
     <div id="vfx-jump-wind" class="vfx-overlay"></div>
     <div id="vfx-ground-slam" class="vfx-overlay"></div>
     <div id="vfx-earth-buff" class="vfx-overlay"></div>
+    <div id="vfx-channeling-glow" class="vfx-overlay"></div>
     <div id="target-frame"></div>
     <div id="tutorial-text-container" style="display: none;">
         <p id="tutorial-text"></p>
@@ -1118,6 +1119,24 @@ body:not(.game-active) #tutorial-text-container {
     100% { transform: scale(1.0); opacity: 0.8; }
 }
 
+/* NEW: Channeling VFX */
+#vfx-channeling-glow {
+    background-image:
+        radial-gradient(ellipse 40vw 40vh at top left, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at top right, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at bottom left, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at bottom right, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%);
+    transition: opacity 0.5s ease-in-out;
+}
+#vfx-channeling-glow.active {
+    opacity: 1;
+    animation: channeling-pulse 4s infinite ease-in-out;
+}
+@keyframes channeling-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
 
 /* REWORKED: CROSSHAIR & TARGETING */
 #crosshair-container {
@@ -1899,6 +1918,18 @@ body:not(.game-active) #tutorial-text-container {
         "cooldown": 8.0,
         "description": "When used on the ground, release a forceful wave in front of you that knocks enemies back.",
         "flavor": "Get out of the way."
+    },
+    "UTILITY_001": {
+        "id": "UTILITY_001",
+        "name": "Second Chance",
+        "type": "Ability",
+        "element": "Utility",
+        "tier": 1,
+        "castType": "channel",
+        "energyCost": 0,
+        "cooldown": 15.0,
+        "description": "Hold to channel your power, converting 2 Energy into 1 Health per tick. Cooldown begins on release.",
+        "flavor": "Sometimes, willpower is the best medicine."
     }
 }
 --------------------------------------------------
@@ -1914,7 +1945,8 @@ body:not(.game-active) #tutorial-text-container {
     "FIRE_001",
     "FIRE_002",
     "EARTH_001",
-    "WATER_001"
+    "WATER_001",
+    "UTILITY_001"
   ],
   "savedLoadouts": {
     "My First Build": {
@@ -1932,7 +1964,7 @@ body:not(.game-active) #tutorial-text-container {
       "weapon": "WEAPON_REVOLVER",
       "cards": [
         "FIRE_001",
-        null,
+        "UTILITY_001",
         null,
         null
       ]
@@ -2828,6 +2860,7 @@ export class PlayerController {
         this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
         this.keyLastPress = {};
         this.keyPreviousState = {};
+        this.isRightMouseDown = false;
         
         // --- PERFORMANCE: Reusable Vectors ---
         this._forward = new THREE.Vector3();
@@ -2837,6 +2870,7 @@ export class PlayerController {
         
         // --- Event Handlers ---
         this._onSinglePress = this._onSinglePress.bind(this);
+        this._onScroll = this._onScroll.bind(this);
     }
 
     /**
@@ -2848,6 +2882,7 @@ export class PlayerController {
         // Sync the controller's euler angles with the player's camera on attach
         this.euler.setFromQuaternion(this.player.camera.quaternion);
         this.input.on('singlePress', this._onSinglePress);
+        this.input.on('scroll', this._onScroll);
     }
 
     /**
@@ -2855,6 +2890,7 @@ export class PlayerController {
      */
     detach() {
         this.input.off('singlePress', this._onSinglePress);
+        this.input.off('scroll', this._onScroll);
         this.player = null;
     }
 
@@ -2864,6 +2900,10 @@ export class PlayerController {
      */
     update(deltaTime) {
         if (!this.player || this.player.isDead || !document.pointerLockElement) {
+            if (this.isRightMouseDown) {
+                this.player.stopUsingAbility();
+                this.isRightMouseDown = false;
+            }
             return;
         }
 
@@ -2950,10 +2990,14 @@ export class PlayerController {
         if (event.code === 'KeyF') {
             this.player.inspectWeapon();
         }
+    }
 
-        if (event.button === 2) { // Right mouse button
-            this.player.useSelectedAbility();
-        }
+    _onScroll(event) {
+        if (!this.player || this.player.isDead || !document.pointerLockElement) return;
+    
+        // Positive deltaY means scrolling down/forward, negative means up/backward
+        const direction = Math.sign(event.deltaY);
+        this.player.cycleAbility(direction);
     }
 
     /**
@@ -2962,6 +3006,20 @@ export class PlayerController {
     _handleActions() {
         if (this.input.mouse.leftClick) {
             this.player.weapon?.attack();
+        }
+
+        if (this.input.mouse.rightClick) {
+            if (!this.isRightMouseDown) {
+                // First frame of press
+                this.player.startUsingAbility();
+                this.isRightMouseDown = true;
+            }
+        } else {
+            if (this.isRightMouseDown) {
+                // First frame of release
+                this.player.stopUsingAbility();
+                this.isRightMouseDown = false;
+            }
         }
 
         for (let i = 1; i <= 4; i++) {
@@ -3793,6 +3851,7 @@ export class VFXManager {
             jump: document.getElementById('vfx-jump-wind'),
             slam: document.getElementById('vfx-ground-slam'),
             earthBuff: document.getElementById('vfx-earth-buff'),
+            channelingGlow: document.getElementById('vfx-channeling-glow'),
         };
         this.setupVFXListeners();
     }
@@ -3805,8 +3864,9 @@ export class VFXManager {
         Object.values(this.domElements).forEach(element => {
             if (element) {
                 element.addEventListener('animationend', () => {
-                    // Don't remove 'active' from sustained effects like buffs
-                    if (element.id !== 'vfx-earth-buff') {
+                    // Don't remove 'active' from sustained effects like buffs or glows
+                    const sustainedEffects = ['vfx-earth-buff', 'vfx-channeling-glow'];
+                    if (!sustainedEffects.includes(element.id)) {
                         element.classList.remove('active', 'right-to-left', 'left-to-right');
                     }
                 });
@@ -4424,6 +4484,7 @@ export class VFXSystem {
         this.world.on('projectileDetonated', data => this.onProjectileDetonated(data));
         this.world.on('playerBuffActivated', data => this.onPlayerBuffActivated(data));
         this.world.on('playerBuffDeactivated', data => this.onPlayerBuffDeactivated(data));
+        this.world.on('playerChannelingUpdate', data => this.onPlayerChannelingUpdate(data));
         this.world.on('wavePowerUsed', data => this.onWavePowerUsed(data));
         this.world.on('weaponFired', data => this.onWeaponFired(data));
     }
@@ -4489,6 +4550,16 @@ export class VFXSystem {
     onPlayerBuffDeactivated({ buffName }) {
         if (buffName === 'stonePlating') {
             this.vfxManager.deactivateSustained('earthBuff');
+        }
+    }
+
+    onPlayerChannelingUpdate({ isChanneling, ability }) {
+        if (ability?.data?.id === 'UTILITY_001') {
+            if (isChanneling) {
+                this.vfxManager.activateSustained('channelingGlow');
+            } else {
+                this.vfxManager.deactivateSustained('channelingGlow');
+            }
         }
     }
 
@@ -6306,6 +6377,7 @@ export class InputManager extends EventEmitter {
         this._onMouseMove = this._onMouseMove.bind(this);
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseUp = this._onMouseUp.bind(this);
+        this._onWheel = this._onWheel.bind(this);
         
         this.addEventListeners();
     }
@@ -6316,6 +6388,7 @@ export class InputManager extends EventEmitter {
         document.addEventListener('mousemove', this._onMouseMove);
         document.addEventListener('mousedown', this._onMouseDown);
         document.addEventListener('mouseup', this._onMouseUp);
+        document.addEventListener('wheel', this._onWheel, { passive: false });
     }
 
     _onKeyDown(e) {
@@ -6350,6 +6423,13 @@ export class InputManager extends EventEmitter {
         this.mouse.movementY = e.movementY;
     }
 
+    _onWheel(e) {
+        if (this.enabled) {
+            e.preventDefault(); // Prevent page scrolling during gameplay
+            this.emit('scroll', { deltaY: e.deltaY });
+        }
+    }
+
     update() {
         this.mouse.movementX = 0;
         this.mouse.movementY = 0;
@@ -6361,6 +6441,7 @@ export class InputManager extends EventEmitter {
         document.removeEventListener('mousemove', this._onMouseMove);
         document.removeEventListener('mousedown', this._onMouseDown);
         document.removeEventListener('mouseup', this._onMouseUp);
+        document.removeEventListener('wheel', this._onWheel);
     }
 }
 --------------------------------------------------
@@ -8286,6 +8367,7 @@ export class Ability {
         this.energyCost = abilityData.energyCost || 0;
         this.element = abilityData.element || 'Utility';
         this.isCasting = false;
+        this.castType = abilityData.castType || 'instant';
 
         // Start ready to cast
         this.cooldownTimer = this.cooldown;
@@ -8348,6 +8430,22 @@ export class Ability {
     }
 
     /**
+     * Called on button press. For instant abilities, this just casts.
+     * Channeling abilities should override this to begin their channeling state.
+     */
+    startCasting() {
+        return this.cast();
+    }
+
+    /**
+     * Called on button release.
+     * Channeling abilities should override this to end their channeling state.
+     */
+    stopCasting() {
+        this.isCasting = false;
+    }
+
+    /**
      * Resets the cooldown timer after casting.
      */
     triggerCooldown() {
@@ -8384,12 +8482,14 @@ import { FireballAbility } from './FireballAbility.js';
 import { FirefliesAbility } from './FirefliesAbility.js';
 import { StonePlatingAbility } from './StonePlatingAbility.js';
 import { WavePowerAbility } from './WavePowerAbility.js';
+import { SecondChanceAbility } from './SecondChanceAbility.js';
 
 const AbilityMap = {
     'FIRE_001': FireballAbility,
     'FIRE_002': FirefliesAbility,
     'EARTH_001': StonePlatingAbility,
     'WATER_001': WavePowerAbility,
+    'UTILITY_001': SecondChanceAbility,
     // Add new ability classes here
 };
 
@@ -8907,6 +9007,94 @@ export class FireflyProjectile {
 }
 --------------------------------------------------
 === END OF FILE: src/game/abilities/FireflyProjectile.js ===
+
+
+=== FILE: src/game/abilities/SecondChanceAbility.js ===
+--------------------------------------------------
+import { Ability } from './Ability.js';
+
+export class SecondChanceAbility extends Ability {
+    constructor(caster, abilityData) {
+        super(caster, abilityData);
+
+        this.isChanneling = false;
+        // Constants for the ability's mechanics
+        this.HEALTH_PER_SECOND = 50;
+        this.ENERGY_PER_HEALTH = 2;
+        this.ENERGY_PER_SECOND = this.HEALTH_PER_SECOND * this.ENERGY_PER_HEALTH;
+    }
+
+    // Override startCasting to avoid the base class's instant cooldown trigger.
+    startCasting() {
+        const { canCast, reasons } = this._getCastability();
+        if (!canCast) {
+            if (reasons.includes('on_cooldown') || reasons.includes('insufficient_energy')) {
+                this.caster.world.emit('abilityCastFailed', { 
+                    reasons: reasons,
+                    entity: this.caster, 
+                    ability: this 
+                });
+            }
+            return false;
+        }
+
+        if (this.caster.health.currentHealth >= this.caster.health.maxHealth) {
+            return false; // Silently fail if already at full health
+        }
+        
+        if (this.caster.abilities.currentEnergy <= 0) {
+            this.caster.world.emit('abilityCastFailed', {
+                reasons: ['insufficient_energy'],
+                entity: this.caster,
+                ability: this,
+            });
+            return false;
+        }
+
+        this.isChanneling = true;
+        this.caster.world.emit('playerChannelingUpdate', { isChanneling: true, ability: this });
+        return true;
+    }
+
+    // Override stopCasting to trigger cooldown on release.
+    stopCasting() {
+        if (!this.isChanneling) return;
+        
+        this.isChanneling = false;
+        this.caster.world.emit('playerChannelingUpdate', { isChanneling: false, ability: this });
+
+        // Don't trigger cooldown in debug mode
+        if (this.caster.world.game && this.caster.world.game.debugModeActive) return;
+
+        this.triggerCooldown();
+    }
+
+    update(deltaTime) {
+        super.update(deltaTime); // This still handles ticking up the cooldownTimer
+
+        if (!this.isChanneling) {
+            return;
+        }
+
+        if (this.caster.health.currentHealth >= this.caster.health.maxHealth || this.caster.abilities.currentEnergy <= 0) {
+            this.stopCasting(); // Stop channeling and trigger cooldown
+            return;
+        }
+
+        const energyToDrain = this.ENERGY_PER_SECOND * deltaTime;
+        const actualEnergyDrained = Math.min(energyToDrain, this.caster.abilities.currentEnergy);
+        
+        this.caster.abilities.currentEnergy -= actualEnergyDrained;
+        
+        const healthToGain = actualEnergyDrained / this.ENERGY_PER_HEALTH;
+        this.caster.health.currentHealth = Math.min(
+            this.caster.health.maxHealth,
+            this.caster.health.currentHealth + healthToGain
+        );
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/abilities/SecondChanceAbility.js ===
 
 
 === FILE: src/game/abilities/StonePlatingAbility.js ===
@@ -9497,7 +9685,31 @@ export class StatusEffect {
     
         requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
         selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
-        useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
+
+        startUsingAbility() {
+            const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex];
+            if (ability) {
+                ability.startCasting();
+            }
+        }
+    
+        stopUsingAbility() {
+            const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex];
+            if (ability) {
+                ability.stopCasting();
+            }
+        }
+    
+        cycleAbility(direction) {
+            const numAbilities = this.abilities.abilities.length;
+            if (numAbilities === 0) return;
+    
+            let currentIndex = this.abilities.selectedAbilityIndex;
+            // The modulo trick handles wrapping around in both directions.
+            // Adding numAbilities before taking the modulo ensures the result is always positive.
+            const newIndex = (currentIndex + direction + numAbilities) % numAbilities;
+            this.selectAbility(newIndex);
+        }
     
         applyLoadout(loadoutData) {
             // Ensure loadoutData is an object and has a 'cards' array property.
