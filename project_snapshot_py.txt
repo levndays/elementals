@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-03T15:01:31.438370
+Snapshot created on: 2025-07-03T18:47:00.706238
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1039,7 +1039,6 @@ canvas {
 
 === FILE: css/game.css ===
 --------------------------------------------------
-/* css/game.css */
 /* --- GAMEPLAY STATE --- */
 body:not(.game-active) #game-hud,
 body:not(.game-active) #crosshair-container,
@@ -1335,12 +1334,24 @@ body:not(.game-active) #tutorial-text-container {
 }
 
 .ability-slot.flash-cooldown-error {
-  animation: flash-outline-red 0.5s 4;
+  animation: flash-outline-error 0.5s 4;
 }
 
-@keyframes flash-outline-red {
+.ability-slot.flash-cooldown-error .cooldown-ring-circle {
+  animation: flash-stroke-error 0.5s 4;
+}
+
+@keyframes flash-outline-error {
     0%, 49.9% { outline: 3px solid hsl(0, 80%, 60%); outline-offset: 1px; }
     50%, 100% { outline: none; }
+}
+
+@keyframes flash-stroke-error {
+    0%, 49.9% {
+        stroke: hsl(0, 80%, 60%);
+        stroke-dashoffset: 0; /* Show a full red ring */
+    }
+    /* From 50% to 100%, the stroke reverts to its original computed color and offset */
 }
 
 /* NEW: Ammo Counter */
@@ -2779,8 +2790,6 @@ app.init().catch(err => console.error("Application failed to initialize:", err))
 
 === FILE: src/client/entities/PlayerController.js ===
 --------------------------------------------------
-// src/client/entities/PlayerController.js
-
 import * as THREE from 'three';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -2906,7 +2915,7 @@ export class PlayerController {
     }
     
     _onSinglePress(event) {
-        if (!this.player || this.player.isDead) return;
+        if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
             this.player.jump();
@@ -2919,6 +2928,10 @@ export class PlayerController {
         if (event.code === 'KeyF') {
             this.player.inspectWeapon();
         }
+
+        if (event.button === 2) { // Right mouse button
+            this.player.useSelectedAbility();
+        }
     }
 
     /**
@@ -2927,10 +2940,6 @@ export class PlayerController {
     _handleActions() {
         if (this.input.mouse.leftClick) {
             this.player.weapon?.attack();
-        }
-
-        if (this.input.mouse.rightClick) {
-            this.player.useSelectedAbility();
         }
 
         for (let i = 1; i <= 4; i++) {
@@ -4976,7 +4985,6 @@ export class HealthBar {
 
 === FILE: src/client/ui/HUD.js ===
 --------------------------------------------------
-// src/client/ui/HUD.js
 import * as THREE from 'three';
 
 /**
@@ -5001,6 +5009,8 @@ export class HUD {
                 element: document.getElementById(`ability-${i}`),
                 icon: document.getElementById(`ability-${i}`).querySelector('.ability-icon'),
                 cooldownRing: document.getElementById(`ability-${i}`).querySelector('.cooldown-ring-circle'),
+                currentElementClass: null,
+                isFlashing: false, // State to prevent updates during error animation
             })),
             
             targetFrame: document.getElementById('target-frame'),
@@ -5052,12 +5062,18 @@ export class HUD {
     updateAbilities(abilities, selectedIndex) {
         this.elements.abilitySlots.forEach((slotUI, i) => {
             const ability = abilities[i];
-            
-            slotUI.element.className = 'ability-slot';
+
+            // Safely manage element-specific class without resetting others
+            const newElementClass = ability ? `element-${ability.data.element.toLowerCase()}` : null;
+            if (slotUI.currentElementClass && slotUI.currentElementClass !== newElementClass) {
+                slotUI.element.classList.remove(slotUI.currentElementClass);
+            }
+            if (newElementClass && !slotUI.element.classList.contains(newElementClass)) {
+                slotUI.element.classList.add(newElementClass);
+            }
+            slotUI.currentElementClass = newElementClass;
 
             if (ability) {
-                slotUI.element.classList.add(`element-${ability.data.element.toLowerCase()}`);
-
                 if (!this.loadedIconUrls.has(ability.data.id)) {
                     slotUI.icon.innerHTML = '...';
                     this.loadedIconUrls.set(ability.data.id, 'loading');
@@ -5065,6 +5081,7 @@ export class HUD {
                     this.abilityIconService.generate(ability.data).then(iconUrl => {
                         if (iconUrl) {
                             this.loadedIconUrls.set(ability.data.id, iconUrl);
+                            // Verify the ability in the slot hasn't changed while the icon was loading
                             if (abilities[i]?.data.id === ability.data.id) {
                                 this._applyIconStyle(slotUI.icon, iconUrl);
                             }
@@ -5082,8 +5099,12 @@ export class HUD {
                 const cooldownProgress = ability.getCooldownProgress();
                 const isReady = cooldownProgress >= 1.0;
                 slotUI.element.classList.toggle('ready', isReady);
-                const offset = this.RING_CIRCUMFERENCE * (1 - cooldownProgress);
-                slotUI.cooldownRing.style.strokeDashoffset = offset;
+
+                // Freeze cooldown progress animation during error flash
+                if (!slotUI.isFlashing) {
+                    const offset = this.RING_CIRCUMFERENCE * (1 - cooldownProgress);
+                    slotUI.cooldownRing.style.strokeDashoffset = offset;
+                }
             } else {
                 slotUI.icon.style.backgroundImage = 'none';
                 slotUI.icon.style.backgroundColor = '';
@@ -5902,7 +5923,6 @@ export class TutorialManager {
 
 === FILE: src/client/ui/UIManager.js ===
 --------------------------------------------------
-// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -5930,6 +5950,7 @@ export class UIManager {
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
             energyBarContainer: document.getElementById('energy-bar-container'),
+            abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
         };
 
         this.hud = new HUD(abilityIconService);
@@ -6069,11 +6090,16 @@ export class UIManager {
     }
 
     flashAbilitySlotError(index) {
-        const slot = this.hud.elements.abilitySlots[index]?.element;
-        if (!slot || slot.classList.contains('flash-cooldown-error')) return;
-        slot.classList.add('flash-cooldown-error');
-        slot.addEventListener('animationend', () => {
-            slot.classList.remove('flash-cooldown-error');
+        const slotUI = this.hud.elements.abilitySlots[index];
+        if (!slotUI || slotUI.isFlashing) return;
+
+        const slotElement = slotUI.element;
+        slotElement.classList.add('flash-cooldown-error');
+        slotUI.isFlashing = true;
+        
+        slotElement.addEventListener('animationend', () => {
+            slotElement.classList.remove('flash-cooldown-error');
+            slotUI.isFlashing = false;
         }, { once: true });
     }
 
@@ -6235,8 +6261,6 @@ export class AssetManager {
 
 === FILE: src/core/InputManager.js ===
 --------------------------------------------------
-// src/core/InputManager.js
-
 import { EventEmitter } from '../shared/EventEmitter.js';
 
 export class InputManager extends EventEmitter {
@@ -6252,6 +6276,8 @@ export class InputManager extends EventEmitter {
             screenY: 0,
         };
         this.enabled = true;
+
+        this.mousePreviousState = {};
 
         this._onKeyDown = this._onKeyDown.bind(this);
         this._onKeyUp = this._onKeyUp.bind(this);
@@ -6273,7 +6299,7 @@ export class InputManager extends EventEmitter {
     _onKeyDown(e) {
         // Emit a singlePress event only on the initial press
         if (!this.keys[e.code]) {
-            this.emit('singlePress', e);
+            this.emit('singlePress', { code: e.code });
         }
         this.keys[e.code] = true;
     }
@@ -6282,11 +6308,17 @@ export class InputManager extends EventEmitter {
     _onMouseDown(e) {
         if (e.button === 0) this.mouse.leftClick = true;
         if (e.button === 2) this.mouse.rightClick = true;
+        
+        if (!this.mousePreviousState[e.button]) {
+            this.emit('singlePress', { button: e.button });
+        }
+        this.mousePreviousState[e.button] = true;
     }
 
     _onMouseUp(e) {
         if (e.button === 0) this.mouse.leftClick = false;
         if (e.button === 2) this.mouse.rightClick = false;
+        this.mousePreviousState[e.button] = false;
     }
 
     _onMouseMove(e) {

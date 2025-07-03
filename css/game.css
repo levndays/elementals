@@ -292,25 +292,47 @@ body:not(.game-active) #tutorial-text-container {
     box-shadow: 0 0 15px var(--color-accent);
 }
 
+/* REWORKED: Ability Cooldown Error Flash */
 .ability-slot.flash-cooldown-error {
-  animation: flash-outline-error 0.5s 4;
+    /* This animation targets the slot's border and glow */
+    animation: flash-red-border-error 0.5s 4;
 }
 
-.ability-slot.flash-cooldown-error .cooldown-ring-circle {
-  animation: flash-stroke-error 0.5s 4;
+.ability-slot.flash-cooldown-error .ability-icon {
+    /* This animation targets the icon itself, making it blink red */
+    animation: blink-red-icon-error 0.5s 4;
 }
 
-@keyframes flash-outline-error {
-    0%, 49.9% { outline: 3px solid hsl(0, 80%, 60%); outline-offset: 1px; }
-    50%, 100% { outline: none; }
+.ability-slot.flash-cooldown-error .cooldown-track {
+    /* This makes the background of the cooldown ring flash red as well */
+    animation: flash-track-error 0.5s 4;
 }
 
-@keyframes flash-stroke-error {
+/* The .cooldown-ring-circle is NOT animated, preserving the cooldown progress display. */
+
+@keyframes flash-red-border-error {
     0%, 49.9% {
-        stroke: hsl(0, 80%, 60%);
-        stroke-dashoffset: 0; /* Show a full red ring */
+        border-color: hsl(0, 80%, 60%);
+        /* Combine outer glow with existing inner shadow */
+        box-shadow: 0 0 15px hsl(0, 80%, 60%), inset 0 0 10px hsla(0,0%,0%,0.6);
     }
-    /* From 50% to 100%, the stroke reverts to its original computed color and offset */
+    /* 50%-100%: Properties revert to their normally computed values for the "off" part of the blink */
+}
+
+@keyframes blink-red-icon-error {
+    0%, 49.9% {
+        /* A filter trick to make the icon red and bright */
+        filter: brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(8);
+        opacity: 0.5;
+    }
+    /* 50%-100%: Revert to normal state */
+}
+
+@keyframes flash-track-error {
+    0%, 49.9% {
+        stroke: hsl(0, 50%, 30%);
+    }
+    /* 50%-100%: Revert to normal state */
 }
 
 /* NEW: Ammo Counter */
