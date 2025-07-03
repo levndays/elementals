@@ -1,4 +1,3 @@
-/* css/game.css */
 /* --- GAMEPLAY STATE --- */
 body:not(.game-active) #game-hud,
 body:not(.game-active) #crosshair-container,
@@ -294,12 +293,21 @@ body:not(.game-active) #tutorial-text-container {
 }
 
 .ability-slot.flash-cooldown-error {
-  animation: flash-outline-red 0.5s 4;
+  animation: flash-outline-error 0.5s 4;
 }
 
-@keyframes flash-outline-red {
+.ability-slot.flash-cooldown-error .cooldown-ring-circle {
+  animation: flash-stroke-error 0.5s 4;
+}
+
+@keyframes flash-outline-error {
     0%, 49.9% { outline: 3px solid hsl(0, 80%, 60%); outline-offset: 1px; }
     50%, 100% { outline: none; }
+}
+
+@keyframes flash-stroke-error {
+    0%, 49.9% { stroke: hsl(0, 80%, 60%); }
+    /* From 50% to 100%, the stroke reverts to its original computed color */
 }
 
 /* NEW: Ammo Counter */

@@ -23,6 +23,7 @@ export class HUD {
                 element: document.getElementById(`ability-${i}`),
                 icon: document.getElementById(`ability-${i}`).querySelector('.ability-icon'),
                 cooldownRing: document.getElementById(`ability-${i}`).querySelector('.cooldown-ring-circle'),
+                currentElementClass: null,
             })),
             
             targetFrame: document.getElementById('target-frame'),
@@ -74,12 +75,18 @@ export class HUD {
     updateAbilities(abilities, selectedIndex) {
         this.elements.abilitySlots.forEach((slotUI, i) => {
             const ability = abilities[i];
-            
-            slotUI.element.className = 'ability-slot';
+
+            // Safely manage element-specific class without resetting others
+            const newElementClass = ability ? `element-${ability.data.element.toLowerCase()}` : null;
+            if (slotUI.currentElementClass && slotUI.currentElementClass !== newElementClass) {
+                slotUI.element.classList.remove(slotUI.currentElementClass);
+            }
+            if (newElementClass && !slotUI.element.classList.contains(newElementClass)) {
+                slotUI.element.classList.add(newElementClass);
+            }
+            slotUI.currentElementClass = newElementClass;
 
             if (ability) {
-                slotUI.element.classList.add(`element-${ability.data.element.toLowerCase()}`);
-
                 if (!this.loadedIconUrls.has(ability.data.id)) {
                     slotUI.icon.innerHTML = '...';
                     this.loadedIconUrls.set(ability.data.id, 'loading');
@@ -87,6 +94,7 @@ export class HUD {
                     this.abilityIconService.generate(ability.data).then(iconUrl => {
                         if (iconUrl) {
                             this.loadedIconUrls.set(ability.data.id, iconUrl);
+                            // Verify the ability in the slot hasn't changed while the icon was loading
                             if (abilities[i]?.data.id === ability.data.id) {
                                 this._applyIconStyle(slotUI.icon, iconUrl);
                             }
