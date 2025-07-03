@@ -25,6 +25,7 @@ export class UIManager {
             resumeBtn: document.getElementById('resume-btn'),
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
+            energyBarContainer: document.getElementById('energy-bar-container'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -78,6 +79,7 @@ export class UIManager {
         
         setupMainMenuListeners();
         game.on('mainMenuRendered', setupMainMenuListeners);
+        game.on('abilityCastFailed', (data) => this.onAbilityCastFailed(data));
 
         this.elements.loadCustomLevelBtn.onclick = () => this.elements.customLevelInput.click();
         this.elements.customLevelInput.onchange = (e) => this.handleCustomLevelSelect(e, game);
@@ -139,7 +141,38 @@ export class UIManager {
         this.customLevelPlayBtn.onclick = () => game.startLevel({ data, loadout: this._getLoadout() });
         this.screens.levelSelect.appendChild(this.customLevelPlayBtn);
     }
-    
+
+    onAbilityCastFailed(data) {
+        if (data.reasons.includes('insufficient_energy')) {
+            this.flashEnergyBar();
+        }
+        if (data.reasons.includes('on_cooldown') && data.ability) {
+            const player = data.entity;
+            const abilityIndex = player.abilities.abilities.indexOf(data.ability);
+            if (abilityIndex !== -1) {
+                this.flashAbilitySlotError(abilityIndex);
+            }
+        }
+    }
+
+    flashEnergyBar() {
+        const container = this.elements.energyBarContainer;
+        if (!container || container.classList.contains('flash-error')) return;
+        container.classList.add('flash-error');
+        container.addEventListener('animationend', () => {
+            container.classList.remove('flash-error');
+        }, { once: true });
+    }
+
+    flashAbilitySlotError(index) {
+        const slot = this.hud.elements.abilitySlots[index]?.element;
+        if (!slot || slot.classList.contains('flash-cooldown-error')) return;
+        slot.classList.add('flash-cooldown-error');
+        slot.addEventListener('animationend', () => {
+            slot.classList.remove('flash-cooldown-error');
+        }, { once: true });
+    }
+
     update(game) {
         if (!game || !game.world) return;
         

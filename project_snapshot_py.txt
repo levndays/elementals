@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-03T13:44:45.886474
+Snapshot created on: 2025-07-03T14:23:17.641794
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1246,6 +1246,16 @@ body:not(.game-active) #tutorial-text-container {
 #energy-bar { background: linear-gradient(to right, hsl(190, 100%, 45%), hsl(190, 100%, 65%)); }
 .resource-text { display: none; }
 
+#energy-bar-container.flash-error #energy-bar {
+    animation: energy-flash-red 1s ease-out;
+}
+
+@keyframes energy-flash-red {
+  16%, 50%, 83% {
+    background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(0, 100%, 75%));
+  }
+}
+
 /* REWORKED: Abilities Container & Slots */
 #abilities-container {
     display: flex; gap: 16px;
@@ -1315,6 +1325,17 @@ body:not(.game-active) #tutorial-text-container {
 .ability-slot:not([class*='element-']).selected {
     border-color: var(--color-accent);
     box-shadow: 0 0 15px var(--color-accent);
+}
+
+.ability-slot.flash-cooldown-error {
+  animation: flash-border-red 0.6s ease-out;
+}
+
+@keyframes flash-border-red {
+  25%, 75% {
+    border-color: hsl(0, 80%, 60%);
+    box-shadow: inset 0 0 10px hsla(0,0%,0%,0.6), 0 0 15px hsl(0, 80%, 60%);
+  }
 }
 
 /* NEW: Ammo Counter */
@@ -1591,11 +1612,31 @@ body:not(.game-active) #tutorial-text-container {
     padding-bottom: 5px;
 }
 
+/* Elemental/Ability Card Backgrounds */
 .card-item.element-fire    { background-color: hsl(25, 100%, 55%); }
 .card-item.element-water   { background-color: hsl(195, 100%, 50%); }
 .card-item.element-air     { background-color: hsl(180, 80%, 85%); }
 .card-item.element-earth   { background-color: hsl(35, 45%, 50%); }
 .card-item.element-utility { background-color: hsl(265, 90%, 65%); }
+
+/* Weapon Card Overrides */
+.card-item.type-weapon {
+    background: linear-gradient(145deg, hsl(230, 10%, 28%), hsl(230, 10%, 18%));
+    border: 1px solid hsl(230, 10%, 12%);
+}
+.card-item.type-weapon::after {
+    background-color: var(--color-text-dark);
+}
+.card-item.type-weapon.tier-1::after { background-color: hsl(210, 10%, 60%); }
+.card-item.type-weapon.tier-2::after { background-color: hsl(210, 10%, 85%); }
+.card-item.type-weapon.tier-3::after { background-color: hsl(0, 0%, 100%); }
+
+.card-item.type-weapon .card-item-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><path d="M22,4 C22,4 18,1 18,1 C18,1 14,4 14,4 C14,4 14,14 14,14 C14,14 12,16 12,16 C12,16 11,23 11,23 L13,23 L13,16 C13,16 18,16 18,16 C18,16 22,13 22,13 C22,13 22,4 22,4 Z M10,14 L10,23 L8,23 L8,14 C8,14 2,14 2,14 C2,14 2,4 2,4 C2,4 6,1 6,1 C6,1 10,4 10,4 L10,14 Z"/></svg>');
+    background-size: 65%;
+    opacity: 0.6;
+}
+
 
 /* --- INSPECTOR MODAL --- */
 .inspector-modal-overlay {
@@ -5272,482 +5313,486 @@ export class LoadoutManager {
 
 === FILE: src/client/ui/LoadoutUI.js ===
 --------------------------------------------------
-// src/client/ui/LoadoutUI.js
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CardObject } from '../rendering/CardObject.js';
-import { CardParticleSystem } from '../rendering/CardParticleSystem.js';
-import { WeaponFactory } from '../../game/weapons/WeaponFactory.js';
-
-export class LoadoutUI {
-    constructor(manager, abilityIconService) {
-        this.manager = manager;
-        this.abilityIconService = abilityIconService;
-        this.elements = {
-            inventoryPanel: document.getElementById('inventory-panel'),
-            inventoryGrid: document.getElementById('inventory-grid'),
-            
-            playerPanel: document.getElementById('player-panel'),
-            playerPreviewCanvas: document.getElementById('player-preview-canvas'),
-            equippedSlotsContainer: document.getElementById('equipped-slots-container'),
-            equippedSlots: document.querySelectorAll('.equipped-slot'),
-            
-            synergyName: document.getElementById('synergy-name'),
-            synergyDescription: document.getElementById('synergy-description'),
-            synergyDisplay: document.getElementById('synergy-display'),
-
-            cardDetailsPanel: document.getElementById('card-details-panel'),
-            detailsView2D: document.getElementById('details-view-2d'),
-            detailsName: document.getElementById('details-name'),
-            detailsElementTier: document.getElementById('details-element-tier'),
-            detailsCost: document.getElementById('details-cost'),
-            detailsCooldown: document.getElementById('details-cooldown'),
-            detailsDescription: document.getElementById('details-description'),
-            detailsFlavor: document.getElementById('details-flavor-text'),
-            inspectBtn: document.getElementById('inspect-card-btn'),
-
-            inspectorModal: document.getElementById('inspector-modal'),
-            inspectionCanvas: document.getElementById('inspection-canvas'),
-            inspectorModalCloseBtn: document.getElementById('inspector-modal-close-btn'),
-
-            loadoutSelect: document.getElementById('loadout-select-dropdown'),
-            loadoutNameInput: document.getElementById('loadout-name-input'),
-            saveBtn: document.getElementById('save-loadout-btn'),
-            backBtn: document.getElementById('back-to-menu-btn'),
-            playBtn: document.getElementById('play-game-btn'),
-        };
-        this.selectedCardForInspect = null;
-
-        this.inspector = {
-            isActive: false,
-            clock: new THREE.Clock(),
-            scene: null, camera: null, renderer: null, controls: null,
-            backgroundScene: null, backgroundCamera: null,
-            activeMesh: null,
-            activeCardObject: null, 
-            particleSystem: null, 
-            godRayPlane: null,
-            tierLight: null,
-            resizeObserver: null,
-        };
-    }
-
-    init() {
-        this.initPlayerPreview();
-        this.initCardInspector();
-        this.renderInventory();
-        this.renderLoadout();
-        this.renderLoadoutSelector();
-        this.bindEventListeners();
-    }
-
-    initPlayerPreview() {
-        const canvas = this.elements.playerPreviewCanvas;
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        camera.position.z = 3;
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(1, 2, 3);
-        scene.add(directionalLight);
-        const playerGeo = new THREE.CapsuleGeometry(0.5, 1.0, 4, 8);
-        const playerMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5 });
-        const playerMesh = new THREE.Mesh(playerGeo, playerMat);
-        playerMesh.position.y = -0.5;
-        scene.add(playerMesh);
-
-        const onResize = () => {
-            if (!canvas.parentElement) return;
-            const { clientWidth, clientHeight } = canvas.parentElement;
-            renderer.setSize(clientWidth, clientHeight);
-            camera.aspect = clientWidth / clientHeight;
-            camera.updateProjectionMatrix();
-        };
-        onResize();
-        new ResizeObserver(onResize).observe(canvas.parentElement);
-        const animate = () => {
-            requestAnimationFrame(animate);
-            playerMesh.rotation.y += 0.005;
-            renderer.render(scene, camera);
-        };
-        animate();
-    }
-
-    initCardInspector() {
-        const canvas = this.elements.inspectionCanvas;
-        this.inspector.scene = new THREE.Scene();
-        this.inspector.backgroundScene = new THREE.Scene();
-        this.inspector.camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-        this.inspector.backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        this.inspector.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-        this.inspector.renderer.setPixelRatio(window.devicePixelRatio);
-        this.inspector.renderer.autoClear = false;
-
-        this.inspector.camera.position.set(0, 0, 3.5);
-        this.inspector.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(2, 3, 3);
-        this.inspector.scene.add(keyLight);
-
-        this.inspector.controls = new OrbitControls(this.inspector.camera, this.inspector.renderer.domElement);
-        this.inspector.controls.enableDamping = true;
-        this.inspector.controls.enablePan = false;
-        this.inspector.controls.minDistance = 2;
-        this.inspector.controls.maxDistance = 6;
-        
-        this._animateInspector();
-    }
-
-    _animateInspector() {
-        requestAnimationFrame(() => this._animateInspector());
-        if (!this.inspector.isActive) return;
-
-        const deltaTime = this.inspector.clock.getDelta();
-        this.inspector.controls.update();
-        this.inspector.activeCardObject?.update(deltaTime);
-        this.inspector.particleSystem?.update(deltaTime);
-        if (this.inspector.godRayPlane) this.inspector.godRayPlane.rotation.z += 0.001;
-
-        const { renderer, backgroundScene, backgroundCamera, scene, camera } = this.inspector;
-        renderer.clear();
-        renderer.render(backgroundScene, backgroundCamera);
-        renderer.clearDepth();
-        renderer.render(scene, camera);
-    }
+ import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CardObject } from '../rendering/CardObject.js';
+    import { CardParticleSystem } from '../rendering/CardParticleSystem.js';
+    import { WeaponFactory } from '../../game/weapons/WeaponFactory.js';
     
-    async showInspectorView(cardId) {
-        if (!cardId) return;
-        const cardData = this.manager.getCardDetails(cardId);
-        if (!cardData) return;
-
-        this._cleanupInspectorAssets();
-        
-        const tierColors = {
-            1: new THREE.Color(0x3399ff),
-            2: new THREE.Color(0xcc66ff),
-            3: new THREE.Color(0xff6633),
-            default: new THREE.Color(0xffffff)
-        };
-        const tierColor = tierColors[cardData.tier] || tierColors.default;
-
-        if (cardData.type === 'Weapon') {
-            const weapon = WeaponFactory.create(cardId);
-            if (weapon?.mesh) {
-                this.inspector.activeMesh = weapon.mesh;
-            }
-        } else {
-            this.inspector.activeCardObject = await CardObject.create(cardData);
-            this.inspector.activeMesh = this.inspector.activeCardObject.mesh;
-            this.inspector.particleSystem = new CardParticleSystem(this.inspector.scene, cardData.element);
-        }
-        
-        if (this.inspector.activeMesh) {
-            this.inspector.scene.add(this.inspector.activeMesh);
-        }
-
-        this._createGodRayPlane(tierColor);
-        this.inspector.tierLight = new THREE.PointLight(tierColor, 10, 20, 1.5);
-        this.inspector.tierLight.position.set(0, 0, -4);
-        this.inspector.scene.add(this.inspector.tierLight);
-        
-        this.elements.inspectorModal.classList.add('active');
-        this.inspector.isActive = true;
-
-        const canvas = this.elements.inspectionCanvas;
-        const { clientWidth, clientHeight } = canvas.parentElement;
-        this.inspector.renderer.setSize(clientWidth, clientHeight);
-        this.inspector.camera.aspect = clientWidth / clientHeight;
-        this.inspector.camera.updateProjectionMatrix();
-
-        if (!this.inspector.resizeObserver) {
-            const onResize = () => {
-                if (!this.inspector.isActive || !canvas.parentElement) return;
-                const { clientWidth, clientHeight } = canvas.parentElement;
-                this.inspector.renderer.setSize(clientWidth, clientHeight);
-                this.inspector.camera.aspect = clientWidth / clientHeight;
-                this.inspector.camera.updateProjectionMatrix();
+    export class LoadoutUI {
+        constructor(manager, abilityIconService) {
+            this.manager = manager;
+            this.abilityIconService = abilityIconService;
+            this.elements = {
+                inventoryPanel: document.getElementById('inventory-panel'),
+                inventoryGrid: document.getElementById('inventory-grid'),
+                
+                playerPanel: document.getElementById('player-panel'),
+                playerPreviewCanvas: document.getElementById('player-preview-canvas'),
+                equippedSlotsContainer: document.getElementById('equipped-slots-container'),
+                equippedSlots: document.querySelectorAll('.equipped-slot'),
+                
+                synergyName: document.getElementById('synergy-name'),
+                synergyDescription: document.getElementById('synergy-description'),
+                synergyDisplay: document.getElementById('synergy-display'),
+    
+                cardDetailsPanel: document.getElementById('card-details-panel'),
+                detailsView2D: document.getElementById('details-view-2d'),
+                detailsName: document.getElementById('details-name'),
+                detailsElementTier: document.getElementById('details-element-tier'),
+                detailsCost: document.getElementById('details-cost'),
+                detailsCooldown: document.getElementById('details-cooldown'),
+                detailsDescription: document.getElementById('details-description'),
+                detailsFlavor: document.getElementById('details-flavor-text'),
+                inspectBtn: document.getElementById('inspect-card-btn'),
+    
+                inspectorModal: document.getElementById('inspector-modal'),
+                inspectionCanvas: document.getElementById('inspection-canvas'),
+                inspectorModalCloseBtn: document.getElementById('inspector-modal-close-btn'),
+    
+                loadoutSelect: document.getElementById('loadout-select-dropdown'),
+                loadoutNameInput: document.getElementById('loadout-name-input'),
+                saveBtn: document.getElementById('save-loadout-btn'),
+                backBtn: document.getElementById('back-to-menu-btn'),
+                playBtn: document.getElementById('play-game-btn'),
             };
-            this.inspector.resizeObserver = new ResizeObserver(onResize);
-            this.inspector.resizeObserver.observe(canvas.parentElement);
-        }
-    }
-
-    hideInspectorView() {
-        this.inspector.isActive = false;
-        this._cleanupInspectorAssets();
-        this.elements.inspectorModal.classList.remove('active');
-
-        if (this.inspector.resizeObserver) {
-            this.inspector.resizeObserver.disconnect();
-            this.inspector.resizeObserver = null;
-        }
-    }
-
-    _cleanupInspectorAssets() {
-        if (this.inspector.activeMesh) {
-            this.inspector.scene.remove(this.inspector.activeMesh);
-            this.inspector.activeMesh = null;
-        }
-        if (this.inspector.activeCardObject) {
-            this.inspector.activeCardObject.dispose();
-            this.inspector.activeCardObject = null;
-        }
-        if (this.inspector.particleSystem) {
-            this.inspector.particleSystem.dispose();
-            this.inspector.particleSystem = null;
-        }
-        if (this.inspector.godRayPlane) {
-             this.inspector.backgroundScene.remove(this.inspector.godRayPlane);
-             this.inspector.godRayPlane.geometry.dispose();
-             this.inspector.godRayPlane.material.map?.dispose();
-             this.inspector.godRayPlane.material.dispose();
-             this.inspector.godRayPlane = null;
-        }
-        if (this.inspector.tierLight) {
-            this.inspector.scene.remove(this.inspector.tierLight);
-            this.inspector.tierLight.dispose();
-            this.inspector.tierLight = null;
-        }
-    }
-
-    _createGodRayPlane(color) {
-        if (this.inspector.godRayPlane) {
-            this.inspector.backgroundScene.remove(this.inspector.godRayPlane);
-            this.inspector.godRayPlane.geometry.dispose();
-            this.inspector.godRayPlane.material.map?.dispose();
-            this.inspector.godRayPlane.material.dispose();
-        }
-
-        const canvas = document.createElement('canvas');
-        const size = 512;
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d'), centerX = size / 2, centerY = size / 2;
-        
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size / 2);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-        gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.lineWidth = 1.5;
-        for(let i=0; i < 100; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const length = size * 0.4 + (Math.random() * size * 0.3);
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(centerX + Math.cos(angle) * length, centerY + Math.sin(angle) * length);
-            ctx.stroke();
-        }
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.MeshBasicMaterial({ map: texture, color, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
-        this.inspector.godRayPlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-        this.inspector.backgroundScene.add(this.inspector.godRayPlane);
-    }
-    
-    renderInventory() {
-        this.elements.inventoryGrid.innerHTML = '';
-        const inventoryItems = this.manager.getInventoryItems('all');
-        inventoryItems.forEach(item => {
-            const slot = document.createElement('div');
-            slot.className = 'inventory-slot';
-            slot.appendChild(this.createCardElement(item));
-            this.elements.inventoryGrid.appendChild(slot);
-        });
-    }
-
-    renderLoadout() {
-        const loadoutCards = this.manager.getActiveLoadoutCards();
-        const equippedWeapon = this.manager.getActiveWeapon();
-
-        this.elements.equippedSlots.forEach((slot) => {
-            slot.innerHTML = '';
-            const slotType = slot.dataset.slotType;
-            if (slotType === 'ability') {
-                const index = parseInt(slot.dataset.slotIndex, 10);
-                const card = loadoutCards[index];
-                if (card) slot.appendChild(this.createCardElement(card));
-            } else if (slotType === 'weapon') {
-                if (equippedWeapon) slot.appendChild(this.createCardElement(equippedWeapon));
-            }
-        });
-        this.renderSynergy();
-    }
-
-    renderSynergy() {
-        const { isValid, synergyName, description } = this.manager.currentSynergy;
-        this.elements.synergyName.textContent = synergyName;
-        this.elements.synergyDescription.textContent = description;
-        this.elements.synergyDisplay.className = 'synergy-display ' + (isValid ? 'synergy-valid' : 'synergy-invalid');
-        this.elements.playBtn.disabled = false;
-    }
-
-    renderLoadoutSelector() {
-        this.elements.loadoutSelect.innerHTML = '';
-        Object.keys(this.manager.playerProfile.savedLoadouts).forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            this.elements.loadoutSelect.appendChild(option);
-        });
-        this.elements.loadoutSelect.value = this.manager.activeLoadout.name;
-        this.elements.loadoutNameInput.value = this.manager.activeLoadout.name;
-    }
-
-    createCardElement(cardData) {
-        const el = document.createElement('div');
-        el.className = `card-item element-${cardData.element.toLowerCase()} tier-${cardData.tier}`;
-        el.draggable = true;
-        el.dataset.cardId = cardData.id;
-        el.dataset.cardType = cardData.type || 'Ability';
-
-        const iconContainer = document.createElement('div');
-        iconContainer.className = 'card-item-icon';
-        el.appendChild(iconContainer);
-        
-        this.abilityIconService.generate(cardData).then(iconUrl => {
-            if (iconUrl) iconContainer.style.backgroundImage = `url(${iconUrl})`;
-        }).catch(err => console.error(`Failed to generate icon for ${cardData.name}:`, err));
-
-        const textWrapper = document.createElement('div');
-        textWrapper.className = 'card-item-text';
-        textWrapper.innerHTML = `
-            <span class="card-item-name">${cardData.name}</span>
-            <span class="card-item-type">${cardData.type}</span>
-        `;
-        el.appendChild(textWrapper);
-        
-        el.onclick = (e) => {
-            e.stopPropagation();
-            this.selectForInspect(cardData.id);
-        };
-        return el;
-    }
-    
-    selectForInspect(cardId) {
-        document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
-        if (!cardId) {
             this.selectedCardForInspect = null;
-            this.elements.inspectBtn.disabled = true;
-            this.renderCardDetails(null);
-            return;
+    
+            this.inspector = {
+                isActive: false,
+                clock: new THREE.Clock(),
+                scene: null, camera: null, renderer: null, controls: null,
+                backgroundScene: null, backgroundCamera: null,
+                activeMesh: null,
+                activeCardObject: null, 
+                particleSystem: null, 
+                godRayPlane: null,
+                tierLight: null,
+                resizeObserver: null,
+            };
         }
-
-        const cardData = this.manager.getCardDetails(cardId);
-        this.renderCardDetails(cardData);
-        
-        document.querySelectorAll(`.card-item[data-card-id="${cardId}"]`).forEach(el => el.classList.add('selected'));
-        
-        this.selectedCardForInspect = cardId;
-        this.elements.inspectBtn.disabled = false;
-    }
-
-    renderCardDetails(card) {
-        if (card) {
-            this.elements.detailsName.textContent = card.name;
-            this.elements.detailsElementTier.textContent = `${card.element} - Tier ${card.tier}`;
-            this.elements.detailsCost.textContent = card.energyCost ? `Cost: ${card.energyCost}` : '';
-            this.elements.detailsCooldown.textContent = card.cooldown ? `CD: ${card.cooldown}s` : '';
-            this.elements.detailsDescription.textContent = card.description;
-            this.elements.detailsFlavor.textContent = `"${card.flavor}"`;
-        } else {
-            this.elements.detailsName.textContent = 'SELECT A CARD';
-            this.elements.detailsElementTier.textContent = 'Click a card to see its details.';
-            this.elements.detailsCost.textContent = '';
-            this.elements.detailsCooldown.textContent = '';
-            this.elements.detailsDescription.textContent = '';
-            this.elements.detailsFlavor.textContent = '';
+    
+        init() {
+            this.initPlayerPreview();
+            this.initCardInspector();
+            this.renderInventory();
+            this.renderLoadout();
+            this.renderLoadoutSelector();
+            this.bindEventListeners();
         }
-    }
-
-    bindEventListeners() {
-        this.elements.inspectBtn.onclick = () => this.showInspectorView(this.selectedCardForInspect);
-        this.elements.inspectorModalCloseBtn.onclick = () => this.hideInspectorView();
-        this.elements.inspectorModal.onclick = (e) => {
-            if (e.target === this.elements.inspectorModal) this.hideInspectorView();
-        };
-
-        let draggedElement = null;
-        document.body.addEventListener('dragstart', e => {
-            if (e.target.matches('.card-item')) {
-                draggedElement = e.target;
-                setTimeout(() => e.target.classList.add('dragging'), 0);
-                const data = { cardId: e.target.dataset.cardId, cardType: e.target.dataset.cardType };
-                const sourceSlotEl = e.target.closest('.equipped-slot');
-                if (sourceSlotEl) data.sourceType = sourceSlotEl.dataset.slotType;
-                if (sourceSlotEl?.dataset.slotIndex) data.sourceIndex = sourceSlotEl.dataset.slotIndex;
-                e.dataTransfer.setData('application/json', JSON.stringify(data));
-                e.dataTransfer.effectAllowed = 'move';
+    
+        initPlayerPreview() {
+            const canvas = this.elements.playerPreviewCanvas;
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            camera.position.z = 3;
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 2, 3);
+            scene.add(directionalLight);
+            const playerGeo = new THREE.CapsuleGeometry(0.5, 1.0, 4, 8);
+            const playerMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5 });
+            const playerMesh = new THREE.Mesh(playerGeo, playerMat);
+            playerMesh.position.y = -0.5;
+            scene.add(playerMesh);
+    
+            const onResize = () => {
+                if (!canvas.parentElement) return;
+                const { clientWidth, clientHeight } = canvas.parentElement;
+                renderer.setSize(clientWidth, clientHeight);
+                camera.aspect = clientWidth / clientHeight;
+                camera.updateProjectionMatrix();
+            };
+            onResize();
+            new ResizeObserver(onResize).observe(canvas.parentElement);
+            const animate = () => {
+                requestAnimationFrame(animate);
+                playerMesh.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            };
+            animate();
+        }
+    
+        initCardInspector() {
+            const canvas = this.elements.inspectionCanvas;
+            this.inspector.scene = new THREE.Scene();
+            this.inspector.backgroundScene = new THREE.Scene();
+            this.inspector.camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+            this.inspector.backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            this.inspector.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            this.inspector.renderer.setPixelRatio(window.devicePixelRatio);
+            this.inspector.renderer.autoClear = false;
+    
+            this.inspector.camera.position.set(0, 0, 3.5);
+            this.inspector.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            keyLight.position.set(2, 3, 3);
+            this.inspector.scene.add(keyLight);
+    
+            this.inspector.controls = new OrbitControls(this.inspector.camera, this.inspector.renderer.domElement);
+            this.inspector.controls.enableDamping = true;
+            this.inspector.controls.enablePan = false;
+            this.inspector.controls.minDistance = 2;
+            this.inspector.controls.maxDistance = 6;
+            
+            this._animateInspector();
+        }
+    
+        _animateInspector() {
+            requestAnimationFrame(() => this._animateInspector());
+            if (!this.inspector.isActive) return;
+    
+            const deltaTime = this.inspector.clock.getDelta();
+            this.inspector.controls.update();
+            this.inspector.activeCardObject?.update(deltaTime);
+            this.inspector.particleSystem?.update(deltaTime);
+            if (this.inspector.godRayPlane) this.inspector.godRayPlane.rotation.z += 0.001;
+    
+            const { renderer, backgroundScene, backgroundCamera, scene, camera } = this.inspector;
+            renderer.clear();
+            renderer.render(backgroundScene, backgroundCamera);
+            renderer.clearDepth();
+            renderer.render(scene, camera);
+        }
+        
+        async showInspectorView(cardId) {
+            if (!cardId) return;
+            const cardData = this.manager.getCardDetails(cardId);
+            if (!cardData) return;
+    
+            this._cleanupInspectorAssets();
+            
+            const tierColors = {
+                1: new THREE.Color(0x3399ff),
+                2: new THREE.Color(0xcc66ff),
+                3: new THREE.Color(0xff6633),
+                default: new THREE.Color(0xffffff)
+            };
+            const tierColor = tierColors[cardData.tier] || tierColors.default;
+    
+            if (cardData.type === 'Weapon') {
+                const weapon = WeaponFactory.create(cardId);
+                if (weapon?.mesh) {
+                    this.inspector.activeMesh = weapon.mesh;
+                }
+            } else {
+                this.inspector.activeCardObject = await CardObject.create(cardData);
+                this.inspector.activeMesh = this.inspector.activeCardObject.mesh;
+                this.inspector.particleSystem = new CardParticleSystem(this.inspector.scene, cardData.element);
             }
-        });
-        document.body.addEventListener('dragend', () => {
-            draggedElement?.classList.remove('dragging');
-            draggedElement = null;
-            this.elements.inventoryPanel.classList.remove('inventory-drag-over');
-        });
-
-        this.elements.equippedSlots.forEach(slot => {
-            slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
-            slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
-            slot.addEventListener('drop', e => {
+            
+            if (this.inspector.activeMesh) {
+                this.inspector.scene.add(this.inspector.activeMesh);
+            }
+    
+            this._createGodRayPlane(tierColor);
+            this.inspector.tierLight = new THREE.PointLight(tierColor, 10, 20, 1.5);
+            this.inspector.tierLight.position.set(0, 0, -4);
+            this.inspector.scene.add(this.inspector.tierLight);
+            
+            this.elements.inspectorModal.classList.add('active');
+            this.inspector.isActive = true;
+    
+            const canvas = this.elements.inspectionCanvas;
+            const { clientWidth, clientHeight } = canvas.parentElement;
+            this.inspector.renderer.setSize(clientWidth, clientHeight);
+            this.inspector.camera.aspect = clientWidth / clientHeight;
+            this.inspector.camera.updateProjectionMatrix();
+    
+            if (!this.inspector.resizeObserver) {
+                const onResize = () => {
+                    if (!this.inspector.isActive || !canvas.parentElement) return;
+                    const { clientWidth, clientHeight } = canvas.parentElement;
+                    this.inspector.renderer.setSize(clientWidth, clientHeight);
+                    this.inspector.camera.aspect = clientWidth / clientHeight;
+                    this.inspector.camera.updateProjectionMatrix();
+                };
+                this.inspector.resizeObserver = new ResizeObserver(onResize);
+                this.inspector.resizeObserver.observe(canvas.parentElement);
+            }
+        }
+    
+        hideInspectorView() {
+            this.inspector.isActive = false;
+            this._cleanupInspectorAssets();
+            this.elements.inspectorModal.classList.remove('active');
+    
+            if (this.inspector.resizeObserver) {
+                this.inspector.resizeObserver.disconnect();
+                this.inspector.resizeObserver = null;
+            }
+        }
+    
+        _cleanupInspectorAssets() {
+            if (this.inspector.activeMesh) {
+                this.inspector.scene.remove(this.inspector.activeMesh);
+                this.inspector.activeMesh = null;
+            }
+            if (this.inspector.activeCardObject) {
+                this.inspector.activeCardObject.dispose();
+                this.inspector.activeCardObject = null;
+            }
+            if (this.inspector.particleSystem) {
+                this.inspector.particleSystem.dispose();
+                this.inspector.particleSystem = null;
+            }
+            if (this.inspector.godRayPlane) {
+                 this.inspector.backgroundScene.remove(this.inspector.godRayPlane);
+                 this.inspector.godRayPlane.geometry.dispose();
+                 this.inspector.godRayPlane.material.map?.dispose();
+                 this.inspector.godRayPlane.material.dispose();
+                 this.inspector.godRayPlane = null;
+            }
+            if (this.inspector.tierLight) {
+                this.inspector.scene.remove(this.inspector.tierLight);
+                this.inspector.tierLight.dispose();
+                this.inspector.tierLight = null;
+            }
+        }
+    
+        _createGodRayPlane(color) {
+            if (this.inspector.godRayPlane) {
+                this.inspector.backgroundScene.remove(this.inspector.godRayPlane);
+                this.inspector.godRayPlane.geometry.dispose();
+                this.inspector.godRayPlane.material.map?.dispose();
+                this.inspector.godRayPlane.material.dispose();
+            }
+    
+            const canvas = document.createElement('canvas');
+            const size = 512;
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d'), centerX = size / 2, centerY = size / 2;
+            
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size / 2);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+            gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+    
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1.5;
+            for(let i=0; i < 100; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const length = size * 0.4 + (Math.random() * size * 0.3);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + Math.cos(angle) * length, centerY + Math.sin(angle) * length);
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.MeshBasicMaterial({ map: texture, color, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+            this.inspector.godRayPlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+            this.inspector.backgroundScene.add(this.inspector.godRayPlane);
+        }
+        
+        renderInventory() {
+            this.elements.inventoryGrid.innerHTML = '';
+            const inventoryItems = this.manager.getInventoryItems('all');
+            inventoryItems.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-slot';
+                slot.appendChild(this.createCardElement(item));
+                this.elements.inventoryGrid.appendChild(slot);
+            });
+        }
+    
+        renderLoadout() {
+            const loadoutCards = this.manager.getActiveLoadoutCards();
+            const equippedWeapon = this.manager.getActiveWeapon();
+    
+            this.elements.equippedSlots.forEach((slot) => {
+                slot.innerHTML = '';
+                const slotType = slot.dataset.slotType;
+                if (slotType === 'ability') {
+                    const index = parseInt(slot.dataset.slotIndex, 10);
+                    const card = loadoutCards[index];
+                    if (card) slot.appendChild(this.createCardElement(card));
+                } else if (slotType === 'weapon') {
+                    if (equippedWeapon) slot.appendChild(this.createCardElement(equippedWeapon));
+                }
+            });
+            this.renderSynergy();
+        }
+    
+        renderSynergy() {
+            const { isValid, synergyName, description } = this.manager.currentSynergy;
+            this.elements.synergyName.textContent = synergyName;
+            this.elements.synergyDescription.textContent = description;
+            this.elements.synergyDisplay.className = 'synergy-display ' + (isValid ? 'synergy-valid' : 'synergy-invalid');
+            this.elements.playBtn.disabled = false;
+        }
+    
+        renderLoadoutSelector() {
+            this.elements.loadoutSelect.innerHTML = '';
+            Object.keys(this.manager.playerProfile.savedLoadouts).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                this.elements.loadoutSelect.appendChild(option);
+            });
+            this.elements.loadoutSelect.value = this.manager.activeLoadout.name;
+            this.elements.loadoutNameInput.value = this.manager.activeLoadout.name;
+        }
+    
+        createCardElement(cardData) {
+            const el = document.createElement('div');
+            el.className = `card-item tier-${cardData.tier}`;
+            el.draggable = true;
+            el.dataset.cardId = cardData.id;
+            el.dataset.cardType = cardData.type || 'Ability';
+    
+            const iconContainer = document.createElement('div');
+            iconContainer.className = 'card-item-icon';
+            el.appendChild(iconContainer);
+            
+            if (cardData.type === 'Weapon') {
+                el.classList.add('type-weapon');
+            } else {
+                el.classList.add(`element-${cardData.element.toLowerCase()}`);
+                this.abilityIconService.generate(cardData).then(iconUrl => {
+                    if (iconUrl) iconContainer.style.backgroundImage = `url(${iconUrl})`;
+                }).catch(err => console.error(`Failed to generate icon for ${cardData.name}:`, err));
+            }
+    
+            const textWrapper = document.createElement('div');
+            textWrapper.className = 'card-item-text';
+            textWrapper.innerHTML = `
+                <span class="card-item-name">${cardData.name}</span>
+                <span class="card-item-type">${cardData.type}</span>
+            `;
+            el.appendChild(textWrapper);
+            
+            el.onclick = (e) => {
+                e.stopPropagation();
+                this.selectForInspect(cardData.id);
+            };
+            return el;
+        }
+        
+        selectForInspect(cardId) {
+            document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
+            if (!cardId) {
+                this.selectedCardForInspect = null;
+                this.elements.inspectBtn.disabled = true;
+                this.renderCardDetails(null);
+                return;
+            }
+    
+            const cardData = this.manager.getCardDetails(cardId);
+            this.renderCardDetails(cardData);
+            
+            document.querySelectorAll(`.card-item[data-card-id="${cardId}"]`).forEach(el => el.classList.add('selected'));
+            
+            this.selectedCardForInspect = cardId;
+            this.elements.inspectBtn.disabled = false;
+        }
+    
+        renderCardDetails(card) {
+            if (card) {
+                this.elements.detailsName.textContent = card.name;
+                this.elements.detailsElementTier.textContent = `${card.element} - Tier ${card.tier}`;
+                this.elements.detailsCost.textContent = card.energyCost ? `Cost: ${card.energyCost}` : '';
+                this.elements.detailsCooldown.textContent = card.cooldown ? `CD: ${card.cooldown}s` : '';
+                this.elements.detailsDescription.textContent = card.description;
+                this.elements.detailsFlavor.textContent = `"${card.flavor}"`;
+            } else {
+                this.elements.detailsName.textContent = 'SELECT A CARD';
+                this.elements.detailsElementTier.textContent = 'Click a card to see its details.';
+                this.elements.detailsCost.textContent = '';
+                this.elements.detailsCooldown.textContent = '';
+                this.elements.detailsDescription.textContent = '';
+                this.elements.detailsFlavor.textContent = '';
+            }
+        }
+    
+        bindEventListeners() {
+            this.elements.inspectBtn.onclick = () => this.showInspectorView(this.selectedCardForInspect);
+            this.elements.inspectorModalCloseBtn.onclick = () => this.hideInspectorView();
+            this.elements.inspectorModal.onclick = (e) => {
+                if (e.target === this.elements.inspectorModal) this.hideInspectorView();
+            };
+    
+            let draggedElement = null;
+            document.body.addEventListener('dragstart', e => {
+                if (e.target.matches('.card-item')) {
+                    draggedElement = e.target;
+                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                    const data = { cardId: e.target.dataset.cardId, cardType: e.target.dataset.cardType };
+                    const sourceSlotEl = e.target.closest('.equipped-slot');
+                    if (sourceSlotEl) data.sourceType = sourceSlotEl.dataset.slotType;
+                    if (sourceSlotEl?.dataset.slotIndex) data.sourceIndex = sourceSlotEl.dataset.slotIndex;
+                    e.dataTransfer.setData('application/json', JSON.stringify(data));
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+            document.body.addEventListener('dragend', () => {
+                draggedElement?.classList.remove('dragging');
+                draggedElement = null;
+                this.elements.inventoryPanel.classList.remove('inventory-drag-over');
+            });
+    
+            this.elements.equippedSlots.forEach(slot => {
+                slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
+                slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+                slot.addEventListener('drop', e => {
+                    e.preventDefault();
+                    slot.classList.remove('drag-over');
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                        if (!data.cardId) return;
+    
+                        const targetSlotType = slot.dataset.slotType;
+                        if (data.cardType.toLowerCase() !== targetSlotType) return;
+    
+                        if (targetSlotType === 'weapon') {
+                            this.manager.equipWeapon(data.cardId);
+                        } else if (targetSlotType === 'ability') {
+                            const targetIndex = parseInt(slot.dataset.slotIndex, 10);
+                            if (data.sourceType === 'ability') {
+                                const sourceIndex = parseInt(data.sourceIndex, 10);
+                                this.manager.swapCards(sourceIndex, targetIndex);
+                            } else {
+                                this.manager.equipCard(data.cardId, targetIndex);
+                            }
+                        }
+                        this.renderLoadout();
+                        this.renderInventory();
+                    } catch (err) { console.warn("Drop on slot failed.", err); }
+                });
+            });
+    
+            const inventoryPanel = this.elements.inventoryPanel;
+            inventoryPanel.addEventListener('dragover', e => {
                 e.preventDefault();
-                slot.classList.remove('drag-over');
+                inventoryPanel.classList.add('inventory-drag-over');
+            });
+            inventoryPanel.addEventListener('dragleave', () => inventoryPanel.classList.remove('inventory-drag-over'));
+            inventoryPanel.addEventListener('drop', e => {
+                e.preventDefault();
+                inventoryPanel.classList.remove('inventory-drag-over');
                 try {
                     const data = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (!data.cardId) return;
-
-                    const targetSlotType = slot.dataset.slotType;
-                    if (data.cardType.toLowerCase() !== targetSlotType) return;
-
-                    if (targetSlotType === 'weapon') {
-                        this.manager.equipWeapon(data.cardId);
-                    } else if (targetSlotType === 'ability') {
-                        const targetIndex = parseInt(slot.dataset.slotIndex, 10);
-                        if (data.sourceType === 'ability') {
-                            const sourceIndex = parseInt(data.sourceIndex, 10);
-                            this.manager.swapCards(sourceIndex, targetIndex);
-                        } else {
-                            this.manager.equipCard(data.cardId, targetIndex);
-                        }
+                    if (data.sourceType === 'ability') {
+                        this.manager.unequipCard(parseInt(data.sourceIndex, 10));
+                    } else if (data.sourceType === 'weapon') {
+                        this.manager.unequipWeapon();
                     }
                     this.renderLoadout();
                     this.renderInventory();
-                } catch (err) { console.warn("Drop on slot failed.", err); }
+                } catch (err) { console.warn("Drop on inventory failed.", err); }
             });
-        });
-
-        const inventoryPanel = this.elements.inventoryPanel;
-        inventoryPanel.addEventListener('dragover', e => {
-            e.preventDefault();
-            inventoryPanel.classList.add('inventory-drag-over');
-        });
-        inventoryPanel.addEventListener('dragleave', () => inventoryPanel.classList.remove('inventory-drag-over'));
-        inventoryPanel.addEventListener('drop', e => {
-            e.preventDefault();
-            inventoryPanel.classList.remove('inventory-drag-over');
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('application/json'));
-                if (data.sourceType === 'ability') {
-                    this.manager.unequipCard(parseInt(data.sourceIndex, 10));
-                } else if (data.sourceType === 'weapon') {
-                    this.manager.unequipWeapon();
-                }
-                this.renderLoadout();
-                this.renderInventory();
-            } catch (err) { console.warn("Drop on inventory failed.", err); }
-        });
-
-        this.elements.saveBtn.onclick = () => { this.manager.saveActiveLoadout(this.elements.loadoutNameInput.value); this.renderLoadoutSelector(); };
-        this.elements.loadoutSelect.onchange = (e) => { this.manager.switchActiveLoadout(e.target.value); this.elements.loadoutNameInput.value = e.target.value; this.renderLoadout(); this.renderInventory(); };
-        this.elements.backBtn.onclick = () => window.location.href = 'index.html';
-        this.elements.playBtn.onclick = () => { this.manager.saveActiveLoadoutToLocalStorage(); window.location.href = 'index.html?showLevelSelect=true'; };
-        document.body.addEventListener('click', () => { if(!this.inspector.isActive) this.selectForInspect(null); });
+    
+            this.elements.saveBtn.onclick = () => { this.manager.saveActiveLoadout(this.elements.loadoutNameInput.value); this.renderLoadoutSelector(); };
+            this.elements.loadoutSelect.onchange = (e) => { this.manager.switchActiveLoadout(e.target.value); this.elements.loadoutNameInput.value = e.target.value; this.renderLoadout(); this.renderInventory(); };
+            this.elements.backBtn.onclick = () => window.location.href = 'index.html';
+            this.elements.playBtn.onclick = () => { this.manager.saveActiveLoadoutToLocalStorage(); window.location.href = 'index.html?showLevelSelect=true'; };
+            document.body.addEventListener('click', () => { if(!this.inspector.isActive) this.selectForInspect(null); });
+        }
     }
-}
 --------------------------------------------------
 === END OF FILE: src/client/ui/LoadoutUI.js ===
 
@@ -5879,6 +5924,7 @@ export class UIManager {
             resumeBtn: document.getElementById('resume-btn'),
             pauseQuitBtn: document.getElementById('pause-quit-btn'),
             deathQuitBtn: document.getElementById('death-quit-btn'),
+            energyBarContainer: document.getElementById('energy-bar-container'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -5932,6 +5978,7 @@ export class UIManager {
         
         setupMainMenuListeners();
         game.on('mainMenuRendered', setupMainMenuListeners);
+        game.on('abilityCastFailed', (data) => this.onAbilityCastFailed(data));
 
         this.elements.loadCustomLevelBtn.onclick = () => this.elements.customLevelInput.click();
         this.elements.customLevelInput.onchange = (e) => this.handleCustomLevelSelect(e, game);
@@ -5993,7 +6040,37 @@ export class UIManager {
         this.customLevelPlayBtn.onclick = () => game.startLevel({ data, loadout: this._getLoadout() });
         this.screens.levelSelect.appendChild(this.customLevelPlayBtn);
     }
-    
+
+    onAbilityCastFailed(data) {
+        if (data.reason === 'insufficient_energy') {
+            this.flashEnergyBar();
+        } else if (data.reason === 'on_cooldown' && data.ability) {
+            const player = data.entity;
+            const abilityIndex = player.abilities.abilities.indexOf(data.ability);
+            if (abilityIndex !== -1) {
+                this.flashAbilitySlotError(abilityIndex);
+            }
+        }
+    }
+
+    flashEnergyBar() {
+        const container = this.elements.energyBarContainer;
+        if (!container || container.classList.contains('flash-error')) return;
+        container.classList.add('flash-error');
+        container.addEventListener('animationend', () => {
+            container.classList.remove('flash-error');
+        }, { once: true });
+    }
+
+    flashAbilitySlotError(index) {
+        const slot = this.hud.elements.abilitySlots[index]?.element;
+        if (!slot || slot.classList.contains('flash-cooldown-error')) return;
+        slot.classList.add('flash-cooldown-error');
+        slot.addEventListener('animationend', () => {
+            slot.classList.remove('flash-cooldown-error');
+        }, { once: true });
+    }
+
     update(game) {
         if (!game || !game.world) return;
         
@@ -8009,6 +8086,9 @@ export class Game {
         this.world.on('playerDied', () => this.handlePlayerDeath());
         this.world.on('levelCompleted', () => this.ui.tutorialManager.showLevelCompleted());
         this.world.on('tutorialTriggerActivated', (data) => this.ui.tutorialManager.onTriggerActivated(data));
+        this.world.on('abilityCastFailed', (data) => {
+            this.emit('abilityCastFailed', data);
+        });
 
         try {
             await this.world.loadLevel(config);
@@ -8151,14 +8231,14 @@ export class Ability {
 
     /**
      * Checks if the ability can be cast based on cooldown and caster's energy.
-     * @returns {boolean}
+     * @returns {{canCast: boolean, reason: string|null}}
      */
-    canCast() {
-        if (this.caster.world.game && this.caster.world.game.debugModeActive) return true;
-
-        const isReady = this.cooldownTimer >= this.cooldown;
-        const hasEnergy = this.caster.abilities.currentEnergy >= this.energyCost;
-        return isReady && hasEnergy && !this.isCasting;
+    _getCastability() {
+        if (this.caster.world.game?.debugModeActive) return { canCast: true, reason: null };
+        if (this.isCasting) return { canCast: false, reason: 'is_casting' };
+        if (this.cooldownTimer < this.cooldown) return { canCast: false, reason: 'on_cooldown' };
+        if (this.caster.abilities.currentEnergy < this.energyCost) return { canCast: false, reason: 'insufficient_energy' };
+        return { canCast: true, reason: null };
     }
 
     /**
@@ -8175,7 +8255,18 @@ export class Ability {
      * @returns {boolean} True if the cast was successful, false otherwise.
      */
     cast() {
-        if (!this.canCast()) return false;
+        const { canCast, reason } = this._getCastability();
+
+        if (!canCast) {
+            if (reason === 'on_cooldown' || reason === 'insufficient_energy') {
+                this.caster.world.emit('abilityCastFailed', { 
+                    reason: reason, 
+                    entity: this.caster, 
+                    ability: this 
+                });
+            }
+            return false;
+        }
 
         const castSuccessful = this._executeCast();
 
@@ -8754,56 +8845,44 @@ export class FireflyProjectile {
 
 === FILE: src/game/abilities/StonePlatingAbility.js ===
 --------------------------------------------------
-import { Ability } from './Ability.js';
-
-export class StonePlatingAbility extends Ability {
-    constructor(caster, abilityData) {
-        super(caster, abilityData);
-        this.duration = 15.0;
-        this.buffIsActive = false;
-        this.buffTimer = 0;
-    }
-
-    _executeCast() {
-        if (this.buffIsActive) return false;
-
-        this.buffIsActive = true;
-        this.buffTimer = 0;
-
-        // Apply the buff
-        this.caster.activeBuffs.set('stonePlating', {
-            duration: this.duration,
-            damageReduction: 0.80,
-            meleeDamageBoost: 0.30
-        });
-        
-        // Notify systems that the buff is active
-        this.caster.world.emit('playerBuffActivated', { buffName: 'stonePlating' });
-
-        return true;
-    }
-
-    update(deltaTime) {
-        // This is called for all abilities, even inactive ones, to handle their main cooldown
-        super.update(deltaTime);
-
-        // Only process buff logic if it's currently active on this instance
-        if (this.buffIsActive) {
-            this.buffTimer += deltaTime;
-            if (this.buffTimer >= this.duration) {
-                this.removeBuff();
-            }
+ import { Ability } from './Ability.js';
+    import { StatusEffect } from '../effects/StatusEffect.js';
+    
+    export class StonePlatingAbility extends Ability {
+        constructor(caster, abilityData) {
+            super(caster, abilityData);
+            this.duration = 15.0;
+        }
+    
+        _executeCast() {
+            if (this.caster.statusEffects.has('stonePlating')) return false;
+    
+            const effect = new StatusEffect(this.caster, {
+                name: 'stonePlating',
+                duration: this.duration,
+                properties: {
+                    damageReduction: 0.80,
+                    meleeDamageBoost: 0.30
+                },
+                onApply: (target) => {
+                    target.world.emit('playerBuffActivated', { buffName: 'stonePlating' });
+                },
+                onRemove: (target) => {
+                    target.world.emit('playerBuffDeactivated', { buffName: 'stonePlating' });
+                }
+            });
+    
+            this.caster.statusEffects.addEffect(effect);
+            
+            return true;
+        }
+    
+        update(deltaTime) {
+            // This is called for all abilities, even inactive ones, to handle their main cooldown
+            super.update(deltaTime);
+            // The active buff logic is now handled by the StatusEffectSystem
         }
     }
-
-    removeBuff() {
-        this.buffIsActive = false;
-        this.caster.activeBuffs.delete('stonePlating');
-        
-        // Notify systems that the buff has ended
-        this.caster.world.emit('playerBuffDeactivated', { buffName: 'stonePlating' });
-    }
-}
 --------------------------------------------------
 === END OF FILE: src/game/abilities/StonePlatingAbility.js ===
 
@@ -9033,6 +9112,57 @@ export class PlayerInputComponent {
 === END OF FILE: src/game/components/PlayerInputComponent.js ===
 
 
+=== FILE: src/game/components/StatusEffectComponent.js ===
+--------------------------------------------------
+// src/game/components/StatusEffectComponent.js
+
+/**
+ * A data component that holds and manages status effects for an entity.
+ */
+export class StatusEffectComponent {
+    constructor() {
+        /** @type {Map<string, import('../effects/StatusEffect.js').StatusEffect>} */
+        this.activeEffects = new Map();
+    }
+
+    /**
+     * Adds a new effect to the entity or refreshes the duration of an existing one.
+     * @param {import('../effects/StatusEffect.js').StatusEffect} effect - The effect instance to add.
+     */
+    addEffect(effect) {
+        const existing = this.activeEffects.get(effect.name);
+        if (existing) {
+            // Refresh duration of existing effect
+            existing.timer = 0;
+            return;
+        }
+
+        this.activeEffects.set(effect.name, effect);
+        effect.apply();
+    }
+
+    /**
+     * Checks if an effect is currently active.
+     * @param {string} effectName - The name of the effect.
+     * @returns {boolean}
+     */
+    has(effectName) {
+        return this.activeEffects.has(effectName);
+    }
+
+    /**
+     * Gets an active effect instance by name.
+     * @param {string} effectName - The name of the effect.
+     * @returns {import('../effects/StatusEffect.js').StatusEffect | undefined}
+     */
+    get(effectName) {
+        return this.activeEffects.get(effectName);
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/components/StatusEffectComponent.js ===
+
+
 === FILE: src/game/components/TransformComponent.js ===
 --------------------------------------------------
 import * as THREE from 'three';
@@ -9052,239 +9182,307 @@ export class TransformComponent {
 === END OF FILE: src/game/components/TransformComponent.js ===
 
 
-=== FILE: src/game/entities/Enemy.js ===
+=== FILE: src/game/effects/StatusEffect.js ===
 --------------------------------------------------
-// src/game/entities/Enemy.js
-
-import * as THREE from 'three';
-import { HealthComponent } from '../components/HealthComponent.js';
-import { AIComponent } from '../components/AIComponent.js';
-import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
-import { GAME_CONFIG } from '../../shared/config.js';
+// src/game/effects/StatusEffect.js
 
 /**
- * Encapsulates the enemy entity's state and components.
+ * Represents a single buff, debuff, or state applied to an entity.
+ * Encapsulates duration, properties, and lifecycle callbacks.
  */
-export class Enemy {
-    constructor(world, body, mesh, definition) {
-        this.id = THREE.MathUtils.generateUUID();
-        this.type = 'enemy';
-        this.world = world;
-        this.name = definition.name || 'Dummy';
-        this.mesh = mesh;
-        this.definition = definition;
-        
-        // Components
-        this.health = new HealthComponent(GAME_CONFIG.ENEMY.DUMMY.MAX_HEALTH);
-        this.ai = new AIComponent();
-        this.physics = new PhysicsBodyComponent(body);
+export class StatusEffect {
+    /**
+     * @param {object} target - The entity the effect is applied to.
+     * @param {object} options - Configuration for the effect.
+     * @param {string} options.name - The unique name of the effect.
+     * @param {number} [options.duration=Infinity] - The duration of the effect in seconds.
+     * @param {object} [options.properties={}] - A key-value store for static data like damage multipliers.
+     * @param {Function} [options.onApply] - Callback executed when the effect is first applied.
+     * @param {Function} [options.onTick] - Callback executed on every game update.
+     * @param {Function} [options.onRemove] - Callback executed when the effect expires or is removed.
+     */
+    constructor(target, { name, duration = Infinity, properties = {}, onApply, onTick, onRemove }) {
+        this.target = target;
+        this.name = name;
+        this.duration = duration;
+        this.properties = properties;
+        this.timer = 0;
+        this.isFinished = false;
 
-        // Client-side visual state
-        this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
-        this.isDead = false;
-
-        // Link back to entity for easy access from physics/rendering
-        const gameEntityLink = { type: 'Enemy', entity: this };
-        this.userData = { gameEntity: gameEntityLink };
-        mesh.userData.gameEntity = gameEntityLink;
-        if (!body.userData) body.userData = {};
-        body.userData.entity = this; // Use consistent .entity property for collisions
+        this._onApply = onApply;
+        this._onTick = onTick;
+        this._onRemove = onRemove;
     }
-    
-    takeDamage(amount) {
-        if (this.isDead) return;
 
-        this.health.currentHealth -= amount;
-        this.world.emit('entityTookDamage', { entity: this, amount });
-
-        if (this.health.currentHealth <= 0) {
-            this.health.currentHealth = 0;
-            this.die();
+    /**
+     * Called when the effect is first added to a target.
+     */
+    apply() {
+        if (this._onApply) {
+            this._onApply(this.target);
         }
     }
 
-    die() {
-        if (this.isDead) return;
-        this.isDead = true;
-        this.world.emit('enemyDied', { entity: this });
+    /**
+     * Called every frame the effect is active.
+     * @param {number} deltaTime - The time since the last frame.
+     */
+    tick(deltaTime) {
+        this.timer += deltaTime;
+        if (this.duration !== Infinity && this.timer >= this.duration) {
+            this.isFinished = true;
+        }
+        if (this._onTick) {
+            this._onTick(this.target, deltaTime);
+        }
     }
 
-    dispose() {
-        if (this.physics.body) {
-            this.physics.body.userData.entity = null;
-            this.world.physics.queueForRemoval(this.physics.body);
-            this.physics.body = null;
-        }
-        if (this.mesh) {
-            this.mesh.userData.entity = null;
-            this.mesh.geometry?.dispose();
-            if (this.mesh.material.dispose) {
-                this.mesh.material.dispose();
-            }
-            this.world.scene.remove(this.mesh);
-            this.mesh = null;
+    /**
+     * Called when the effect is removed from a target.
+     */
+    remove() {
+        if (this._onRemove) {
+            this._onRemove(this.target);
         }
     }
 }
+--------------------------------------------------
+=== END OF FILE: src/game/effects/StatusEffect.js ===
+
+
+=== FILE: src/game/entities/Enemy.js ===
+--------------------------------------------------
+  import * as THREE from 'three';
+    import { HealthComponent } from '../components/HealthComponent.js';
+    import { AIComponent } from '../components/AIComponent.js';
+    import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
+    import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
+    import { GAME_CONFIG } from '../../shared/config.js';
+    
+    /**
+     * Encapsulates the enemy entity's state and components.
+     */
+    export class Enemy {
+        constructor(world, body, mesh, definition) {
+            this.id = THREE.MathUtils.generateUUID();
+            this.type = 'enemy';
+            this.world = world;
+            this.name = definition.name || 'Dummy';
+            this.mesh = mesh;
+            this.definition = definition;
+            
+            // Components
+            this.health = new HealthComponent(GAME_CONFIG.ENEMY.DUMMY.MAX_HEALTH);
+            this.ai = new AIComponent();
+            this.physics = new PhysicsBodyComponent(body);
+            this.statusEffects = new StatusEffectComponent();
+    
+            // Client-side visual state
+            this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
+            this.isDead = false;
+    
+            // Link back to entity for easy access from physics/rendering
+            const gameEntityLink = { type: 'Enemy', entity: this };
+            this.userData = { gameEntity: gameEntityLink };
+            mesh.userData.gameEntity = gameEntityLink;
+            if (!body.userData) body.userData = {};
+            body.userData.entity = this; // Use consistent .entity property for collisions
+        }
+        
+        takeDamage(amount) {
+            if (this.isDead) return;
+    
+            this.health.currentHealth -= amount;
+            this.world.emit('entityTookDamage', { entity: this, amount });
+    
+            if (this.health.currentHealth <= 0) {
+                this.health.currentHealth = 0;
+                this.die();
+            }
+        }
+    
+        die() {
+            if (this.isDead) return;
+            this.isDead = true;
+            this.world.emit('enemyDied', { entity: this });
+        }
+    
+        dispose() {
+            if (this.physics.body) {
+                this.physics.body.userData.entity = null;
+                this.world.physics.queueForRemoval(this.physics.body);
+                this.physics.body = null;
+            }
+            if (this.mesh) {
+                this.mesh.userData.entity = null;
+                this.mesh.geometry?.dispose();
+                if (this.mesh.material.dispose) {
+                    this.mesh.material.dispose();
+                }
+                this.world.scene.remove(this.mesh);
+                this.mesh = null;
+            }
+        }
+    }
 --------------------------------------------------
 === END OF FILE: src/game/entities/Enemy.js ===
 
 
 === FILE: src/game/entities/Player.js ===
 --------------------------------------------------
-// src/game/entities/Player.js
-import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
-import { HealthComponent } from '../components/HealthComponent.js';
-import { PlayerInputComponent } from '../components/PlayerInputComponent.js';
-import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
-import { AbilityLoadoutComponent } from '../components/AbilityLoadoutComponent.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-import { AbilityFactory } from '../abilities/AbilityFactory.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-
-/**
- * Encapsulates the player entity's state, components, and core logic.
- */
-export class Player {
-    constructor(world, camera, weapon, body) {
-        this.id = THREE.MathUtils.generateUUID();
-        this.type = 'player';
-        this.world = world;
-        this.camera = camera;
-        this.weapon = weapon;
-        if (this.weapon) this.weapon.wielder = this;
-        
-        this.health = new HealthComponent(GAME_CONFIG.PLAYER.MAX_HEALTH);
-        this.input = new PlayerInputComponent();
-        this.physics = new PhysicsBodyComponent(body);
-        this.abilities = new AbilityLoadoutComponent();
-        
-        this.jumpsRemaining = 0;
-        this.isSlamming = false;
-        this.isDead = true;
-        this.lockedTarget = null;
-        this.doubleJumpOnCooldown = false;
-        this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
-        this.isDashing = false;
-        this.dashOnCooldown = false;
-        this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
-        this.dashStateTimer = 0;
-        this.dashDirection = new THREE.Vector3();
-        this.targetFov = GAME_CONFIG.PLAYER.FOV;
-        this.activeBuffs = new Map();
-
-        if (!body.userData) body.userData = {};
-        body.userData.entity = this;
-        
-        this.physics.body.addEventListener('collide', (e) => this.onCollide(e));
-    }
-
-    onCollide(event) {
-        const otherBody = event.body;
-        if (otherBody.collisionFilterGroup & COLLISION_GROUPS.WORLD) {
-            const contactNormal = new CANNON.Vec3();
-            if (event.contact.bi.id === this.physics.body.id) event.contact.ni.negate(contactNormal);
-            else contactNormal.copy(event.contact.ni);
-
-            if (contactNormal.dot(CANNON.Vec3.UNIT_Y) > 0.5) {
-                if (this.isSlamming) {
-                    this.isSlamming = false;
-                    this.world.emit('playerGroundSlammed');
-                }
-                this.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
-                if (!this.doubleJumpOnCooldown) {
-                    this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
+ import * as THREE from 'three';
+    import * as CANNON from 'cannon-es';
+    import { HealthComponent } from '../components/HealthComponent.js';
+    import { PlayerInputComponent } from '../components/PlayerInputComponent.js';
+    import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
+    import { AbilityLoadoutComponent } from '../components/AbilityLoadoutComponent.js';
+    import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
+    import { GAME_CONFIG } from '../../shared/config.js';
+    import { AbilityFactory } from '../abilities/AbilityFactory.js';
+    import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+    
+    /**
+     * Encapsulates the player entity's state, components, and core logic.
+     */
+    export class Player {
+        constructor(world, camera, weapon, body) {
+            this.id = THREE.MathUtils.generateUUID();
+            this.type = 'player';
+            this.world = world;
+            this.camera = camera;
+            this.weapon = weapon;
+            if (this.weapon) this.weapon.wielder = this;
+            
+            this.health = new HealthComponent(GAME_CONFIG.PLAYER.MAX_HEALTH);
+            this.input = new PlayerInputComponent();
+            this.physics = new PhysicsBodyComponent(body);
+            this.abilities = new AbilityLoadoutComponent();
+            this.statusEffects = new StatusEffectComponent();
+            
+            this.jumpsRemaining = 0;
+            this.isSlamming = false;
+            this.isDead = true;
+            this.lockedTarget = null;
+            this.doubleJumpOnCooldown = false;
+            this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
+            this.isDashing = false;
+            this.dashOnCooldown = false;
+            this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
+            this.dashStateTimer = 0;
+            this.dashDirection = new THREE.Vector3();
+            this.targetFov = GAME_CONFIG.PLAYER.FOV;
+    
+            if (!body.userData) body.userData = {};
+            body.userData.entity = this;
+            
+            this.physics.body.addEventListener('collide', (e) => this.onCollide(e));
+        }
+    
+        onCollide(event) {
+            const otherBody = event.body;
+            if (otherBody.collisionFilterGroup & COLLISION_GROUPS.WORLD) {
+                const contactNormal = new CANNON.Vec3();
+                if (event.contact.bi.id === this.physics.body.id) event.contact.ni.negate(contactNormal);
+                else contactNormal.copy(event.contact.ni);
+    
+                if (contactNormal.dot(CANNON.Vec3.UNIT_Y) > 0.5) {
+                    if (this.isSlamming) {
+                        this.isSlamming = false;
+                        this.world.emit('playerGroundSlammed');
+                    }
+                    this.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+                    if (!this.doubleJumpOnCooldown) {
+                        this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
+                    }
                 }
             }
         }
-    }
-
-    setMoveDirection(direction) { this.input.moveDirection.copy(direction); }
-    setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
-    jump() {
-        if (this.activeBuffs.has('stonePlating')) {
-            // Allow first jump from the ground, but not subsequent (double) jumps.
-            if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
-                return; // Block double jump
+        setMoveDirection(direction) { this.input.moveDirection.copy(direction); }
+        setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
+        
+        jump() {
+            if (this.statusEffects.has('stonePlating')) {
+                // Allow first jump from the ground, but not subsequent (double) jumps.
+                if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
+                    return; // Block double jump
+                }
+            }
+            this.input.jumpRequested = true;
+        }
+        
+        dash(direction) {
+            if (this.statusEffects.has('stonePlating') || this.dashOnCooldown) return;
+            this.input.dashRequested = true;
+            this.dashDirection.copy(direction);
+        }
+        
+        reloadWeapon() {
+            if (this.weapon && typeof this.weapon.reload === 'function') {
+                this.weapon.reload();
             }
         }
-        this.input.jumpRequested = true;
-    }
     
-    dash(direction) {
-        if (this.activeBuffs.has('stonePlating') || this.dashOnCooldown) return;
-        this.input.dashRequested = true;
-        this.dashDirection.copy(direction);
-    }
+        inspectWeapon() {
+            if (this.weapon && typeof this.weapon.inspect === 'function') {
+                this.weapon.inspect();
+            }
+        }
     
-    reloadWeapon() {
-        if (this.weapon && typeof this.weapon.reload === 'function') {
-            this.weapon.reload();
-        }
-    }
-
-    inspectWeapon() {
-        if (this.weapon && typeof this.weapon.inspect === 'function') {
-            this.weapon.inspect();
-        }
-    }
-
-    requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
-    selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
-    useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
-
-    applyLoadout(loadoutData) {
-        // Ensure loadoutData is an object and has a 'cards' array property.
-        const cardIds = (loadoutData && Array.isArray(loadoutData.cards)) 
-            ? loadoutData.cards 
-            : [null, null, null, null]; // Default to empty slots if data is malformed.
-        
-        this.abilities.abilities = cardIds.map(cardId => 
-            cardId ? AbilityFactory.create(cardId, this) : null
-        );
-    }
-
-    takeDamage(amount) {
-        if (this.isDead || (this.world.game && this.world.game.debugModeActive)) return;
-        
-        let finalAmount = amount;
-        if (this.activeBuffs.has('stonePlating')) {
-            const buff = this.activeBuffs.get('stonePlating');
-            finalAmount *= (1 - buff.damageReduction);
-        }
-
-        this.health.currentHealth -= finalAmount;
-        this.world.emit('entityTookDamage', { entity: this, amount: finalAmount });
-        if (this.health.currentHealth <= 0) {
-            this.health.currentHealth = 0;
-            this.die();
-        }
-    }
-
-    die() { if (!this.isDead) { this.isDead = true; this.world.emit('playerDied'); } }
-
-    reset(spawnPosition) {
-        this.health.currentHealth = this.health.maxHealth;
-        this.abilities.currentEnergy = this.abilities.maxEnergy;
-        this.isDead = false; this.isSlamming = false; this.isDashing = false; this.lockedTarget = null;
-        this.jumpsRemaining = 0;
-        this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
-        this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
-        this.dashStateTimer = 0;
-        this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
-        this.abilities.lastAbilityTime = -Infinity;
-        this.activeBuffs.clear();
-        
-        this.physics.body.position.copy(spawnPosition);
-        this.physics.body.velocity.set(0, 0, 0);
-        this.physics.body.angularVelocity.set(0, 0, 0);
-        this.physics.body.wakeUp();
-    }
+        requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
+        selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
+        useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
     
-    spawn(spawnPosition) { this.reset(spawnPosition); }
-}
+        applyLoadout(loadoutData) {
+            // Ensure loadoutData is an object and has a 'cards' array property.
+            const cardIds = (loadoutData && Array.isArray(loadoutData.cards)) 
+                ? loadoutData.cards 
+                : [null, null, null, null]; // Default to empty slots if data is malformed.
+            
+            this.abilities.abilities = cardIds.map(cardId => 
+                cardId ? AbilityFactory.create(cardId, this) : null
+            );
+        }
+    
+        takeDamage(amount) {
+            if (this.isDead || (this.world.game && this.world.game.debugModeActive)) return;
+            
+            let finalAmount = amount;
+            if (this.statusEffects.has('stonePlating')) {
+                const buff = this.statusEffects.get('stonePlating');
+                finalAmount *= (1 - buff.properties.damageReduction);
+            }
+    
+            this.health.currentHealth -= finalAmount;
+            this.world.emit('entityTookDamage', { entity: this, amount: finalAmount });
+            if (this.health.currentHealth <= 0) {
+                this.health.currentHealth = 0;
+                this.die();
+            }
+        }
+    
+        die() { if (!this.isDead) { this.isDead = true; this.world.emit('playerDied'); } }
+    
+        reset(spawnPosition) {
+            this.health.currentHealth = this.health.maxHealth;
+            this.abilities.currentEnergy = this.abilities.maxEnergy;
+            this.isDead = false; this.isSlamming = false; this.isDashing = false; this.lockedTarget = null;
+            this.jumpsRemaining = 0;
+            this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
+            this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
+            this.dashStateTimer = 0;
+            this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
+            this.abilities.lastAbilityTime = -Infinity;
+            this.statusEffects.activeEffects.clear();
+            
+            this.physics.body.position.copy(spawnPosition);
+            this.physics.body.velocity.set(0, 0, 0);
+            this.physics.body.angularVelocity.set(0, 0, 0);
+            this.physics.body.wakeUp();
+        }
+        
+        spawn(spawnPosition) { this.reset(spawnPosition); }
+    }
 --------------------------------------------------
 === END OF FILE: src/game/entities/Player.js ===
 
@@ -9780,173 +9978,173 @@ export class DeathSystem {
 
 === FILE: src/game/systems/MovementSystem.js ===
 --------------------------------------------------
-// src/game/systems/MovementSystem.js
-
-import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
-import { GAME_CONFIG } from '../../shared/config.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-
-/**
- * Handles player movement based on input, including jumping, dashing, and ground slams.
- */
-export class MovementSystem {
-    constructor() {
-        // No properties needed for ground check
-    }
+ // src/game/systems/MovementSystem.js
+    
+    import * as THREE from 'three';
+    import * as CANNON from 'cannon-es';
+    import { GAME_CONFIG } from '../../shared/config.js';
+    import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
     
     /**
-     * @param {import('../world/World.js').World} world
-     * @param {number} deltaTime
+     * Handles player movement based on input, including jumping, dashing, and ground slams.
      */
-    update(world, deltaTime) {
-        const player = world.player;
-        if (!player || player.isDead) return;
-
-        player.physics.body.wakeUp();
-
-        const { input, physics } = player;
-
-        // Ground checking and jump reset is now handled in Player.js via onCollide
-        this._handleCooldowns(player, deltaTime);
-        this._handleLook(player);
-        this._handleFOV(player, deltaTime);
-        
-        this._initiateDash(player);
-
-        if (player.isSlamming) {
-            physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
-        } else if (player.isDashing) {
-            this._applyDashMovement(player);
-        } else {
-            this._applyStandardMovement(player, input.moveDirection);
+    export class MovementSystem {
+        constructor() {
+            // No properties needed for ground check
         }
         
-        this._handleJump(player);
-        this._handleSlam(player);
-
-        input.jumpRequested = false;
-    }
-
-    _initiateDash(player) {
-        if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
-            player.isDashing = true;
-            player.dashOnCooldown = true;
-            player.dashStateTimer = 0;
-            player.dashCooldownTimer = 0;
-            
-            const cameraDir = new THREE.Vector3();
-            player.camera.getWorldDirection(cameraDir);
-            cameraDir.y = 0;
-            cameraDir.normalize();
-
-            const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
-            
-            const forwardDot = player.dashDirection.dot(cameraDir);
-            const rightDot = player.dashDirection.dot(rightDir);
+        /**
+         * @param {import('../world/World.js').World} world
+         * @param {number} deltaTime
+         */
+        update(world, deltaTime) {
+            const player = world.player;
+            if (!player || player.isDead) return;
     
-            player.world.emit('playerDashed', { forwardDot, rightDot });
+            player.physics.body.wakeUp();
     
-            if (Math.abs(forwardDot) > Math.abs(rightDot)) {
-                player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
+            const { input, physics } = player;
+    
+            // Ground checking and jump reset is now handled in Player.js via onCollide
+            this._handleCooldowns(player, deltaTime);
+            this._handleLook(player);
+            this._handleFOV(player, deltaTime);
+            
+            this._initiateDash(player);
+    
+            if (player.isSlamming) {
+                physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
+            } else if (player.isDashing) {
+                this._applyDashMovement(player);
+            } else {
+                this._applyStandardMovement(player, input.moveDirection);
             }
             
-            player.input.dashRequested = false;
-        }
-    }
-
-    _handleFOV(player, deltaTime) {
-        if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
-            player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
-            player.camera.updateProjectionMatrix();
-        }
-        
-        if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
-            player.targetFov = GAME_CONFIG.PLAYER.FOV;
-        }
-    }
-
-    _handleCooldowns(player, deltaTime) {
-        const config = GAME_CONFIG.PLAYER;
-        
-        if (player.doubleJumpOnCooldown) {
-            player.doubleJumpCooldownTimer += deltaTime;
-            if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
-                player.doubleJumpOnCooldown = false;
-                player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
-            }
-        }
-        
-        if (player.dashOnCooldown) {
-            player.dashCooldownTimer += deltaTime;
-            if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
-                player.dashOnCooldown = false;
-            }
-        }
-
-        if (player.isDashing) {
-            player.dashStateTimer += deltaTime;
-            if (player.dashStateTimer >= config.DASH_DURATION) {
-                player.isDashing = false;
-            }
-        }
-    }
-
-    _handleLook(player) {
-        player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
-    }
-
-    _applyStandardMovement(player, moveDirection) {
-        let speed = GAME_CONFIG.PLAYER.SPEED;
-        if (player.activeBuffs.has('stonePlating')) {
-            speed *= 0.8; // Reduce speed by 30%
-        }
-        
-        const velocity = player.physics.body.velocity;
-        velocity.x = moveDirection.x * speed;
-        velocity.z = moveDirection.z * speed;
-    }
-
-    _applyDashMovement(player) {
-        const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
-        const velocity = player.physics.body.velocity;
-        velocity.x = player.dashDirection.x * dashSpeed;
-        velocity.z = player.dashDirection.z * dashSpeed;
-    }
+            this._handleJump(player);
+            this._handleSlam(player);
     
-    _handleJump(player) {
-        if (!player.input.jumpRequested || player.jumpsRemaining <= 0) return;
-
-        const performJump = () => {
-            player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
-            player.world.emit('playerJumped');
-            player.jumpsRemaining--;
-        };
+            input.jumpRequested = false;
+        }
+    
+        _initiateDash(player) {
+            if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
+                player.isDashing = true;
+                player.dashOnCooldown = true;
+                player.dashStateTimer = 0;
+                player.dashCooldownTimer = 0;
+                
+                const cameraDir = new THREE.Vector3();
+                player.camera.getWorldDirection(cameraDir);
+                cameraDir.y = 0;
+                cameraDir.normalize();
+    
+                const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
+                
+                const forwardDot = player.dashDirection.dot(cameraDir);
+                const rightDot = player.dashDirection.dot(rightDir);
         
-        // This logic mirrors the old implementation correctly now.
-        if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
-            if (!player.doubleJumpOnCooldown) {
-                player.doubleJumpOnCooldown = true;
-                player.doubleJumpCooldownTimer = 0;
+                player.world.emit('playerDashed', { forwardDot, rightDot });
+        
+                if (Math.abs(forwardDot) > Math.abs(rightDot)) {
+                    player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
+                }
+                
+                player.input.dashRequested = false;
+            }
+        }
+    
+        _handleFOV(player, deltaTime) {
+            if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
+                player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
+                player.camera.updateProjectionMatrix();
+            }
+            
+            if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
+                player.targetFov = GAME_CONFIG.PLAYER.FOV;
+            }
+        }
+    
+        _handleCooldowns(player, deltaTime) {
+            const config = GAME_CONFIG.PLAYER;
+            
+            if (player.doubleJumpOnCooldown) {
+                player.doubleJumpCooldownTimer += deltaTime;
+                if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
+                    player.doubleJumpOnCooldown = false;
+                    player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
+                }
+            }
+            
+            if (player.dashOnCooldown) {
+                player.dashCooldownTimer += deltaTime;
+                if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
+                    player.dashOnCooldown = false;
+                }
+            }
+    
+            if (player.isDashing) {
+                player.dashStateTimer += deltaTime;
+                if (player.dashStateTimer >= config.DASH_DURATION) {
+                    player.isDashing = false;
+                }
+            }
+        }
+    
+        _handleLook(player) {
+            player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
+        }
+    
+        _applyStandardMovement(player, moveDirection) {
+            let speed = GAME_CONFIG.PLAYER.SPEED;
+            if (player.statusEffects.has('stonePlating')) {
+                speed *= 0.8; // Reduce speed by 20%
+            }
+            
+            const velocity = player.physics.body.velocity;
+            velocity.x = moveDirection.x * speed;
+            velocity.z = moveDirection.z * speed;
+        }
+    
+        _applyDashMovement(player) {
+            const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
+            const velocity = player.physics.body.velocity;
+            velocity.x = player.dashDirection.x * dashSpeed;
+            velocity.z = player.dashDirection.z * dashSpeed;
+        }
+        
+        _handleJump(player) {
+            if (!player.input.jumpRequested || player.jumpsRemaining <= 0) return;
+    
+            const performJump = () => {
+                player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
+                player.world.emit('playerJumped');
+                player.jumpsRemaining--;
+            };
+            
+            // This logic mirrors the old implementation correctly now.
+            if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
+                if (!player.doubleJumpOnCooldown) {
+                    player.doubleJumpOnCooldown = true;
+                    player.doubleJumpCooldownTimer = 0;
+                    performJump();
+                }
+            } else {
                 performJump();
             }
-        } else {
-            performJump();
         }
-    }
-    
-    _handleSlam(player) {
-        const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
         
-        if (player.input.slamRequested && !player.isSlamming) {
-            if (isAirborne && player.physics.body.velocity.y < 0) {
-                player.isSlamming = true;
+        _handleSlam(player) {
+            const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
+            
+            if (player.input.slamRequested && !player.isSlamming) {
+                if (isAirborne && player.physics.body.velocity.y < 0) {
+                    player.isSlamming = true;
+                }
+            } else if (player.isSlamming && !player.input.slamHeld) {
+                player.isSlamming = false;
             }
-        } else if (player.isSlamming && !player.input.slamHeld) {
-            player.isSlamming = false;
         }
     }
-}
 --------------------------------------------------
 === END OF FILE: src/game/systems/MovementSystem.js ===
 
@@ -10015,6 +10213,42 @@ export class PhysicsSyncSystem {
 }
 --------------------------------------------------
 === END OF FILE: src/game/systems/PhysicsSyncSystem.js ===
+
+
+=== FILE: src/game/systems/StatusEffectSystem.js ===
+--------------------------------------------------
+// src/game/systems/StatusEffectSystem.js
+
+/**
+ * Manages the lifecycle of all active status effects in the world.
+ * It ticks effects, checks for expiration, and handles their removal.
+ */
+export class StatusEffectSystem {
+    /**
+     * @param {import('../world/World.js').World} world
+     * @param {number} deltaTime
+     */
+    update(world, deltaTime) {
+        for (const entity of world.getEntities()) {
+            if (!entity.statusEffects) continue;
+
+            const effectsToDelete = [];
+            for (const effect of entity.statusEffects.activeEffects.values()) {
+                effect.tick(deltaTime);
+                if (effect.isFinished) {
+                    effectsToDelete.push(effect);
+                }
+            }
+
+            for (const effect of effectsToDelete) {
+                effect.remove();
+                entity.statusEffects.activeEffects.delete(effect.name);
+            }
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/systems/StatusEffectSystem.js ===
 
 
 === FILE: src/game/systems/TargetingSystem.js ===
@@ -10225,399 +10459,464 @@ export class WeaponSystem {
 
 === FILE: src/game/weapons/Katana.js ===
 --------------------------------------------------
-import * as THREE from 'three';
-import { Weapon } from './Weapon.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-
-export class Katana extends Weapon {
-    constructor() {
-        super(null, {
-            name: 'Katana',
-            damage: GAME_CONFIG.KATANA.DAMAGE,
-            cooldown: GAME_CONFIG.KATANA.COOLDOWN,
-        });
-
-        this.swingRange = GAME_CONFIG.KATANA.RANGE;
-        this.isSwinging = false;
-        this.swingProgress = 0;
-        this.swingDuration = 0.45;
-        this.hitTiming = 120; // ms
-
-        this._forward = new THREE.Vector3();
-        this._enemyPos = new THREE.Vector3();
-
-        this.idlePosition = new THREE.Vector3(0.4, -0.4, -0.8);
-        this.windUpPosition = new THREE.Vector3(0.5, 0.4, -0.6);
-        this.followThroughPosition = new THREE.Vector3(-0.4, -0.5, -0.7);
-
-        const idleRotation = new THREE.Euler(THREE.MathUtils.degToRad(25), THREE.MathUtils.degToRad(-20), THREE.MathUtils.degToRad(15), 'YXZ');
-        const windUpRotation = new THREE.Euler(THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(30), THREE.MathUtils.degToRad(-20), 'YXZ');
-        const followThroughRotation = new THREE.Euler(THREE.MathUtils.degToRad(-45), THREE.MathUtils.degToRad(-40), THREE.MathUtils.degToRad(45), 'YXZ');
-
-        this.qIdle = new THREE.Quaternion().setFromEuler(idleRotation);
-        this.qWindUp = new THREE.Quaternion().setFromEuler(windUpRotation);
-        this.qFollowThrough = new THREE.Quaternion().setFromEuler(followThroughRotation);
-
-        this.createMesh();
-        this.mesh.position.copy(this.idlePosition);
-        this.mesh.quaternion.copy(this.qIdle);
-    }
-
-    createMesh() {
-        this.mesh = new THREE.Group();
-        const bladeMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.9, roughness: 0.3 });
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.01), bladeMat);
-        blade.position.y = 0.7 / 2 + 0.02 / 2;
-        blade.castShadow = true;
-        
-        const guardMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.5 });
-        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.15), guardMat);
-        guard.castShadow = true;
-        
-        const hiltMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
-        const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.25, 8), hiltMat);
-        hilt.position.y = -0.25 / 2 - 0.02 / 2;
-        hilt.castShadow = true;
-        
-        this.mesh.add(blade, guard, hilt);
-    }
-
-    attack() {
-        if (!this.canAttack() || this.isSwinging) return false;
-        this.isSwinging = true;
-        this.swingProgress = 0;
-        this.triggerCooldown();
-        setTimeout(() => { if (this.isSwinging) this.detectHit(); }, this.hitTiming);
-        return true;
-    }
-
-    detectHit() {
-        if (!this.wielder) return;
-
-        this.wielder.camera.getWorldDirection(this._forward);
-        const playerPos = this.wielder.physics.body.position;
-
-        for (const enemy of this.wielder.world.getEnemies()) {
-            if (enemy.isDead || !enemy.physics.body) continue;
-
-            this._enemyPos.copy(enemy.physics.body.position);
-            const distance = playerPos.distanceTo(this._enemyPos);
-
-            if (distance < this.swingRange + enemy.physics.body.shapes[0].radius) {
-                const toEnemy = this._enemyPos.clone().sub(playerPos).normalize();
-                if (this._forward.dot(toEnemy) > 0.64) {
-                    let damage = this.damage;
-                    
-                    // Apply melee damage boost from buff
-                    if (this.wielder.activeBuffs.has('stonePlating')) {
-                        const buff = this.wielder.activeBuffs.get('stonePlating');
-                        damage *= (1 + buff.meleeDamageBoost);
+ import * as THREE from 'three';
+    import { Weapon } from './Weapon.js';
+    import { GAME_CONFIG } from '../../shared/config.js';
+    
+    export class Katana extends Weapon {
+        constructor() {
+            super(null, {
+                name: 'Katana',
+                damage: GAME_CONFIG.KATANA.DAMAGE,
+                cooldown: GAME_CONFIG.KATANA.COOLDOWN,
+            });
+    
+            this.swingRange = GAME_CONFIG.KATANA.RANGE;
+            
+            // REWORK: State management for animations
+            this.state = 'idle'; // idle, swinging, inspecting
+            this.animationProgress = 0;
+            this.animationDuration = 0;
+    
+            // Internal helpers
+            this._forward = new THREE.Vector3();
+            this._enemyPos = new THREE.Vector3();
+            
+            this._defineKeyframes();
+            this.createMesh();
+            
+            this.mesh.position.copy(this.idlePosition);
+            this.mesh.quaternion.copy(this.qIdle);
+        }
+    
+        _defineKeyframes() {
+            // --- Swing Animation ---
+            this.swingDuration = 0.45;
+            this.hitTiming = 120; // ms
+            this.idlePosition = new THREE.Vector3(0.35, -0.35, -0.7);
+            this.windUpPosition = new THREE.Vector3(0.5, 0.4, -0.6);
+            this.followThroughPosition = new THREE.Vector3(-0.4, -0.5, -0.7);
+            const idleRotation = new THREE.Euler(THREE.MathUtils.degToRad(10), THREE.MathUtils.degToRad(-15), THREE.MathUtils.degToRad(5), 'YXZ');
+            const windUpRotation = new THREE.Euler(THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(30), THREE.MathUtils.degToRad(-20), 'YXZ');
+            const followThroughRotation = new THREE.Euler(THREE.MathUtils.degToRad(-45), THREE.MathUtils.degToRad(-40), THREE.MathUtils.degToRad(45), 'YXZ');
+            this.qIdle = new THREE.Quaternion().setFromEuler(idleRotation);
+            this.qWindUp = new THREE.Quaternion().setFromEuler(windUpRotation);
+            this.qFollowThrough = new THREE.Quaternion().setFromEuler(followThroughRotation);
+    
+            // --- NEW: Inspect Animation ---
+            this.p_inspect_up = new THREE.Vector3(0.1, -0.1, -0.6);
+            this.q_inspect_up = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.5, -0.2, 0.2, 'YXZ'));
+            this.p_inspect_flat = this.p_inspect_up.clone();
+            this.q_inspect_flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-1.4, 0.1, -0.2, 'YXZ'));
+        }
+    
+        createMesh() {
+            this.mesh = new THREE.Group();
+            const bladeMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.9, roughness: 0.3 });
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.01), bladeMat);
+            blade.position.y = 0.7 / 2 + 0.02 / 2;
+            blade.castShadow = true;
+            
+            const guardMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.5 });
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.15), guardMat);
+            guard.castShadow = true;
+            
+            const hiltMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+            const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.25, 8), hiltMat);
+            hilt.position.y = -0.25 / 2 - 0.02 / 2;
+            hilt.castShadow = true;
+            
+            this.mesh.add(blade, guard, hilt);
+        }
+    
+        attack() {
+            if (!this.canAttack() || this.state !== 'idle') return false;
+            
+            this.state = 'swinging';
+            this.animationDuration = this.swingDuration;
+            this.animationProgress = 0;
+            this.triggerCooldown();
+            setTimeout(() => { if (this.state === 'swinging') this.detectHit(); }, this.hitTiming);
+            return true;
+        }
+    
+        inspect() {
+            if (this.state !== 'idle') return;
+            this.state = 'inspecting';
+            this.animationDuration = 2.5;
+            this.animationProgress = 0;
+        }
+    
+        detectHit() {
+            if (!this.wielder) return;
+    
+            this.wielder.camera.getWorldDirection(this._forward);
+            const playerPos = this.wielder.physics.body.position;
+    
+            for (const enemy of this.wielder.world.getEnemies()) {
+                if (enemy.isDead || !enemy.physics.body) continue;
+    
+                this._enemyPos.copy(enemy.physics.body.position);
+                const distance = playerPos.distanceTo(this._enemyPos);
+    
+                if (distance < this.swingRange + enemy.physics.body.shapes[0].radius) {
+                    const toEnemy = this._enemyPos.clone().sub(playerPos).normalize();
+                    if (this._forward.dot(toEnemy) > 0.64) {
+                        let damage = this.damage;
+                        if (this.wielder.statusEffects.has('stonePlating')) {
+                            const effect = this.wielder.statusEffects.get('stonePlating');
+                            damage *= (1 + effect.properties.meleeDamageBoost);
+                        }
+                        if (this.wielder.isSlamming) {
+                            damage *= GAME_CONFIG.KATANA.SLAM_DAMAGE_MULTIPLIER;
+                        }
+                        enemy.takeDamage(damage);
                     }
-
-                    if (this.wielder.isSlamming) {
-                        damage *= GAME_CONFIG.KATANA.SLAM_DAMAGE_MULTIPLIER;
-                    }
-
-                    enemy.takeDamage(damage);
                 }
             }
         }
-    }
-
-    update(deltaTime) {
-        super.update(deltaTime);
-        if (!this.isSwinging) return;
-
-        this.swingProgress += deltaTime;
-        const totalProgress = Math.min(this.swingProgress / this.swingDuration, 1.0);
-
-        const windUpPhaseEnd = 0.20;
-        const slashPhaseEnd = 0.60;
-
-        let currentPosition, currentQuaternion, phaseProgress, easedProgress;
-        currentPosition = new THREE.Vector3();
-        currentQuaternion = new THREE.Quaternion();
-
-        if (totalProgress < windUpPhaseEnd) {
-            phaseProgress = totalProgress / windUpPhaseEnd;
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
-            currentPosition.lerpVectors(this.idlePosition, this.windUpPosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qIdle, this.qWindUp, easedProgress);
-        } else if (totalProgress < slashPhaseEnd) {
-            phaseProgress = (totalProgress - windUpPhaseEnd) / (slashPhaseEnd - windUpPhaseEnd);
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 4);
-            currentPosition.lerpVectors(this.windUpPosition, this.followThroughPosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qWindUp, this.qFollowThrough, easedProgress);
-        } else {
-            phaseProgress = (totalProgress - slashPhaseEnd) / (1.0 - slashPhaseEnd);
-            easedProgress = phaseProgress < 0.5 ? 2 * phaseProgress * phaseProgress : 1 - Math.pow(-2 * phaseProgress + 2, 2) / 2;
-            currentPosition.lerpVectors(this.followThroughPosition, this.idlePosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qFollowThrough, this.qIdle, easedProgress);
+    
+        update(deltaTime) {
+            super.update(deltaTime);
+            if (this.state === 'idle') {
+                this.mesh.position.lerp(this.idlePosition, 10 * deltaTime);
+                this.mesh.quaternion.slerp(this.qIdle, 10 * deltaTime);
+                return;
+            }
+    
+            this.animationProgress += deltaTime;
+            const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
+    
+            switch(this.state) {
+                case 'swinging':
+                    this.updateSwingAnimation(p);
+                    break;
+                case 'inspecting':
+                    this.updateInspectAnimation(p);
+                    break;
+            }
+            
+            if (p >= 1.0) {
+                this.state = 'idle';
+            }
         }
-
-        this.mesh.position.copy(currentPosition);
-        this.mesh.quaternion.copy(currentQuaternion);
-
-        if (totalProgress >= 1.0) {
-            this.isSwinging = false;
+    
+        updateSwingAnimation(p) {
+            const windUpPhaseEnd = 0.20;
+            const slashPhaseEnd = 0.60;
+    
+            let currentPosition = new THREE.Vector3();
+            let currentQuaternion = new THREE.Quaternion();
+            let phaseProgress, easedProgress;
+    
+            if (p < windUpPhaseEnd) {
+                phaseProgress = p / windUpPhaseEnd;
+                easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
+                currentPosition.lerpVectors(this.idlePosition, this.windUpPosition, easedProgress);
+                currentQuaternion.slerpQuaternions(this.qIdle, this.qWindUp, easedProgress);
+            } else if (p < slashPhaseEnd) {
+                phaseProgress = (p - windUpPhaseEnd) / (slashPhaseEnd - windUpPhaseEnd);
+                easedProgress = 1 - Math.pow(1 - phaseProgress, 4);
+                currentPosition.lerpVectors(this.windUpPosition, this.followThroughPosition, easedProgress);
+                currentQuaternion.slerpQuaternions(this.qWindUp, this.qFollowThrough, easedProgress);
+            } else {
+                phaseProgress = (p - slashPhaseEnd) / (1.0 - slashPhaseEnd);
+                easedProgress = phaseProgress < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+                currentPosition.lerpVectors(this.followThroughPosition, this.idlePosition, easedProgress);
+                currentQuaternion.slerpQuaternions(this.qFollowThrough, this.qIdle, easedProgress);
+            }
+    
+            this.mesh.position.copy(currentPosition);
+            this.mesh.quaternion.copy(currentQuaternion);
+        }
+        
+        updateInspectAnimation(p) {
+            const p1_end = 0.15, p2_end = 0.8, p3_end = 1.0;
+            let phaseProgress, easedProgress;
+            let currentPosition = new THREE.Vector3();
+            let currentQuaternion = new THREE.Quaternion();
+        
+            if (p < p1_end) {
+                phaseProgress = p / p1_end;
+                easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
+                currentPosition.lerpVectors(this.idlePosition, this.p_inspect_up, easedProgress);
+                currentQuaternion.slerpQuaternions(this.qIdle, this.q_inspect_up, easedProgress);
+            } else if (p < p2_end) {
+                phaseProgress = (p - p1_end) / (p2_end - p1_end);
+                easedProgress = phaseProgress < 0.5 ? 4 * phaseProgress**3 : 1 - Math.pow(-2 * phaseProgress + 2, 3) / 2;
+                currentPosition.lerpVectors(this.p_inspect_up, this.p_inspect_flat, easedProgress);
+                currentQuaternion.slerpQuaternions(this.q_inspect_up, this.q_inspect_flat, easedProgress);
+            } else {
+                phaseProgress = (p - p2_end) / (p3_end - p2_end);
+                easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
+                currentPosition.lerpVectors(this.p_inspect_flat, this.idlePosition, easedProgress);
+                currentQuaternion.slerpQuaternions(this.q_inspect_flat, this.qIdle, easedProgress);
+            }
+        
+            this.mesh.position.copy(currentPosition);
+            this.mesh.quaternion.copy(currentQuaternion);
         }
     }
-}
 --------------------------------------------------
 === END OF FILE: src/game/weapons/Katana.js ===
 
 
 === FILE: src/game/weapons/Revolver.js ===
 --------------------------------------------------
-import * as THREE from 'three';
-import { Weapon } from './Weapon.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-
-export class Revolver extends Weapon {
-    constructor() {
-        super(null, {
-            name: 'Revolver',
-            damage: 100,
-            cooldown: 0.5,
-        });
-
-        this.range = 200;
-        this.magazineSize = 6;
-        this.magazineAmmo = 6;
-        this.reserveAmmo = 24;
-
-        this.state = 'idle'; // idle, firing, reloading, inspecting
-        this.animationProgress = 0;
-        this.animationDuration = 0;
-
-        this._defineKeyframes();
-        this.createMesh();
-        
-        this.mesh.position.copy(this.p_idle);
-        this.mesh.quaternion.copy(this.q_idle);
-    }
-
-    _defineKeyframes() {
-        // --- Base Positions & Rotations ---
-        this.p_idle = new THREE.Vector3(0.3, -0.4, -0.8);
-        this.q_idle = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.5, 0));
-        
-        // --- ADS (Aim Down Sights) - Future Use ---
-        this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
-        this.q_ads = new THREE.Quaternion();
-
-        // --- Reloading Keyframes ---
-        this.p_reload_start = new THREE.Vector3(0.3, -0.5, -0.7);
-        this.q_reload_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, -0.4, 0.2));
-        
-        // --- Inspecting Keyframes ---
-        this.p_inspect_center = new THREE.Vector3(0.1, -0.35, -0.6);
-        this.q_inspect_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.2, 0.5));
-        this.q_inspect_roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, -0.2, -1.5));
-    }
-
-    createMesh() {
-        this.mesh = new THREE.Group();
-        const darkMetal = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.4 });
-        const gripRubber = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
-
-        // --- Frame ---
-        const frameGeo = new THREE.BoxGeometry(0.045, 0.1, 0.14);
-        const frame = new THREE.Mesh(frameGeo, darkMetal);
-        frame.position.set(0, -0.01, -0.05);
-
-        // --- Barrel Assembly ---
-        const barrelAssembly = new THREE.Group();
-        barrelAssembly.position.set(0, 0.045, -0.12);
-        const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.055, 0.22), darkMetal);
-        shroud.position.z = -0.09;
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 8), darkMetal);
-        barrel.rotation.x = Math.PI / 2;
-        barrel.position.z = -0.08;
-        barrelAssembly.add(shroud, barrel);
-
-        // --- Top Rail & Sights ---
-        const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.18), darkMetal);
-        topRail.position.set(0, 0.08, -0.11);
-        const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), darkMetal);
-        rearSight.position.set(0, 0.05, 0.02);
-
-        // --- Grip ---
-        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.16, 8), gripRubber);
-        grip.position.set(0, -0.1, 0.01);
-        grip.rotation.x = -0.2;
-        grip.scale.x = 1.3;
-
-        // --- Cylinder & Crane (for reload animation) ---
-        this.crane = new THREE.Group();
-        this.crane.position.set(-0.0225, -0.01, -0.05); // Pivot point on the frame
-        this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.07, 6), darkMetal);
-        this.cylinder.rotation.x = Math.PI / 2;
-        this.crane.add(this.cylinder);
-
-        // --- Hammer ---
-        this.hammer = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.02), darkMetal);
-        this.hammer.position.set(0, 0.05, 0.02);
-        this.hammer.geometry.translate(0, -0.02, 0); // Set pivot to bottom
-
-        this.mesh.add(frame, barrelAssembly, topRail, rearSight, grip, this.crane, this.hammer);
-        this.mesh.scale.setScalar(1.1);
-        return this.mesh;
-    }
-
-    attack() {
-        if (this.state !== 'idle' || !this.canAttack()) return false;
-        
-        if (this.magazineAmmo <= 0) {
-            this.reload();
-            return false;
+  import * as THREE from 'three';
+    import { Weapon } from './Weapon.js';
+    import { GAME_CONFIG } from '../../shared/config.js';
+    import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+    
+    export class Revolver extends Weapon {
+        constructor() {
+            super(null, {
+                name: 'Revolver',
+                damage: 100,
+                cooldown: 0.5,
+            });
+    
+            this.range = 200;
+            this.magazineSize = 6;
+            this.magazineAmmo = 6;
+            this.reserveAmmo = 24;
+    
+            this.state = 'idle'; // idle, firing, reloading, inspecting
+            this.animationProgress = 0;
+            this.animationDuration = 0;
+    
+            this._defineKeyframes();
+            this.createMesh();
+            
+            this.mesh.position.copy(this.p_idle);
+            this.mesh.quaternion.copy(this.q_idle);
         }
-
-        this.state = 'firing';
-        this.animationDuration = this.cooldown * 0.9;
-        this.animationProgress = 0;
-        this.magazineAmmo--;
-        this.triggerCooldown();
-
-        const raycaster = new THREE.Raycaster();
-        const camera = this.wielder.camera;
-        raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-        
-        const entitiesToTest = this.wielder.world.getEnemies().map(e => e.mesh).filter(Boolean);
-        const intersects = raycaster.intersectObjects(entitiesToTest, true);
-
-        let hitPoint = null;
-        if (intersects.length > 0) {
-            const hit = intersects[0];
-            if (hit.distance < this.range) {
-                const enemy = hit.object.userData.gameEntity.entity;
-                if (enemy) {
-                    enemy.takeDamage(this.damage);
-                    hitPoint = hit.point;
+    
+        _defineKeyframes() {
+            // --- Base Positions & Rotations ---
+            // REWORK: Weapon is offset to the right but rotated (yaw) to point towards the center crosshair.
+            this.p_idle = new THREE.Vector3(0.3, -0.4, -0.7);
+            this.q_idle = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.3, 0));
+            
+            // --- ADS (Aim Down Sights) - Future Use ---
+            this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
+            this.q_ads = new THREE.Quaternion();
+    
+            // --- Reloading Keyframes ---
+            this.p_reload_start = new THREE.Vector3(0.3, -0.5, -0.7);
+            this.q_reload_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, -0.4, 0.2));
+            
+            // --- Inspecting Keyframes ---
+            this.p_inspect_center = new THREE.Vector3(0.1, -0.35, -0.6);
+            this.q_inspect_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.2, 0.5));
+            this.q_inspect_roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, -0.2, -1.5));
+        }
+    
+        createMesh() {
+            this.mesh = new THREE.Group();
+            const darkMetal = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.4 });
+            const gripRubber = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+    
+            // --- Frame ---
+            const frameGeo = new THREE.BoxGeometry(0.045, 0.1, 0.14);
+            const frame = new THREE.Mesh(frameGeo, darkMetal);
+            frame.position.set(0, -0.01, -0.05);
+    
+            // --- Barrel Assembly ---
+            const barrelAssembly = new THREE.Group();
+            barrelAssembly.position.set(0, 0.045, -0.12);
+            const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.055, 0.22), darkMetal);
+            shroud.position.z = -0.09;
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 8), darkMetal);
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.z = -0.08;
+            barrelAssembly.add(shroud, barrel);
+    
+            // --- Top Rail & Sights ---
+            const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.18), darkMetal);
+            topRail.position.set(0, 0.08, -0.11);
+            const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), darkMetal);
+            rearSight.position.set(0, 0.05, 0.02);
+    
+            // --- Grip ---
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.16, 8), gripRubber);
+            grip.position.set(0, -0.1, 0.01);
+            grip.rotation.x = -0.2;
+            grip.scale.x = 1.3;
+    
+            // --- Cylinder & Crane (for reload animation) ---
+            this.crane = new THREE.Group();
+            this.crane.position.set(-0.0225, -0.01, -0.05); // Pivot point on the frame
+            this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.07, 6), darkMetal);
+            this.cylinder.rotation.x = Math.PI / 2;
+            this.crane.add(this.cylinder);
+    
+            // --- Hammer ---
+            this.hammer = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.02), darkMetal);
+            this.hammer.position.set(0, 0.05, 0.02);
+            this.hammer.geometry.translate(0, -0.02, 0); // Set pivot to bottom
+    
+            this.mesh.add(frame, barrelAssembly, topRail, rearSight, grip, this.crane, this.hammer);
+            this.mesh.scale.setScalar(1.1);
+            return this.mesh;
+        }
+    
+        attack() {
+            if (this.state !== 'idle' || !this.canAttack()) return false;
+            
+            if (this.magazineAmmo <= 0) {
+                this.reload();
+                return false;
+            }
+    
+            this.state = 'firing';
+            this.animationDuration = this.cooldown * 0.9;
+            this.animationProgress = 0;
+            this.magazineAmmo--;
+            this.triggerCooldown();
+    
+            const raycaster = new THREE.Raycaster();
+            const camera = this.wielder.camera;
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            
+            const enemyMeshes = this.wielder.world.getEnemies().map(e => e.mesh).filter(Boolean);
+            const worldMeshes = this.wielder.world.getLevelObjects().map(e => e.mesh).filter(Boolean);
+            const entitiesToTest = [...enemyMeshes, ...worldMeshes];
+    
+            const intersects = raycaster.intersectObjects(entitiesToTest, true);
+    
+            let hitPoint = null;
+            if (intersects.length > 0) {
+                const hit = intersects[0];
+                if (hit.distance < this.range) {
+                    hitPoint = hit.point; // Always set hit point
+                    const gameEntity = hit.object.userData.gameEntity;
+                    if (gameEntity && gameEntity.type === 'Enemy') {
+                        gameEntity.entity.takeDamage(this.damage);
+                    }
                 }
             }
-        }
-        
-        if (!hitPoint) {
-            hitPoint = raycaster.ray.at(this.range, new THREE.Vector3());
-        }
-
-        this.wielder.world.emit('weaponFired', { weapon: this, hitPoint });
-
-        if (this.magazineAmmo === 0) {
-            setTimeout(() => this.reload(), 500);
-        }
-
-        return true;
-    }
-
-    reload() {
-        if (this.state !== 'idle' || this.magazineAmmo === this.magazineSize || this.reserveAmmo <= 0) return;
-
-        this.state = 'reloading';
-        this.animationDuration = 2.8;
-        this.animationProgress = 0;
-    }
-
-    inspect() {
-        if (this.state !== 'idle') return;
-        this.state = 'inspecting';
-        this.animationDuration = 3.5;
-        this.animationProgress = 0;
-    }
-
-    update(deltaTime) {
-        super.update(deltaTime);
-        if (this.state === 'idle') {
-            this.mesh.position.lerp(this.p_idle, 10 * deltaTime);
-            this.mesh.quaternion.slerp(this.q_idle, 10 * deltaTime);
-            this.crane.rotation.y = THREE.MathUtils.lerp(this.crane.rotation.y, 0, 15 * deltaTime);
-            this.hammer.rotation.z = THREE.MathUtils.lerp(this.hammer.rotation.z, 0, 15 * deltaTime);
-            return;
-        }
-
-        this.animationProgress += deltaTime;
-        const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
-
-        switch(this.state) {
-            case 'firing': this.updateFireAnimation(p, deltaTime); break;
-            case 'reloading': this.updateReloadAnimation(p, deltaTime); break;
-            case 'inspecting': this.updateInspectAnimation(p); break;
-        }
-        
-        if (p >= 1.0) {
-            if (this.state === 'reloading') {
-                const ammoNeeded = this.magazineSize - this.magazineAmmo;
-                const ammoToReload = Math.min(ammoNeeded, this.reserveAmmo);
-                this.magazineAmmo += ammoToReload;
-                this.reserveAmmo -= ammoToReload;
+            
+            if (!hitPoint) {
+                hitPoint = raycaster.ray.at(this.range, new THREE.Vector3());
             }
-            this.state = 'idle';
-        }
-    }
-
-    updateFireAnimation(p, deltaTime) {
-        // Kickback
-        const kickbackAmount = 0.2;
-        this.mesh.position.z = this.p_idle.z + Math.sin(p * Math.PI) * kickbackAmount;
-        
-        // Muzzle flip
-        const flipAmount = -0.5;
-        this.mesh.rotation.x = Math.sin(p * Math.PI) * flipAmount;
-        
-        // Hammer animation
-        const hammerCockBack = -Math.PI / 4;
-        if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
-        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p-0.1) / 0.9);
-        
-        // Cylinder rotation
-        this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);
-    }
-
-    updateReloadAnimation(p, deltaTime) {
-        // Phase 1: Bring to center and start opening (0.0 -> 0.2)
-        const p1 = Math.min(1, p / 0.2);
-        this.mesh.position.lerpVectors(this.p_idle, this.p_reload_start, p1);
-        this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_reload_start, p1);
-
-        // Phase 2: Swing cylinder out (0.1 -> 0.4)
-        const p2 = Math.min(1, Math.max(0, (p - 0.1) / 0.3));
-        const swingOutAngle = -Math.PI / 2.5;
-        this.crane.rotation.y = THREE.MathUtils.lerp(0, swingOutAngle, p2);
-
-        // Phase 3: Eject shells (0.4 -> 0.6) - a quick spin
-        if (p > 0.4 && p < 0.6) {
-            this.cylinder.rotation.y -= deltaTime * 50;
-        }
-
-        // Phase 4: Swing cylinder in (0.7 -> 0.9)
-        const p4 = Math.min(1, Math.max(0, (p - 0.7) / 0.2));
-        this.crane.rotation.y = THREE.MathUtils.lerp(swingOutAngle, 0, p4);
-
-        // Phase 5: Return to idle (0.8 -> 1.0)
-        const p5 = Math.min(1, Math.max(0, (p - 0.8) / 0.2));
-        this.mesh.position.lerpVectors(this.p_reload_start, this.p_idle, p5);
-        this.mesh.quaternion.slerpQuaternions(this.q_reload_start, this.q_idle, p5);
-    }
     
-    updateInspectAnimation(p) {
-        const p1_end = 0.2, p2_end = 0.7, p3_end = 1.0;
+            this.wielder.world.emit('weaponFired', { weapon: this, hitPoint });
+    
+            if (this.magazineAmmo === 0) {
+                setTimeout(() => this.reload(), 500);
+            }
+    
+            return true;
+        }
+    
+        reload() {
+            if (this.state !== 'idle' || this.magazineAmmo === this.magazineSize || this.reserveAmmo <= 0) return;
+    
+            this.state = 'reloading';
+            this.animationDuration = 2.8;
+            this.animationProgress = 0;
+        }
+    
+        inspect() {
+            if (this.state !== 'idle') return;
+            this.state = 'inspecting';
+            this.animationDuration = 3.5;
+            this.animationProgress = 0;
+        }
+    
+        update(deltaTime) {
+            super.update(deltaTime);
+            if (this.state === 'idle') {
+                this.mesh.position.lerp(this.p_idle, 10 * deltaTime);
+                this.mesh.quaternion.slerp(this.q_idle, 10 * deltaTime);
+                this.crane.rotation.y = THREE.MathUtils.lerp(this.crane.rotation.y, 0, 15 * deltaTime);
+                this.hammer.rotation.z = THREE.MathUtils.lerp(this.hammer.rotation.z, 0, 15 * deltaTime);
+                return;
+            }
+    
+            this.animationProgress += deltaTime;
+            const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
+    
+            switch(this.state) {
+                case 'firing': this.updateFireAnimation(p, deltaTime); break;
+                case 'reloading': this.updateReloadAnimation(p, deltaTime); break;
+                case 'inspecting': this.updateInspectAnimation(p); break;
+            }
+            
+            if (p >= 1.0) {
+                if (this.state === 'reloading') {
+                    const ammoNeeded = this.magazineSize - this.magazineAmmo;
+                    const ammoToReload = Math.min(ammoNeeded, this.reserveAmmo);
+                    this.magazineAmmo += ammoToReload;
+                    this.reserveAmmo -= ammoToReload;
+                }
+                this.state = 'idle';
+            }
+        }
+    
+        updateFireAnimation(p, deltaTime) {
+            // Kickback
+            const kickbackAmount = 0.2;
+            this.mesh.position.z = this.p_idle.z + Math.sin(p * Math.PI) * kickbackAmount;
+            
+            // Muzzle flip
+            const flipAmount = -0.5;
+            this.mesh.rotation.x = Math.sin(p * Math.PI) * flipAmount;
+            
+            // Hammer animation
+            const hammerCockBack = -Math.PI / 4;
+            if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
+            else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p-0.1) / 0.9);
+            
+            // Cylinder rotation
+            this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);
+        }
+    
+        updateReloadAnimation(p, deltaTime) {
+            // Phase 1: Bring to center and start opening (0.0 -> 0.2)
+            const p1 = Math.min(1, p / 0.2);
+            this.mesh.position.lerpVectors(this.p_idle, this.p_reload_start, p1);
+            this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_reload_start, p1);
+    
+            // Phase 2: Swing cylinder out (0.1 -> 0.4)
+            const p2 = Math.min(1, Math.max(0, (p - 0.1) / 0.3));
+            const swingOutAngle = -Math.PI / 2.5;
+            this.crane.rotation.y = THREE.MathUtils.lerp(0, swingOutAngle, p2);
+    
+            // Phase 3: Eject shells (0.4 -> 0.6) - a quick spin
+            if (p > 0.4 && p < 0.6) {
+                this.cylinder.rotation.y -= deltaTime * 50;
+            }
+    
+            // Phase 4: Swing cylinder in (0.7 -> 0.9)
+            const p4 = Math.min(1, Math.max(0, (p - 0.7) / 0.2));
+            this.crane.rotation.y = THREE.MathUtils.lerp(swingOutAngle, 0, p4);
+    
+            // Phase 5: Return to idle (0.8 -> 1.0)
+            const p5 = Math.min(1, Math.max(0, (p - 0.8) / 0.2));
+            this.mesh.position.lerpVectors(this.p_reload_start, this.p_idle, p5);
+            this.mesh.quaternion.slerpQuaternions(this.q_reload_start, this.q_idle, p5);
+        }
         
-        if (p < p1_end) { // Move to center
-            const progress = p / p1_end;
-            this.mesh.position.lerpVectors(this.p_idle, this.p_inspect_center, progress);
-            this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_inspect_start, progress);
-        } else if (p < p2_end) { // Roll
-            const progress = (p - p1_end) / (p2_end - p1_end);
-            this.mesh.quaternion.slerpQuaternions(this.q_inspect_start, this.q_inspect_roll, progress);
-            this.cylinder.rotation.y += 0.05 * (1.0 - progress);
-        } else { // Return to idle
-            const progress = (p - p2_end) / (p3_end - p2_end);
-            this.mesh.position.lerpVectors(this.p_inspect_center, this.p_idle, progress);
-            this.mesh.quaternion.slerpQuaternions(this.q_inspect_roll, this.q_idle, progress);
+        updateInspectAnimation(p) {
+            const p1_end = 0.2, p2_end = 0.7, p3_end = 1.0;
+            
+            if (p < p1_end) { // Move to center
+                const progress = p / p1_end;
+                this.mesh.position.lerpVectors(this.p_idle, this.p_inspect_center, progress);
+                this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_inspect_start, progress);
+            } else if (p < p2_end) { // Roll
+                const progress = (p - p1_end) / (p2_end - p1_end);
+                this.mesh.quaternion.slerpQuaternions(this.q_inspect_start, this.q_inspect_roll, progress);
+                this.cylinder.rotation.y += 0.05 * (1.0 - progress);
+            } else { // Return to idle
+                const progress = (p - p2_end) / (p3_end - p2_end);
+                this.mesh.position.lerpVectors(this.p_inspect_center, this.p_idle, progress);
+                this.mesh.quaternion.slerpQuaternions(this.q_inspect_roll, this.q_idle, progress);
+            }
         }
     }
-}
 --------------------------------------------------
 === END OF FILE: src/game/weapons/Revolver.js ===
 
@@ -10831,168 +11130,169 @@ export class LevelManager {
 
 === FILE: src/game/world/World.js ===
 --------------------------------------------------
-// src/game/world/World.js
-import * as THREE from 'three';
-import { EventEmitter } from '../../shared/EventEmitter.js';
-import { LevelManager } from './LevelManager.js';
-import { PlayerPrefab } from '../prefabs/PlayerPrefab.js';
-import { MovementSystem } from '../systems/MovementSystem.js';
-import { AISystem } from '../systems/AISystem.js';
-import { AbilitySystem } from '../systems/AbilitySystem.js';
-import { WeaponSystem } from '../systems/WeaponSystem.js';
-import { TargetingSystem } from '../systems/TargetingSystem.js';
-import { DeathSystem } from '../systems/DeathSystem.js';
-import { TriggerSystem } from '../systems/TriggerSystem.js';
-import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
-import { Fireball } from '../abilities/Fireball.js';
-import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
-import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
-
-/**
- * Represents a single level instance, containing all entities, systems, and game state.
- */
-export class World {
-    constructor(core, game) {
-        this.emitter = new EventEmitter(); // Composition
-        this.core = core;
-        this.game = game;
-        this.scene = core.renderer.scene;
-        this.physics = core.physics;
-        
-        this.levelName = '';
-        this.spawnPoint = new THREE.Vector3();
-        this.deathSpawnPoint = new THREE.Vector3();
-        this.player = null;
-        this.entities = new Set();
-        this._entitiesByType = new Map();
-        this.initialEnemyCount = 0;
-        this.enemiesKilled = 0;
-
-        this.levelManager = new LevelManager(this);
-        this.systems = [
-            new MovementSystem(),
-            new AISystem(),
-            new AbilitySystem(),
-            new WeaponSystem(),
-            new TargetingSystem(),
-            new DeathSystem(),
-            new OutOfBoundsSystem(),
-        ];
-        this.triggerSystem = new TriggerSystem(this);
-        
-        this.on('enemyDied', () => this.onEnemyDied());
-    }
-
-    // --- Event Emitter Delegation ---
-    on(eventName, listener) { this.emitter.on(eventName, listener); }
-    emit(eventName, data) { this.emitter.emit(eventName, data); }
-    off(eventName, listener) { this.emitter.off(eventName, listener); }
-    removeAllListeners() { this.emitter.removeAllListeners(); }
-
-    async loadLevel(config) {
-        let levelData;
-        if (config.url) {
-            const response = await fetch(config.url);
-            if (!response.ok) throw new Error(`Failed to load level: ${response.statusText}`);
-            levelData = await response.json();
-        } else if (config.data) {
-            levelData = config.data;
-        } else {
-            throw new Error('Level configuration must provide a URL or data.');
-        }
-
-        this.levelManager.build(levelData);
-
-        this.player = PlayerPrefab.create(
-            this,
-            this.core.renderer.camera,
-            this.game.viewModelScene,
-            config.loadout
-        );
-        this.add(this.player);
-    }
+  import * as THREE from 'three';
+    import { EventEmitter } from '../../shared/EventEmitter.js';
+    import { LevelManager } from './LevelManager.js';
+    import { PlayerPrefab } from '../prefabs/PlayerPrefab.js';
+    import { MovementSystem } from '../systems/MovementSystem.js';
+    import { AISystem } from '../systems/AISystem.js';
+    import { AbilitySystem } from '../systems/AbilitySystem.js';
+    import { WeaponSystem } from '../systems/WeaponSystem.js';
+    import { TargetingSystem } from '../systems/TargetingSystem.js';
+    import { DeathSystem } from '../systems/DeathSystem.js';
+    import { TriggerSystem } from '../systems/TriggerSystem.js';
+    import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
+    import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
+    import { Fireball } from '../abilities/Fireball.js';
+    import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
+    import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
     
-    onEnemyDied() {
-        this.enemiesKilled++;
-        if (this.initialEnemyCount > 0 && this.enemiesKilled >= this.initialEnemyCount) {
-            this.emit('levelCompleted');
+    /**
+     * Represents a single level instance, containing all entities, systems, and game state.
+     */
+    export class World {
+        constructor(core, game) {
+            this.emitter = new EventEmitter(); // Composition
+            this.core = core;
+            this.game = game;
+            this.scene = core.renderer.scene;
+            this.physics = core.physics;
+            
+            this.levelName = '';
+            this.spawnPoint = new THREE.Vector3();
+            this.deathSpawnPoint = new THREE.Vector3();
+            this.player = null;
+            this.entities = new Set();
+            this._entitiesByType = new Map();
+            this.initialEnemyCount = 0;
+            this.enemiesKilled = 0;
+    
+            this.levelManager = new LevelManager(this);
+            this.systems = [
+                new MovementSystem(),
+                new AISystem(),
+                new AbilitySystem(),
+                new WeaponSystem(),
+                new TargetingSystem(),
+                new DeathSystem(),
+                new OutOfBoundsSystem(),
+                new StatusEffectSystem(),
+            ];
+            this.triggerSystem = new TriggerSystem(this);
+            
+            this.on('enemyDied', () => this.onEnemyDied());
         }
-    }
-
-    add(entity) {
-        if (!entity || this.entities.has(entity)) return;
-        this.entities.add(entity);
-        if (entity.type) {
-            if (!this._entitiesByType.has(entity.type)) {
-                this._entitiesByType.set(entity.type, new Set());
+    
+        // --- Event Emitter Delegation ---
+        on(eventName, listener) { this.emitter.on(eventName, listener); }
+        emit(eventName, data) { this.emitter.emit(eventName, data); }
+        off(eventName, listener) { this.emitter.off(eventName, listener); }
+        removeAllListeners() { this.emitter.removeAllListeners(); }
+    
+        async loadLevel(config) {
+            let levelData;
+            if (config.url) {
+                const response = await fetch(config.url);
+                if (!response.ok) throw new Error(`Failed to load level: ${response.statusText}`);
+                levelData = await response.json();
+            } else if (config.data) {
+                levelData = config.data;
+            } else {
+                throw new Error('Level configuration must provide a URL or data.');
             }
-            this._entitiesByType.get(entity.type).add(entity);
+    
+            this.levelManager.build(levelData);
+    
+            this.player = PlayerPrefab.create(
+                this,
+                this.core.renderer.camera,
+                this.game.viewModelScene,
+                config.loadout
+            );
+            this.add(this.player);
         }
         
-        if (entity.mesh) this.scene.add(entity.mesh);
-        const body = entity.physics?.body || entity.body;
-        if (body) this.physics.addBody(body);
-
-        this.emit('entityAdded', { entity });
-
-        if (entity.type === 'enemy') this.emit('enemySpawned', { enemy: entity });
-    }
-
-    remove(entity) {
-        if (!entity || !this.entities.has(entity)) return;
-        this.emit('entityRemoved', { entity });
-        if (entity.dispose) entity.dispose();
-        else {
-            if (entity.mesh) {
-                this.scene.remove(entity.mesh);
-                entity.mesh.geometry?.dispose();
-                if (Array.isArray(entity.mesh.material)) entity.mesh.material.forEach(m => m.dispose());
-                else entity.mesh.material?.dispose();
+        onEnemyDied() {
+            this.enemiesKilled++;
+            if (this.initialEnemyCount > 0 && this.enemiesKilled >= this.initialEnemyCount) {
+                this.emit('levelCompleted');
             }
+        }
+    
+        add(entity) {
+            if (!entity || this.entities.has(entity)) return;
+            this.entities.add(entity);
+            if (entity.type) {
+                if (!this._entitiesByType.has(entity.type)) {
+                    this._entitiesByType.set(entity.type, new Set());
+                }
+                this._entitiesByType.get(entity.type).add(entity);
+            }
+            
+            if (entity.mesh) this.scene.add(entity.mesh);
             const body = entity.physics?.body || entity.body;
-            if (body) this.physics.queueForRemoval(body);
+            if (body) this.physics.addBody(body);
+    
+            this.emit('entityAdded', { entity });
+    
+            if (entity.type === 'enemy') this.emit('enemySpawned', { enemy: entity });
+        }
+    
+        remove(entity) {
+            if (!entity || !this.entities.has(entity)) return;
+            this.emit('entityRemoved', { entity });
+            if (entity.dispose) entity.dispose();
+            else {
+                if (entity.mesh) {
+                    this.scene.remove(entity.mesh);
+                    entity.mesh.geometry?.dispose();
+                    if (Array.isArray(entity.mesh.material)) entity.mesh.material.forEach(m => m.dispose());
+                    else entity.mesh.material?.dispose();
+                }
+                const body = entity.physics?.body || entity.body;
+                if (body) this.physics.queueForRemoval(body);
+            }
+            
+            this.entities.delete(entity);
+            if (entity.type && this._entitiesByType.has(entity.type)) {
+                this._entitiesByType.get(entity.type).delete(entity);
+            }
+        }
+    
+        getEntities() { return Array.from(this.entities); }
+        getEnemies() { return Array.from(this._entitiesByType.get('enemy') || []); }
+        getLevelObjects() { return Array.from(this._entitiesByType.get('Object') || []); }
+        getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
+        getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
+    
+        resetPlayer() {
+            if (this.player) {
+                this.player.reset(this.deathSpawnPoint);
+                this.emit('playerRespawned');
+            }
+        }
+    
+        createFireball(data) { new Fireball({ world: this, ...data }); }
+        createEnemyProjectile(data) { new EnemyProjectile({ world: this, ...data }); }
+        createFireflyProjectile(data) { new FireflyProjectile({ world: this, ...data }); }
+    
+        update(deltaTime) {
+            for (const system of this.systems) system.update(this, deltaTime);
+            for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
         }
         
-        this.entities.delete(entity);
-        if (entity.type && this._entitiesByType.has(entity.type)) {
-            this._entitiesByType.get(entity.type).delete(entity);
+        dispose() {
+            this.removeAllListeners();
+            this.triggerSystem.dispose();
+            [...this.entities].forEach(entity => this.remove(entity));
+            this.scene.children.slice().forEach(child => {
+                if (child.type !== 'PerspectiveCamera') this.scene.remove(child);
+            });
+            this.physics.world.bodies.forEach(body => this.physics.queueForRemoval(body));
+            this.physics._removeQueuedBodies();
+            this.systems = [];
         }
     }
-
-    getEntities() { return Array.from(this.entities); }
-    getEnemies() { return Array.from(this._entitiesByType.get('enemy') || []); }
-    getLevelObjects() { return Array.from(this._entitiesByType.get('Object') || []); }
-    getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
-    getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
-
-    resetPlayer() {
-        if (this.player) {
-            this.player.reset(this.deathSpawnPoint);
-            this.emit('playerRespawned');
-        }
-    }
-
-    createFireball(data) { new Fireball({ world: this, ...data }); }
-    createEnemyProjectile(data) { new EnemyProjectile({ world: this, ...data }); }
-    createFireflyProjectile(data) { new FireflyProjectile({ world: this, ...data }); }
-
-    update(deltaTime) {
-        for (const system of this.systems) system.update(this, deltaTime);
-        for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
-    }
-    
-    dispose() {
-        this.removeAllListeners();
-        this.triggerSystem.dispose();
-        [...this.entities].forEach(entity => this.remove(entity));
-        this.scene.children.slice().forEach(child => {
-            if (child.type !== 'PerspectiveCamera') this.scene.remove(child);
-        });
-        this.physics.world.bodies.forEach(body => this.physics.queueForRemoval(body));
-        this.physics._removeQueuedBodies();
-        this.systems = [];
-    }
-}
 --------------------------------------------------
 === END OF FILE: src/game/world/World.js ===
 

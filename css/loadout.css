@@ -213,11 +213,31 @@
     padding-bottom: 5px;
 }
 
+/* Elemental/Ability Card Backgrounds */
 .card-item.element-fire    { background-color: hsl(25, 100%, 55%); }
 .card-item.element-water   { background-color: hsl(195, 100%, 50%); }
 .card-item.element-air     { background-color: hsl(180, 80%, 85%); }
 .card-item.element-earth   { background-color: hsl(35, 45%, 50%); }
 .card-item.element-utility { background-color: hsl(265, 90%, 65%); }
+
+/* Weapon Card Overrides */
+.card-item.type-weapon {
+    background: linear-gradient(145deg, hsl(230, 10%, 28%), hsl(230, 10%, 18%));
+    border: 1px solid hsl(230, 10%, 12%);
+}
+.card-item.type-weapon::after {
+    background-color: var(--color-text-dark);
+}
+.card-item.type-weapon.tier-1::after { background-color: hsl(210, 10%, 60%); }
+.card-item.type-weapon.tier-2::after { background-color: hsl(210, 10%, 85%); }
+.card-item.type-weapon.tier-3::after { background-color: hsl(0, 0%, 100%); }
+
+.card-item.type-weapon .card-item-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><path d="M22,4 C22,4 18,1 18,1 C18,1 14,4 14,4 C14,4 14,14 14,14 C14,14 12,16 12,16 C12,16 11,23 11,23 L13,23 L13,16 C13,16 18,16 18,16 C18,16 22,13 22,13 C22,13 22,4 22,4 Z M10,14 L10,23 L8,23 L8,14 C8,14 2,14 2,14 C2,14 2,4 2,4 C2,4 6,1 6,1 C6,1 10,4 10,4 L10,14 Z"/></svg>');
+    background-size: 65%;
+    opacity: 0.6;
+}
+
 
 /* --- INSPECTOR MODAL --- */
 .inspector-modal-overlay {

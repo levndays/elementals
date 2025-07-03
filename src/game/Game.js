@@ -86,9 +86,14 @@ export class Game {
         this.world = new World(this.core, this);
         this.emit('worldCreated', this.world);
         
+        // Centralize all World event listening here
         this.world.on('playerDied', () => this.handlePlayerDeath());
+        this.world.on('enemyDied', () => this.world.onEnemyDied()); // Correctly call the world's handler
         this.world.on('levelCompleted', () => this.ui.tutorialManager.showLevelCompleted());
         this.world.on('tutorialTriggerActivated', (data) => this.ui.tutorialManager.onTriggerActivated(data));
+        this.world.on('abilityCastFailed', (data) => {
+            this.emit('abilityCastFailed', data);
+        });
 
         try {
             await this.world.loadLevel(config);

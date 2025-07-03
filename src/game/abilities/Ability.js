@@ -22,14 +22,17 @@ export class Ability {
 
     /**
      * Checks if the ability can be cast based on cooldown and caster's energy.
-     * @returns {boolean}
+     * @returns {{canCast: boolean, reasons: string[]}}
      */
-    canCast() {
-        if (this.caster.world.game && this.caster.world.game.debugModeActive) return true;
+    _getCastability() {
+        const reasons = [];
+        if (this.caster.world.game?.debugModeActive) return { canCast: true, reasons: [] };
 
-        const isReady = this.cooldownTimer >= this.cooldown;
-        const hasEnergy = this.caster.abilities.currentEnergy >= this.energyCost;
-        return isReady && hasEnergy && !this.isCasting;
+        if (this.isCasting) reasons.push('is_casting');
+        if (this.cooldownTimer < this.cooldown) reasons.push('on_cooldown');
+        if (this.caster.abilities.currentEnergy < this.energyCost) reasons.push('insufficient_energy');
+        
+        return { canCast: reasons.length === 0, reasons };
     }
 
     /**
@@ -46,7 +49,19 @@ export class Ability {
      * @returns {boolean} True if the cast was successful, false otherwise.
      */
     cast() {
-        if (!this.canCast()) return false;
+        const { canCast, reasons } = this._getCastability();
+
+        if (!canCast) {
+            // Emit an event with all failure reasons if there are any user-facing ones
+            if (reasons.includes('on_cooldown') || reasons.includes('insufficient_energy')) {
+                this.caster.world.emit('abilityCastFailed', { 
+                    reasons: reasons,
+                    entity: this.caster, 
+                    ability: this 
+                });
+            }
+            return false;
+        }
 
         const castSuccessful = this._executeCast();
 
