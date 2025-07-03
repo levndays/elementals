@@ -101,6 +101,17 @@
         selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
         useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
     
+        cycleAbility(direction) {
+            const numAbilities = this.abilities.abilities.length;
+            if (numAbilities === 0) return;
+    
+            let currentIndex = this.abilities.selectedAbilityIndex;
+            // The modulo trick handles wrapping around in both directions.
+            // Adding numAbilities before taking the modulo ensures the result is always positive.
+            const newIndex = (currentIndex + direction + numAbilities) % numAbilities;
+            this.selectAbility(newIndex);
+        }
+    
         applyLoadout(loadoutData) {
             // Ensure loadoutData is an object and has a 'cards' array property.
             const cardIds = (loadoutData && Array.isArray(loadoutData.cards)) 

@@ -21,6 +21,7 @@ export class InputManager extends EventEmitter {
         this._onMouseMove = this._onMouseMove.bind(this);
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseUp = this._onMouseUp.bind(this);
+        this._onWheel = this._onWheel.bind(this);
         
         this.addEventListeners();
     }
@@ -31,6 +32,7 @@ export class InputManager extends EventEmitter {
         document.addEventListener('mousemove', this._onMouseMove);
         document.addEventListener('mousedown', this._onMouseDown);
         document.addEventListener('mouseup', this._onMouseUp);
+        document.addEventListener('wheel', this._onWheel, { passive: false });
     }
 
     _onKeyDown(e) {
@@ -65,6 +67,13 @@ export class InputManager extends EventEmitter {
         this.mouse.movementY = e.movementY;
     }
 
+    _onWheel(e) {
+        if (this.enabled) {
+            e.preventDefault(); // Prevent page scrolling during gameplay
+            this.emit('scroll', { deltaY: e.deltaY });
+        }
+    }
+
     update() {
         this.mouse.movementX = 0;
         this.mouse.movementY = 0;
@@ -76,5 +85,6 @@ export class InputManager extends EventEmitter {
         document.removeEventListener('mousemove', this._onMouseMove);
         document.removeEventListener('mousedown', this._onMouseDown);
         document.removeEventListener('mouseup', this._onMouseUp);
+        document.removeEventListener('wheel', this._onWheel);
     }
 }

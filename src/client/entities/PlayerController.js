@@ -23,6 +23,7 @@ export class PlayerController {
         
         // --- Event Handlers ---
         this._onSinglePress = this._onSinglePress.bind(this);
+        this._onScroll = this._onScroll.bind(this);
     }
 
     /**
@@ -34,6 +35,7 @@ export class PlayerController {
         // Sync the controller's euler angles with the player's camera on attach
         this.euler.setFromQuaternion(this.player.camera.quaternion);
         this.input.on('singlePress', this._onSinglePress);
+        this.input.on('scroll', this._onScroll);
     }
 
     /**
@@ -41,6 +43,7 @@ export class PlayerController {
      */
     detach() {
         this.input.off('singlePress', this._onSinglePress);
+        this.input.off('scroll', this._onScroll);
         this.player = null;
     }
 
@@ -140,6 +143,14 @@ export class PlayerController {
         if (event.button === 2) { // Right mouse button
             this.player.useSelectedAbility();
         }
+    }
+
+    _onScroll(event) {
+        if (!this.player || this.player.isDead || !document.pointerLockElement) return;
+    
+        // Positive deltaY means scrolling down/forward, negative means up/backward
+        const direction = Math.sign(event.deltaY);
+        this.player.cycleAbility(direction);
     }
 
     /**
