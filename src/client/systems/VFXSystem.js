@@ -27,6 +27,7 @@ export class VFXSystem {
         this.world.on('projectileDetonated', data => this.onProjectileDetonated(data));
         this.world.on('playerBuffActivated', data => this.onPlayerBuffActivated(data));
         this.world.on('playerBuffDeactivated', data => this.onPlayerBuffDeactivated(data));
+        this.world.on('playerChannelingUpdate', data => this.onPlayerChannelingUpdate(data));
         this.world.on('wavePowerUsed', data => this.onWavePowerUsed(data));
         this.world.on('weaponFired', data => this.onWeaponFired(data));
     }
@@ -92,6 +93,16 @@ export class VFXSystem {
     onPlayerBuffDeactivated({ buffName }) {
         if (buffName === 'stonePlating') {
             this.vfxManager.deactivateSustained('earthBuff');
+        }
+    }
+
+    onPlayerChannelingUpdate({ isChanneling, ability }) {
+        if (ability?.data?.id === 'UTILITY_001') {
+            if (isChanneling) {
+                this.vfxManager.activateSustained('channelingGlow');
+            } else {
+                this.vfxManager.deactivateSustained('channelingGlow');
+            }
         }
     }
 

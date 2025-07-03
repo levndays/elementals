@@ -77,6 +77,24 @@ body:not(.game-active) #tutorial-text-container {
     100% { transform: scale(1.0); opacity: 0.8; }
 }
 
+/* NEW: Channeling VFX */
+#vfx-channeling-glow {
+    background-image:
+        radial-gradient(ellipse 40vw 40vh at top left, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at top right, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at bottom left, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 40vw 40vh at bottom right, hsla(265, 90%, 75%, 0.35) 0%, transparent 50%);
+    transition: opacity 0.5s ease-in-out;
+}
+#vfx-channeling-glow.active {
+    opacity: 1;
+    animation: channeling-pulse 4s infinite ease-in-out;
+}
+@keyframes channeling-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
 
 /* REWORKED: CROSSHAIR & TARGETING */
 #crosshair-container {

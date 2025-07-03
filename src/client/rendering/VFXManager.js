@@ -26,6 +26,7 @@ export class VFXManager {
             jump: document.getElementById('vfx-jump-wind'),
             slam: document.getElementById('vfx-ground-slam'),
             earthBuff: document.getElementById('vfx-earth-buff'),
+            channelingGlow: document.getElementById('vfx-channeling-glow'),
         };
         this.setupVFXListeners();
     }
@@ -38,8 +39,9 @@ export class VFXManager {
         Object.values(this.domElements).forEach(element => {
             if (element) {
                 element.addEventListener('animationend', () => {
-                    // Don't remove 'active' from sustained effects like buffs
-                    if (element.id !== 'vfx-earth-buff') {
+                    // Don't remove 'active' from sustained effects like buffs or glows
+                    const sustainedEffects = ['vfx-earth-buff', 'vfx-channeling-glow'];
+                    if (!sustainedEffects.includes(element.id)) {
                         element.classList.remove('active', 'right-to-left', 'left-to-right');
                     }
                 });

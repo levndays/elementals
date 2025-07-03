@@ -60,5 +60,17 @@
         "cooldown": 8.0,
         "description": "When used on the ground, release a forceful wave in front of you that knocks enemies back.",
         "flavor": "Get out of the way."
+    },
+    "UTILITY_001": {
+        "id": "UTILITY_001",
+        "name": "Second Chance",
+        "type": "Ability",
+        "element": "Utility",
+        "tier": 1,
+        "castType": "channel",
+        "energyCost": 0,
+        "cooldown": 15.0,
+        "description": "Hold to channel your power, converting 2 Energy into 1 Health per tick. Cooldown begins on release.",
+        "flavor": "Sometimes, willpower is the best medicine."
     }
 }

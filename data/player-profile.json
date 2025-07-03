@@ -5,7 +5,8 @@
     "FIRE_001",
     "FIRE_002",
     "EARTH_001",
-    "WATER_001"
+    "WATER_001",
+    "UTILITY_001"
   ],
   "savedLoadouts": {
     "My First Build": {
@@ -23,7 +24,7 @@
       "weapon": "WEAPON_REVOLVER",
       "cards": [
         "FIRE_001",
-        null,
+        "UTILITY_001",
         null,
         null
       ]

@@ -3,12 +3,14 @@ import { FireballAbility } from './FireballAbility.js';
 import { FirefliesAbility } from './FirefliesAbility.js';
 import { StonePlatingAbility } from './StonePlatingAbility.js';
 import { WavePowerAbility } from './WavePowerAbility.js';
+import { SecondChanceAbility } from './SecondChanceAbility.js';
 
 const AbilityMap = {
     'FIRE_001': FireballAbility,
     'FIRE_002': FirefliesAbility,
     'EARTH_001': StonePlatingAbility,
     'WATER_001': WavePowerAbility,
+    'UTILITY_001': SecondChanceAbility,
     // Add new ability classes here
 };
 

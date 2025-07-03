@@ -99,7 +99,20 @@
     
         requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
         selectAbility(index) { if (index >= 0 && index < this.abilities.abilities.length) this.abilities.selectedAbilityIndex = index; }
-        useSelectedAbility() { const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex]; if (ability) ability.cast(); }
+
+        startUsingAbility() {
+            const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex];
+            if (ability) {
+                ability.startCasting();
+            }
+        }
+    
+        stopUsingAbility() {
+            const ability = this.abilities.abilities[this.abilities.selectedAbilityIndex];
+            if (ability) {
+                ability.stopCasting();
+            }
+        }
     
         cycleAbility(direction) {
             const numAbilities = this.abilities.abilities.length;

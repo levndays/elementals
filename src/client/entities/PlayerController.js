@@ -14,6 +14,7 @@ export class PlayerController {
         this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
         this.keyLastPress = {};
         this.keyPreviousState = {};
+        this.isRightMouseDown = false;
         
         // --- PERFORMANCE: Reusable Vectors ---
         this._forward = new THREE.Vector3();
@@ -53,6 +54,10 @@ export class PlayerController {
      */
     update(deltaTime) {
         if (!this.player || this.player.isDead || !document.pointerLockElement) {
+            if (this.isRightMouseDown) {
+                this.player.stopUsingAbility();
+                this.isRightMouseDown = false;
+            }
             return;
         }
 
@@ -139,10 +144,6 @@ export class PlayerController {
         if (event.code === 'KeyF') {
             this.player.inspectWeapon();
         }
-
-        if (event.button === 2) { // Right mouse button
-            this.player.useSelectedAbility();
-        }
     }
 
     _onScroll(event) {
@@ -159,6 +160,20 @@ export class PlayerController {
     _handleActions() {
         if (this.input.mouse.leftClick) {
             this.player.weapon?.attack();
+        }
+
+        if (this.input.mouse.rightClick) {
+            if (!this.isRightMouseDown) {
+                // First frame of press
+                this.player.startUsingAbility();
+                this.isRightMouseDown = true;
+            }
+        } else {
+            if (this.isRightMouseDown) {
+                // First frame of release
+                this.player.stopUsingAbility();
+                this.isRightMouseDown = false;
+            }
         }
 
         for (let i = 1; i <= 4; i++) {

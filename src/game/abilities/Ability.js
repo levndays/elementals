@@ -15,6 +15,7 @@ export class Ability {
         this.energyCost = abilityData.energyCost || 0;
         this.element = abilityData.element || 'Utility';
         this.isCasting = false;
+        this.castType = abilityData.castType || 'instant';
 
         // Start ready to cast
         this.cooldownTimer = this.cooldown;
@@ -74,6 +75,22 @@ export class Ability {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Called on button press. For instant abilities, this just casts.
+     * Channeling abilities should override this to begin their channeling state.
+     */
+    startCasting() {
+        return this.cast();
+    }
+
+    /**
+     * Called on button release.
+     * Channeling abilities should override this to end their channeling state.
+     */
+    stopCasting() {
+        this.isCasting = false;
     }
 
     /**
