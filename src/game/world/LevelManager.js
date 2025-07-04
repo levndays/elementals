@@ -1,7 +1,7 @@
-
+// ~ src/game/world/LevelManager.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { EnemyPrefab } from '../prefabs/EnemyPrefab.js';
+import { NPCPrefab } from '../prefabs/NPCPrefab.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 
 export class LevelManager {
@@ -18,7 +18,7 @@ export class LevelManager {
         const sceneSetupResult = this._setupScene(levelData.settings);
         
         (levelData.objects || []).map(d => this.createObject(d)).forEach(e => this.world.add(e));
-        (levelData.enemies || []).map(d => this.createEnemy(d)).forEach(e => this.world.add(e));
+        (levelData.npcs || []).map(d => this.createNPC(d)).forEach(e => this.world.add(e));
         (levelData.triggers || []).map(d => this.createTrigger(d, 'Trigger')).forEach(e => this.world.add(e));
         (levelData.deathTriggers || []).map(d => this.createTrigger(d, 'DeathTrigger')).forEach(e => this.world.add(e));
 
@@ -93,8 +93,8 @@ export class LevelManager {
         return entity;
     }
 
-    createEnemy(enemyData) {
-        return EnemyPrefab.create(this.world, enemyData);
+    createNPC(npcData) {
+        return NPCPrefab.create(this.world, npcData);
     }
 
     createTrigger(triggerData, type) {
@@ -107,7 +107,7 @@ export class LevelManager {
         mesh.position.set(triggerData.position.x, triggerData.position.y, triggerData.position.z);
 
         const shape = new CANNON.Box(new CANNON.Vec3(...size.map(s => s / 2)));
-        const body = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true, shape, position: new CANNON.Vec3(triggerData.position.x, triggerData.position.y, triggerData.position.z), collisionFilterGroup: COLLISION_GROUPS.TRIGGER, collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY });
+        const body = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true, shape, position: new CANNON.Vec3(triggerData.position.x, triggerData.position.y, triggerData.position.z), collisionFilterGroup: COLLISION_GROUPS.TRIGGER, collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY });
         
         if (triggerData.rotation) {
             mesh.rotation.set(THREE.MathUtils.degToRad(triggerData.rotation.x || 0), THREE.MathUtils.degToRad(triggerData.rotation.y || 0), THREE.MathUtils.degToRad(triggerData.rotation.z || 0));

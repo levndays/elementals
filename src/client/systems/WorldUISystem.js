@@ -1,3 +1,4 @@
+// ~ src/client/systems/WorldUISystem.js
 import { HealthBar } from '../ui/HealthBar.js';
 
 /**
@@ -16,21 +17,23 @@ export class WorldUISystem {
             this.dispose(); // Clean up listeners from old world
         }
         this.world = world;
-        this._onEnemySpawned = this._onEnemySpawned.bind(this);
-        this._onEnemyDied = this._onEnemyDied.bind(this);
+        this._onNPCSpawned = this._onNPCSpawned.bind(this);
+        this._onNPCDied = this._onNPCDied.bind(this);
 
-        this.world.on('enemySpawned', this._onEnemySpawned);
-        this.world.on('enemyDied', this._onEnemyDied);
+        this.world.on('npcSpawned', this._onNPCSpawned);
+        this.world.on('npcDied', this._onNPCDied);
     }
     
-    _onEnemySpawned({ enemy }) {
-        if (!this.healthBars.has(enemy)) {
-            const healthBar = new HealthBar(this.scene);
-            this.healthBars.set(enemy, healthBar);
+    _onNPCSpawned({ npc }) {
+        // Create health bars for any NPC (enemy or allied).
+        // Player entity is not an NPC, so it will be skipped.
+        if ((npc.team === 'enemy' || npc.team === 'player') && !this.healthBars.has(npc)) {
+            const healthBar = new HealthBar(this.scene, npc.team);
+            this.healthBars.set(npc, healthBar);
         }
     }
 
-    _onEnemyDied({ entity }) {
+    _onNPCDied({ entity }) {
         if (this.healthBars.has(entity)) {
             const healthBar = this.healthBars.get(entity);
             healthBar.dispose();
@@ -67,8 +70,8 @@ export class WorldUISystem {
     
     dispose() {
         if (this.world) {
-            this.world.off('enemySpawned', this._onEnemySpawned);
-            this.world.off('enemyDied', this._onEnemyDied);
+            this.world.off('npcSpawned', this._onNPCSpawned);
+            this.world.off('npcDied', this._onNPCDied);
         }
         for (const healthBar of this.healthBars.values()) {
             healthBar.dispose();

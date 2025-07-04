@@ -1,4 +1,4 @@
-// src/game/components/AIComponent.js
+// ~ src/game/components/AIComponent.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
@@ -8,6 +8,7 @@ import * as CANNON from 'cannon-es';
 export class AIComponent {
     constructor() {
         this.state = 'IDLE'; // e.g., IDLE, SEARCHING, COMBAT, REPOSITIONING
+        this.target = null;
         
         // --- Perception ---
         this.lastKnownPlayerPosition = new CANNON.Vec3();
@@ -15,6 +16,7 @@ export class AIComponent {
             detectionRange: 40,
             loseSightRange: 50,
             attackRange: 30,
+            meleeAttackRange: 2.5,
             optimalRange: 22,
             minimumRange: 10,
             hasLineOfSight: false,
@@ -27,6 +29,7 @@ export class AIComponent {
         
         this.actionTimers = {
             attack: 1.5,
+            meleeAttack: 1.0,
             jump: 2.0,
             dash: 2.0,
             reposition: 3.0,
@@ -34,6 +37,7 @@ export class AIComponent {
         
         this.actionCooldowns = {
             attack: 1.5,
+            meleeAttack: 1.0,
             jump: 2.0,
             dash: 2.0,
             reposition: 3.0,

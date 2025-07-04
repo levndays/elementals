@@ -30,10 +30,11 @@
         { "type": "Box", "name": "Slam_Tower_Top", "size": [8, 2, 8], "position": { "x": 20, "y": 18, "z": 50 }, "material": {"color": "0x445566"}, "physics": {"mass": 0}},
         { "type": "Box", "name": "Arena_Platform", "size": [30, 2, 30], "position": { "x": 20, "y": -2, "z": 80 }, "material": {"color": "0x455A64"}, "physics": {"mass": 0}}
     ],
-    "enemies": [
-        { "type": "Dummy", "position": { "x": 15, "y": 1, "z": 85 }},
-        { "type": "Dummy", "position": { "x": 25, "y": 1, "z": 85 }},
-        { "type": "Dummy", "position": { "x": 20, "y": 1, "z": 95 }}
+    "npcs": [
+        { "type": "NPC", "team": "enemy", "attackType": "ranged", "position": { "x": 15, "y": 1, "z": 85 }},
+        { "type": "NPC", "team": "enemy", "attackType": "ranged", "position": { "x": 25, "y": 1, "z": 85 }},
+        { "type": "NPC", "team": "enemy", "attackType": "melee", "position": { "x": 20, "y": 1, "z": 95 }},
+        { "type": "NPC", "team": "player", "attackType": "melee", "position": { "x": 20, "y": 1, "z": 75 }}
     ],
     "triggers": [
         { "type": "Trigger", "name": "Move_Tuto", "position": {"x": 0, "y": 3, "z": 2}, "size": [10, 5, 4], "message": "Use <kbd>WASD</kbd> to move and your <kbd>Mouse</kbd> to look around.", "duration": 8, "color": "0x2ed573"},
@@ -41,7 +42,7 @@
         { "type": "Trigger", "name": "DoubleJump_Tuto", "position": {"x": 0, "y": 3, "z": 22}, "size": [8, 5, 4], "message": "This gap is higher. Press <kbd>Space</kbd> again in mid-air to double jump.", "duration": 8, "color": "0x2ed573"},
         { "type": "Trigger", "name": "Dash_Tuto", "position": {"x": 0, "y": 7, "z": 40}, "size": [8, 5, 4], "message": "Double-tap a movement key (<kbd>W</kbd>,<kbd>A</kbd>,<kbd>S</kbd>, or <kbd>D</kbd>) to dash.", "duration": 8, "color": "0x2ed573"},
         { "type": "Trigger", "name": "Slam_Tuto", "position": {"x": 20, "y": 15, "z": 50}, "size": [10, 10, 10], "message": "Get to the top of the tower, then jump and hold <kbd>L-Shift</kbd> in mid-air to ground slam onto the arena below.", "duration": 10, "color": "0x2ed573"},
-        { "type": "Trigger", "name": "Combat_Tuto", "position": {"x": 20, "y": 2, "z": 70}, "size": [30, 8, 4], "message": "Destroy the dummies to complete the tutorial. <kbd>LMB</kbd> to attack, <kbd>RMB</kbd> to use abilities. <kbd>1-4</kbd> to select abilities.", "duration": 10, "color": "0xff4757"}
+        { "type": "Trigger", "name": "Combat_Tuto", "position": {"x": 20, "y": 2, "z": 70}, "size": [30, 8, 4], "message": "Destroy the enemies to complete the tutorial. An ally will help you. <kbd>LMB</kbd> to attack, <kbd>RMB</kbd> to use abilities. <kbd>1-4</kbd> to select abilities.", "duration": 12, "color": "0xff4757"}
     ],
     "deathTriggers": [
         { "type": "DeathTrigger", "name": "Death_Zone", "position": { "x": 10, "y": -15, "z": 50 }, "size": [100, 2, 120] }

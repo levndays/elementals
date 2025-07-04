@@ -1,3 +1,4 @@
+// ~ src/game/systems/DeathSystem.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
@@ -17,10 +18,10 @@ export class DeathSystem {
      * @param {number} deltaTime
      */
     update(world, deltaTime) {
-        // Find newly dead enemies and start their death sequence
-        for (const enemy of world.getEnemies()) {
-            if (enemy.isDead && !this.dyingEntities.has(enemy)) {
-                this.startDeathSequence(enemy);
+        // Find newly dead NPCs and start their death sequence
+        for (const npc of world.getNPCs()) {
+            if (npc.isDead && !this.dyingEntities.has(npc)) {
+                this.startDeathSequence(npc);
             }
         }
 
@@ -38,14 +39,14 @@ export class DeathSystem {
     }
 
     /**
-     * Initiates the death sequence for an enemy.
-     * @param {import('../entities/Enemy.js').Enemy} enemy
+     * Initiates the death sequence for an NPC.
+     * @param {import('../entities/NPC.js').NPC} npc
      */
-    startDeathSequence(enemy) {
-        this.dyingEntities.set(enemy, { timer: DEATH_DURATION });
+    startDeathSequence(npc) {
+        this.dyingEntities.set(npc, { timer: DEATH_DURATION });
         
-        if (enemy.physics?.body) {
-            const body = enemy.physics.body;
+        if (npc.physics?.body) {
+            const body = npc.physics.body;
             // Make it a ragdoll
             body.fixedRotation = false;
             body.updateMassProperties();
@@ -61,8 +62,8 @@ export class DeathSystem {
         }
 
         // Prepare material for fading
-        if (enemy.mesh?.material) {
-            enemy.mesh.material.transparent = true;
+        if (npc.mesh?.material) {
+            npc.mesh.material.transparent = true;
         }
     }
 

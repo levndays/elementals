@@ -3,7 +3,7 @@
   "spawnPoint": {
     "x": 0,
     "y": 3,
-    "z": 0
+    "z": -20
   },
   "deathSpawnPoint": {
     "x": 0,
@@ -613,70 +613,66 @@
       }
     }
   ],
-  "enemies": [
+  "npcs": [
     {
-      "type": "Dummy",
-      "position": {
-        "x": 20,
-        "y": 3,
-        "z": 0
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": 20, "y": 3, "z": 0 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": -20,
-        "y": 3,
-        "z": 0
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": -20, "y": 3, "z": 0 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": 50,
-        "y": 12,
-        "z": 25
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": 50, "y": 12, "z": 25 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": -50,
-        "y": 12,
-        "z": 25
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": -50, "y": 12, "z": 25 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": 50,
-        "y": 12,
-        "z": -25
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": 50, "y": 12, "z": -25 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": -50,
-        "y": 12,
-        "z": -25
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "ranged",
+      "position": { "x": -50, "y": 12, "z": -25 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": 0,
-        "y": 22,
-        "z": 45
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "melee",
+      "position": { "x": 10, "y": 3, "z": 10 }
     },
     {
-      "type": "Dummy",
-      "position": {
-        "x": 0,
-        "y": 22,
-        "z": -45
-      }
+      "type": "NPC",
+      "team": "enemy",
+      "attackType": "melee",
+      "position": { "x": -10, "y": 3, "z": 10 }
+    },
+    {
+      "type": "NPC",
+      "team": "player",
+      "attackType": "ranged",
+      "position": { "x": -10, "y": 3, "z": -20 }
+    },
+    {
+      "type": "NPC",
+      "team": "player",
+      "attackType": "melee",
+      "position": { "x": 10, "y": 3, "z": -20 }
     }
   ],
   "triggers": [],

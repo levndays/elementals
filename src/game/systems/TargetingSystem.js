@@ -8,7 +8,11 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
  */
 export class TargetingSystem {
     constructor() {
-        // Reusable objects to prevent garbage collection churn
+        // --- System Performance ---
+        this.updateInterval = 0.1; // Run every 100ms
+        this.timer = Math.random() * this.updateInterval; // Stagger updates
+
+        // --- Reusable objects to prevent garbage collection churn ---
         this._targetRayOrigin = new THREE.Vector3();
         this._targetRayDirection = new THREE.Vector3();
         this._enemyPos = new THREE.Vector3();
@@ -26,6 +30,13 @@ export class TargetingSystem {
     update(world, deltaTime) {
         const player = world.player;
         if (!player || player.isDead) return;
+
+        // Throttle the main logic to run at a fixed interval
+        this.timer += deltaTime;
+        if (this.timer < this.updateInterval) {
+            return;
+        }
+        this.timer = 0;
 
         const currentAbility = player.abilities.abilities[player.abilities.selectedAbilityIndex];
         if (!currentAbility?.requiresLockOn) {

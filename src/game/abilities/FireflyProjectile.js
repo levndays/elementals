@@ -1,3 +1,4 @@
+// ~ src/game/abilities/FireflyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -23,7 +24,7 @@ export class FireflyProjectile {
         const shape = new CANNON.Sphere(0.15);
         const body = new CANNON.Body({
             mass: 0.05, shape,
-            collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
+            collisionFilterGroup: COLLISION_GROUPS.PLAYER_PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY,
             linearDamping: 0.1,
         });

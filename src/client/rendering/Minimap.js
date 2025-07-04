@@ -1,8 +1,8 @@
+// ~ src/client/rendering/Minimap.js
 import * as THREE from 'three';
 
 /**
- * Renders the minimap onto a 2D canvas, showing the player, enemies, and level geometry.
- * It's updated by the UIManager with the latest game state.
+ * Renders the minimap onto a 2D canvas, showing the player, enemies, allies, and level geometry.
  */
 export class Minimap {
     constructor() {
@@ -16,6 +16,7 @@ export class Minimap {
         this.borderColor = 'rgba(255, 255, 255, 0.3)';
         this.playerColor = '#2ed573';
         this.enemyColor = '#ff4757';
+        this.allyColor = '#4a90e2'; // Blue for allies
         this.objectColor = 'rgba(255, 255, 255, 0.2)';
 
         // Reusable vector for performance
@@ -25,10 +26,10 @@ export class Minimap {
     /**
      * Updates and draws the minimap.
      * @param {Player} player The player instance from the game world.
-     * @param {Enemy[]} enemies Array of enemy instances.
+     * @param {NPC[]} npcs Array of NPC instances.
      * @param {Object[]} levelObjects Array of level object instances.
      */
-    update(player, enemies, levelObjects) {
+    update(player, npcs, levelObjects) {
         if (!player || player.isDead || !this.ctx) {
             this.ctx?.clearRect(0, 0, this.size, this.size);
             return;
@@ -77,13 +78,14 @@ export class Minimap {
             this.ctx.restore();
         }
 
-        // --- Draw Enemies ---
-        this.ctx.fillStyle = this.enemyColor;
-        for (const enemy of enemies) {
-            if (enemy.isDead || !enemy.physics?.body) continue;
+        // --- Draw NPCs (Enemies and Allies) ---
+        for (const npc of npcs) {
+            if (npc.isDead || !npc.physics?.body) continue;
 
-            const dx = enemy.physics.body.position.x - playerPos.x;
-            const dz = enemy.physics.body.position.z - playerPos.z;
+            this.ctx.fillStyle = npc.team === 'enemy' ? this.enemyColor : this.allyColor;
+
+            const dx = npc.physics.body.position.x - playerPos.x;
+            const dz = npc.physics.body.position.z - playerPos.z;
 
             if (Math.sqrt(dx * dx + dz * dz) < this.worldScale) {
                 this.ctx.beginPath();

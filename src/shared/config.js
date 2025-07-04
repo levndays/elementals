@@ -1,4 +1,4 @@
-// src/shared/config.js
+// ~ src/shared/config.js
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 
@@ -52,16 +52,20 @@ export const GAME_CONFIG = {
         KNOCKBACK_DURATION: 1.0, // seconds
     },
 
-    // Enemy base parameters
-    ENEMY: {
-        DUMMY: {
+    // NPC base parameters
+    NPC: {
+        BASE: {
             MAX_HEALTH: 500,
             SPEED: 7.0,
             MASS: 80,
             RADIUS: 0.8,
+        },
+        RANGED: {
             PROJECTILE_DAMAGE: 100,
             PROJECTILE_SPEED: 40,
-            ATTACK_COOLDOWN: 1.5,
+        },
+        MELEE: {
+            DAMAGE: 150,
         }
     },
     

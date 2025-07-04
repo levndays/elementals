@@ -1,3 +1,4 @@
+// ~ src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -202,7 +203,7 @@ export class UIManager {
             game.core.renderer.camera
         );
         this.hud.updateEnemyCount(game.world.enemiesKilled, game.world.initialEnemyCount);
-        this.minimap.update(player, game.world.getEnemies(), game.world.getLevelObjects());
+        this.minimap.update(player, game.world.getNPCs(), game.world.getLevelObjects());
         
         if (game.gameState === 'DEAD') {
             this.elements.respawnTimerText.textContent = `Respawning in ${Math.ceil(game.respawnTimer)}...`;

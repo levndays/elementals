@@ -1,4 +1,3 @@
-// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -6,7 +5,7 @@ import { Util } from '../../shared/util.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 
 /**
- * Manages AI behavior for enemy entities.
+ * Manages AI behavior for NPC entities.
  */
 export class AISystem {
     constructor() {
@@ -19,6 +18,7 @@ export class AISystem {
         this._lookAtTarget = new THREE.Vector3();
         this._tempQuaternion = new CANNON.Quaternion();
         this._tempObject3D = new THREE.Object3D();
+        this._forward = new THREE.Vector3();
     }
 
     /**
@@ -26,51 +26,68 @@ export class AISystem {
      * @param {number} deltaTime
      */
     update(world, deltaTime) {
-        const player = world.player;
-        if (!player || player.isDead) {
-            world.getEnemies().forEach(enemy => {
-                enemy.ai.state = 'IDLE';
-                enemy.physics.body.velocity.x *= 0.9;
-                enemy.physics.body.velocity.z *= 0.9;
-            });
+        for (const npc of world.getNPCs()) {
+            if (npc.isDead) continue;
+
+            if (npc.ai.isKnockedBack) {
+                npc.ai.knockbackTimer -= deltaTime;
+                if (npc.ai.knockbackTimer <= 0) npc.ai.isKnockedBack = false;
+                continue;
+            }
+            
+            npc.ai.aiUpdateTimer += deltaTime;
+            if (npc.ai.aiUpdateTimer >= npc.ai.aiUpdateInterval) {
+                this._runAI(world, npc);
+                npc.ai.aiUpdateTimer = 0;
+            }
+            
+            this._updateTimers(npc.ai, deltaTime);
+            this._applyMovement(npc);
+        }
+    }
+    
+    _runAI(world, npc) {
+        this._updateTarget(world, npc);
+        if (!npc.ai.target) {
+            npc.ai.state = 'IDLE';
+            npc.physics.body.velocity.x *= 0.9;
+            npc.physics.body.velocity.z *= 0.9;
             return;
         }
 
-        for (const enemy of world.getEnemies()) {
-            if (enemy.isDead) continue;
-
-            if (enemy.ai.isKnockedBack) {
-                enemy.ai.knockbackTimer -= deltaTime;
-                if (enemy.ai.knockbackTimer <= 0) {
-                    enemy.ai.isKnockedBack = false;
-                }
-                continue; // Skip AI logic while knocked back
-            }
-            
-            enemy.ai.aiUpdateTimer += deltaTime;
-            if (enemy.ai.aiUpdateTimer >= enemy.ai.aiUpdateInterval) {
-                this._runAI(world, enemy, player);
-                enemy.ai.aiUpdateTimer = 0;
-            }
-            
-            this._updateTimers(enemy.ai, deltaTime);
-            this._applyMovement(enemy);
+        this._updatePerception(world, npc);
+        this._updateState(npc);
+        this._executeStateActions(world, npc);
+    }
+    
+    _updateTarget(world, npc) {
+        let potentialTargets = [];
+        if (npc.team === 'enemy') {
+            potentialTargets = [world.player, ...world.getAllies()].filter(t => t && !t.isDead);
+        } else { // ally
+            potentialTargets = world.getEnemies().filter(t => t && !t.isDead);
         }
+
+        let closestTarget = null;
+        let minDistanceSq = Infinity;
+
+        for (const target of potentialTargets) {
+            const distanceSq = npc.physics.body.position.distanceSquared(target.physics.body.position);
+            if (distanceSq < minDistanceSq) {
+                minDistanceSq = distanceSq;
+                closestTarget = target;
+            }
+        }
+        npc.ai.target = closestTarget;
     }
-    
-    _runAI(world, enemy, player) {
-        this._updatePerception(world, enemy, player);
-        this._updateState(enemy);
-        this._executeStateActions(world, enemy, player);
-    }
-    
-    _updatePerception(world, enemy, player) {
-        const ai = enemy.ai;
-        ai.perception.distanceToPlayer = enemy.physics.body.position.distanceTo(player.physics.body.position);
+
+    _updatePerception(world, npc) {
+        const ai = npc.ai;
+        ai.perception.distanceToPlayer = npc.physics.body.position.distanceTo(ai.target.physics.body.position);
         
-        this._perceptionRayFrom.copy(enemy.physics.body.position);
+        this._perceptionRayFrom.copy(npc.physics.body.position);
         this._perceptionRayFrom.y += 1.0;
-        this._perceptionRayTo.copy(player.physics.body.position);
+        this._perceptionRayTo.copy(ai.target.physics.body.position);
         this._perceptionRayTo.y += 1.0;
 
         this._losRayResult.reset();
@@ -82,42 +99,52 @@ export class AISystem {
         
         ai.perception.hasLineOfSight = !this._losRayResult.hasHit;
         if (ai.perception.hasLineOfSight) {
-            ai.lastKnownPlayerPosition.copy(player.physics.body.position);
+            ai.lastKnownPlayerPosition.copy(ai.target.physics.body.position);
         }
     }
 
-    _updateState(enemy) {
-        const ai = enemy.ai;
+    _updateState(npc) {
+        const ai = npc.ai;
+        if (!ai.target) {
+            ai.state = 'IDLE';
+            return;
+        }
+
         if (ai.perception.hasLineOfSight && ai.perception.distanceToPlayer < ai.perception.detectionRange) {
             ai.state = 'COMBAT';
         } else if (ai.state === 'COMBAT' && ai.perception.distanceToPlayer > ai.perception.loseSightRange) {
             ai.state = 'SEARCHING';
-        } else if (ai.state === 'SEARCHING' && enemy.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
+        } else if (ai.state === 'SEARCHING' && npc.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
             ai.state = 'IDLE';
         }
     }
 
-    _executeStateActions(world, enemy, player) {
-        const { ai, physics } = enemy;
+    _executeStateActions(world, npc) {
+        const { ai } = npc;
         if (ai.isDashing) {
             if (ai.dashStateTimer >= ai.dashDuration) ai.isDashing = false;
             return;
         }
         
-        this._faceTarget(enemy, ai.lastKnownPlayerPosition);
-        if (ai.state === 'COMBAT') this._handleCombatDecisions(world, enemy, player);
+        this._faceTarget(npc, ai.lastKnownPlayerPosition);
+        if (ai.state === 'COMBAT') this._handleCombatDecisions(world, npc);
     }
 
-    _handleCombatDecisions(world, enemy, player) {
-        const { ai, physics } = enemy;
+    _handleCombatDecisions(world, npc) {
+        if (npc.attackType === 'ranged') this._handleRangedCombat(world, npc);
+        else if (npc.attackType === 'melee') this._handleMeleeCombat(world, npc);
+    }
+    
+    _handleRangedCombat(world, npc) {
+        const { ai, physics } = npc;
         const { distanceToPlayer, hasLineOfSight, attackRange } = ai.perception;
         
         if (hasLineOfSight && distanceToPlayer <= attackRange && ai.actionTimers.attack <= 0) {
-            this._shoot(world, enemy, player);
+            this._shoot(world, npc, ai.target);
             ai.actionTimers.attack = ai.actionCooldowns.attack;
         }
 
-        this._navigateObstacles(world, enemy);
+        this._navigateObstacles(world, npc);
         if (ai.actionTimers.dash <= 0) {
             const toPlayerDir = new CANNON.Vec3().copy(ai.lastKnownPlayerPosition).vsub(physics.body.position);
             const right = new THREE.Vector3().crossVectors(toPlayerDir, CANNON.Vec3.UNIT_Y).normalize();
@@ -127,12 +154,34 @@ export class AISystem {
             ai.actionTimers.dash = ai.actionCooldowns.dash;
         }
     }
+    
+    _handleMeleeCombat(world, npc) {
+        const { ai } = npc;
+        const { distanceToPlayer, hasLineOfSight, meleeAttackRange } = ai.perception;
 
-    _applyMovement(enemy) {
-        const { ai, physics } = enemy;
-        const speed = GAME_CONFIG.ENEMY.DUMMY.SPEED;
+        if (hasLineOfSight && distanceToPlayer <= meleeAttackRange && ai.actionTimers.meleeAttack <= 0) {
+            this._meleeAttack(npc, ai.target);
+            ai.actionTimers.meleeAttack = ai.actionCooldowns.meleeAttack;
+        }
+        this._navigateObstacles(world, npc);
+    }
+    
+    _meleeAttack(npc, target) {
+        const config = GAME_CONFIG.NPC.MELEE;
+        // A simple check if the target is in front of the NPC
+        this._forward.set(0, 0, 1).applyQuaternion(npc.physics.body.quaternion);
+        const toTarget = new THREE.Vector3().copy(target.physics.body.position).sub(npc.physics.body.position).normalize();
         
-        physics.body.wakeUp(); // Wake the body before changing its velocity.
+        if (this._forward.dot(toTarget) > 0.7) { // Check if target is roughly in front (cone)
+            target.takeDamage(config.DAMAGE);
+        }
+    }
+
+    _applyMovement(npc) {
+        const { ai, physics } = npc;
+        const speed = GAME_CONFIG.NPC.BASE.SPEED;
+        
+        physics.body.wakeUp();
 
         if (ai.isDashing) {
             const dashSpeed = speed * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
@@ -149,7 +198,7 @@ export class AISystem {
                 ai.lastKnownPlayerPosition.vsub(physics.body.position, moveDirection);
                 break;
             case 'COMBAT':
-                moveDirection = this._getCombatRepositionVector(enemy);
+                moveDirection = this._getCombatRepositionVector(npc);
                 break;
         }
         
@@ -161,30 +210,35 @@ export class AISystem {
         }
     }
     
-    _getCombatRepositionVector(enemy) {
-        const { ai, physics } = enemy;
-        const { distanceToPlayer, optimalRange, minimumRange } = ai.perception;
+    _getCombatRepositionVector(npc) {
+        const { ai, physics } = npc;
+        const { distanceToPlayer, optimalRange, minimumRange, meleeAttackRange } = ai.perception;
         const toPlayerDir = new CANNON.Vec3().copy(ai.lastKnownPlayerPosition).vsub(physics.body.position);
 
-        if (distanceToPlayer > optimalRange) return toPlayerDir;
-        if (distanceToPlayer < minimumRange) return toPlayerDir.negate();
-        
-        if (ai.actionTimers.reposition <= 0) {
-            ai.strafeDirection *= -1;
-            ai.actionTimers.reposition = ai.actionCooldowns.reposition;
+        if (npc.attackType === 'melee') {
+            if (distanceToPlayer > meleeAttackRange * 0.8) return toPlayerDir; // Get closer
+            return new CANNON.Vec3(); // Stay put
+        } else { // Ranged
+            if (distanceToPlayer > optimalRange) return toPlayerDir;
+            if (distanceToPlayer < minimumRange) return toPlayerDir.negate();
+            
+            if (ai.actionTimers.reposition <= 0) {
+                ai.strafeDirection *= -1;
+                ai.actionTimers.reposition = ai.actionCooldowns.reposition;
+            }
+            return new CANNON.Vec3(toPlayerDir.z, 0, -toPlayerDir.x).scale(ai.strafeDirection);
         }
-        return new CANNON.Vec3(toPlayerDir.z, 0, -toPlayerDir.x).scale(ai.strafeDirection);
     }
     
-    _navigateObstacles(world, enemy) {
-        const { physics, ai } = enemy;
+    _navigateObstacles(world, npc) {
+        const { physics, ai } = npc;
         if (physics.body.velocity.lengthSquared() < 0.1 || ai.actionTimers.jump <= 0) return;
 
         const rayFrom = new CANNON.Vec3().copy(physics.body.position);
         
         const velocityDirection = physics.body.velocity.clone();
-        velocityDirection.normalize(); // Normalizes in-place, returns length. Do not chain.
-        const rayVector = velocityDirection.scale(2); // .scale() returns a new scaled vector.
+        velocityDirection.normalize();
+        const rayVector = velocityDirection.scale(2);
         const rayTo = rayFrom.clone().vadd(rayVector);
 
         this._obstacleRayResult.reset();
@@ -201,23 +255,23 @@ export class AISystem {
         }
     }
     
-    _shoot(world, enemy, player) {
-        const config = GAME_CONFIG.ENEMY.DUMMY;
-        const timeToTarget = enemy.ai.perception.distanceToPlayer / config.PROJECTILE_SPEED;
+    _shoot(world, npc, target) {
+        const config = GAME_CONFIG.NPC.RANGED;
+        const timeToTarget = npc.ai.perception.distanceToPlayer / config.PROJECTILE_SPEED;
         const predictionTime = Math.min(timeToTarget, 1.0);
-        const predictedPosition = new THREE.Vector3().copy(player.physics.body.position).add(
-            new THREE.Vector3().copy(player.physics.body.velocity).multiplyScalar(predictionTime)
+        const predictedPosition = new THREE.Vector3().copy(target.physics.body.position).add(
+            new THREE.Vector3().copy(target.physics.body.velocity).multiplyScalar(predictionTime)
         );
         predictedPosition.y += 0.5;
 
         const launchVelocity = Util.calculateBallisticLaunchVelocity(
-            new THREE.Vector3().copy(enemy.physics.body.position), predictedPosition,
+            new THREE.Vector3().copy(npc.physics.body.position), predictedPosition,
             config.PROJECTILE_SPEED, Math.abs(world.physics.world.gravity.y)
         );
 
         world.createEnemyProjectile({
-            caster: enemy,
-            initialVelocity: launchVelocity || new THREE.Vector3().subVectors(predictedPosition, enemy.physics.body.position).normalize().multiplyScalar(config.PROJECTILE_SPEED)
+            caster: npc,
+            initialVelocity: launchVelocity || new THREE.Vector3().subVectors(predictedPosition, npc.physics.body.position).normalize().multiplyScalar(config.PROJECTILE_SPEED)
         });
     }
 
@@ -230,12 +284,12 @@ export class AISystem {
         if (ai.isDashing) ai.dashStateTimer += deltaTime;
     }
     
-    _faceTarget(enemy, targetPosition) {
+    _faceTarget(npc, targetPosition) {
         this._lookAtTarget.copy(targetPosition);
-        this._lookAtTarget.y = enemy.physics.body.position.y;
-        this._tempObject3D.position.copy(enemy.physics.body.position);
+        this._lookAtTarget.y = npc.physics.body.position.y;
+        this._tempObject3D.position.copy(npc.physics.body.position);
         this._tempObject3D.lookAt(this._lookAtTarget);
         this._tempQuaternion.copy(this._tempObject3D.quaternion);
-        enemy.physics.body.quaternion.slerp(this._tempQuaternion, 0.1, enemy.physics.body.quaternion);
+        npc.physics.body.quaternion.slerp(this._tempQuaternion, 0.1, npc.physics.body.quaternion);
     }
 }

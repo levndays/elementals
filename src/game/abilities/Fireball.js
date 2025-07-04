@@ -1,4 +1,4 @@
-// src/game/abilities/Fireball.js
+// ~ src/game/abilities/Fireball.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -26,7 +26,7 @@ export class Fireball {
         const shape = new CANNON.Sphere(this.RADIUS);
         this.body = new CANNON.Body({
             mass: 0.5, shape,
-            collisionFilterGroup: COLLISION_GROUPS.PROJECTILE,
+            collisionFilterGroup: COLLISION_GROUPS.PLAYER_PROJECTILE,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY,
         });
 
@@ -101,11 +101,7 @@ export class Fireball {
         const damage = this.DAMAGE_PER_SECOND * deltaTime;
         const radiusSq = this.aoeSphere.radius * this.aoeSphere.radius;
 
-        // Check player
-        if (this.world.player.physics.body.position.distanceSquared(this.aoeBody.position) < radiusSq) {
-            this.world.player.takeDamage(damage);
-        }
-        // Check enemies
+        // Player projectiles only damage enemies
         for (const enemy of this.world.getEnemies()) {
             if (enemy.physics.body.position.distanceSquared(this.aoeBody.position) < radiusSq) {
                 enemy.takeDamage(damage);

@@ -1,4 +1,4 @@
-// src/game/Game.js
+// ~ src/game/Game.js
 import * as THREE from 'three';
 import { World } from './world/World.js';
 import { PlayerController } from '../client/entities/PlayerController.js';
@@ -88,7 +88,7 @@ export class Game {
         
         // Centralize all World event listening here
         this.world.on('playerDied', () => this.handlePlayerDeath());
-        this.world.on('enemyDied', () => this.world.onEnemyDied()); // Correctly call the world's handler
+        this.world.on('npcDied', ({ entity }) => this.world.onNPCDied(entity));
         this.world.on('levelCompleted', () => this.ui.tutorialManager.showLevelCompleted());
         this.world.on('tutorialTriggerActivated', (data) => this.ui.tutorialManager.onTriggerActivated(data));
         this.world.on('abilityCastFailed', (data) => {
