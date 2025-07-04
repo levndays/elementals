@@ -1,3 +1,4 @@
+// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -93,7 +94,10 @@ export class AISystem {
         this._losRayResult.reset();
         world.physics.world.raycastClosest(
             this._perceptionRayFrom, this._perceptionRayTo,
-            { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true },
+            {
+                collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.VISION_BLOCKER,
+                skipBackfaces: true
+            },
             this._losRayResult
         );
         
@@ -109,12 +113,21 @@ export class AISystem {
             ai.state = 'IDLE';
             return;
         }
-
+    
+        // If we can see the target and are close enough, enter combat.
         if (ai.perception.hasLineOfSight && ai.perception.distanceToPlayer < ai.perception.detectionRange) {
             ai.state = 'COMBAT';
-        } else if (ai.state === 'COMBAT' && ai.perception.distanceToPlayer > ai.perception.loseSightRange) {
+        } 
+        // If we are in combat but have lost line of sight, start searching.
+        else if (ai.state === 'COMBAT' && !ai.perception.hasLineOfSight) {
             ai.state = 'SEARCHING';
-        } else if (ai.state === 'SEARCHING' && npc.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
+        }
+        // If we are in combat but the target moved too far away, start searching.
+        else if (ai.state === 'COMBAT' && ai.perception.distanceToPlayer > ai.perception.loseSightRange) {
+            ai.state = 'SEARCHING';
+        }
+        // If we were searching and have arrived at the last known position, go idle.
+        else if (ai.state === 'SEARCHING' && npc.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
             ai.state = 'IDLE';
         }
     }

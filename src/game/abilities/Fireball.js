@@ -55,7 +55,11 @@ export class Fireball {
         this.physics.world.addEventListener('preStep', this.preStepHandler);
 
         this.aoeSphere = new CANNON.Sphere(this.RADIUS * 40);
-        this.aoeBody = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true });
+        this.aoeBody = new CANNON.Body({
+            type: CANNON.Body.STATIC,
+            isTrigger: true,
+            collisionFilterGroup: COLLISION_GROUPS.VISION_BLOCKER // This body will now block AI sight
+        });
         this.aoeBody.addShape(this.aoeSphere);
 
         this.physics.addBody(this.body);

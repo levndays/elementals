@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-04T17:25:24.140263
+Snapshot created on: 2025-07-04T18:10:29.614886
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -3196,52 +3196,100 @@ export class CardObject {
 --------------------------------------------------
 import * as THREE from 'three';
 
+// Asynchronously load shaders once at the module level
+const vertexShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.vert').then(res => res.text());
+const fragmentShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.frag').then(res => res.text());
+
 export class CardParticleSystem {
     constructor(scene, element) {
         this.scene = scene;
         this.element = element;
         this.isStreamType = ['Air', 'Water'].includes(this.element);
+        this.isReady = false;
+        this.points = null;
+        this.streamGroup = null;
 
-        if (this.isStreamType) {
-            this.streamGroup = new THREE.Group();
-            this.streams = [];
-            const streamMaterial = new THREE.MeshBasicMaterial({ map: this.createStreamTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, color: this.element === 'Air' ? 0xB3FCFC : 0x00A3FF });
-            const streamGeometry = new THREE.PlaneGeometry(1, 1);
-            for (let i = 0; i < 50; i++) {
-                const streamMesh = new THREE.Mesh(streamGeometry, streamMaterial.clone());
-                streamMesh.userData.velocity = new THREE.Vector3();
-                streamMesh.userData.phase = Math.random() * Math.PI * 2;
-                this.initStreamParticle(streamMesh);
-                this.streams.push(streamMesh);
-                this.streamGroup.add(streamMesh);
-            }
-            this.scene.add(this.streamGroup);
-        } else {
-            this.particleCount = 50;
-            this.velocities = [];
-            this.lifetimes = [];
-            const elementColors = { Fire: '#FF771A', Earth: '#B39159', Utility: '#A16BFF', Default: '#FFFFFF' };
-            this.color = elementColors[element] || elementColors.Default;
-            const positions = new Float32Array(this.particleCount * 3);
-            const opacities = new Float32Array(this.particleCount);
-            for (let i = 0; i < this.particleCount; i++) this.initPointParticle(i, positions, opacities);
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('alpha', new THREE.BufferAttribute(opacities, 1));
-            const material = new THREE.PointsMaterial({ color: this.color, size: 0.08, map: this.createPointTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-            this.points = new THREE.Points(geometry, material);
-            this.scene.add(this.points);
-        }
+        this.init();
     }
 
-    initPointParticle(i, positions, opacities) {
+    async init() {
+        if (this.isStreamType) {
+            this.initStreamSystem();
+        } else {
+            await this.initPointSystem();
+        }
+        this.isReady = true;
+    }
+
+    initStreamSystem() {
+        this.streamGroup = new THREE.Group();
+        this.streams = [];
+        const streamMaterial = new THREE.MeshBasicMaterial({ map: this.createStreamTexture(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, color: this.element === 'Air' ? 0xB3FCFC : 0x00A3FF });
+        const streamGeometry = new THREE.PlaneGeometry(1, 1);
+        for (let i = 0; i < 50; i++) {
+            const streamMesh = new THREE.Mesh(streamGeometry, streamMaterial.clone());
+            streamMesh.userData.velocity = new THREE.Vector3();
+            streamMesh.userData.phase = Math.random() * Math.PI * 2;
+            this.initStreamParticle(streamMesh);
+            this.streams.push(streamMesh);
+            this.streamGroup.add(streamMesh);
+        }
+        this.scene.add(this.streamGroup);
+    }
+    
+    async initPointSystem() {
+        this.particleCount = 150;
+        this.respawnCursor = 0;
+        const elementColors = { Fire: new THREE.Color('#FF771A'), Earth: new THREE.Color('#B39159'), Utility: new THREE.Color('#A16BFF'), Default: new THREE.Color('#FFFFFF') };
+        this.color = elementColors[this.element] || elementColors.Default;
+        
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(this.particleCount * 3);
+        const velocities = new Float32Array(this.particleCount * 3);
+        const lifetimes = new Float32Array(this.particleCount * 4); // maxLifetime, spawnTime, 0, 0
+
+        for (let i = 0; i < this.particleCount; i++) {
+            this.initPointParticle(i, 0, positions, velocities, lifetimes);
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        geometry.setAttribute('aLifetime', new THREE.BufferAttribute(lifetimes, 4));
+
+        const [vertexShader, fragmentShader] = await Promise.all([vertexShaderPromise, fragmentShaderPromise]);
+        
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uTexture: { value: this.createPointTexture() },
+                uColor: { value: this.color },
+                uScale: { value: 2.0 }
+            },
+            vertexShader,
+            fragmentShader,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true
+        });
+
+        this.points = new THREE.Points(geometry, material);
+        this.scene.add(this.points);
+    }
+
+    initPointParticle(i, currentTime, positions, velocities, lifetimes) {
         const i3 = i * 3;
+        const i4 = i * 4;
+
         positions[i3] = (Math.random() - 0.5) * 2;
         positions[i3 + 1] = (Math.random() - 0.5) * 1.5 - 1.0;
         positions[i3 + 2] = (Math.random() - 0.5) * 0.5;
-        this.velocities[i] = new THREE.Vector3((Math.random() - 0.5) * 0.1, Math.random() * 0.4 + 0.2, (Math.random() - 0.5) * 0.1);
-        this.lifetimes[i] = Math.random() * 3.0 + 1.0;
-        opacities[i] = 1.0;
+
+        velocities[i3] = (Math.random() - 0.5) * 0.1;
+        velocities[i3 + 1] = Math.random() * 0.4 + 0.2;
+        velocities[i3 + 2] = (Math.random() - 0.5) * 0.1;
+
+        lifetimes[i4] = Math.random() * 3.0 + 1.0; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime (staggered)
     }
 
     initStreamParticle(stream) {
@@ -3272,6 +3320,8 @@ export class CardParticleSystem {
     }
     
     update(deltaTime) {
+        if (!this.isReady) return;
+
         if (this.isStreamType) {
             for (const stream of this.streams) {
                 stream.userData.lifetime -= deltaTime;
@@ -3280,34 +3330,52 @@ export class CardParticleSystem {
                 stream.position.x += Math.sin(stream.position.y * 0.5 + stream.userData.phase) * 0.008;
                 stream.material.opacity = Math.sin((1.0 - (stream.userData.lifetime / stream.userData.initialLifetime)) * Math.PI) * 0.6;
             }
-        } else {
-            const positions = this.points.geometry.attributes.position.array;
-            const opacities = this.points.geometry.attributes.alpha.array;
-            for (let i = 0; i < this.particleCount; i++) {
-                if ((this.lifetimes[i] -= deltaTime) <= 0) this.initPointParticle(i, positions, opacities);
-                const i3 = i * 3;
-                positions[i3] += this.velocities[i].x * deltaTime;
-                positions[i3 + 1] += this.velocities[i].y * deltaTime;
-                positions[i3 + 2] += this.velocities[i].z * deltaTime;
-                opacities[i] = Math.max(0, this.lifetimes[i] / 3.0);
+        } else if (this.points) {
+            const material = this.points.material;
+            const currentTime = material.uniforms.uTime.value += deltaTime;
+
+            const lifetimeAttr = this.points.geometry.attributes.aLifetime;
+            const positionAttr = this.points.geometry.attributes.position;
+            const velocityAttr = this.points.geometry.attributes.velocity;
+
+            let respawned = 0;
+            const particlesToRespawn = 5; // Check a few particles per frame to amortize cost
+
+            for (let i = 0; i < particlesToRespawn; i++) {
+                const index = (this.respawnCursor + i) % this.particleCount;
+                const maxLifetime = lifetimeAttr.getX(index);
+                const spawnTime = lifetimeAttr.getY(index);
+
+                if (currentTime - spawnTime > maxLifetime) {
+                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array);
+                    respawned++;
+                }
             }
-            this.points.geometry.attributes.position.needsUpdate = true;
-            this.points.geometry.attributes.alpha.needsUpdate = true;
+
+            if (respawned > 0) {
+                lifetimeAttr.needsUpdate = true;
+                positionAttr.needsUpdate = true;
+                velocityAttr.needsUpdate = true;
+            }
+
+            this.respawnCursor = (this.respawnCursor + particlesToRespawn) % this.particleCount;
         }
     }
 
     dispose() {
         if (this.isStreamType) {
-            if (this.streams.length > 0) {
-                this.streams[0].geometry.dispose();
-                this.streams[0].material.map.dispose();
+            if (this.streamGroup) {
+                if (this.streams.length > 0) {
+                    this.streams[0].geometry.dispose();
+                    this.streams[0].material.map.dispose();
+                }
+                this.streams.forEach(stream => stream.material.dispose());
+                this.scene.remove(this.streamGroup);
             }
-            this.streams.forEach(stream => stream.material.dispose());
-            this.scene.remove(this.streamGroup);
         } else if (this.points) {
             this.scene.remove(this.points);
             this.points.geometry.dispose();
-            this.points.material.map.dispose();
+            this.points.material.uniforms.uTexture.value.dispose();
             this.points.material.dispose();
         }
     }
@@ -4255,6 +4323,68 @@ void main() {
 === END OF FILE: src/client/rendering/shaders/card_back.vert ===
 
 
+=== FILE: src/client/rendering/shaders/gpu_particle.frag ===
+--------------------------------------------------
+uniform sampler2D uTexture;
+uniform vec3 uColor;
+
+varying float vAlpha;
+
+void main() {
+    if (vAlpha <= 0.0) discard;
+
+    vec4 texColor = texture2D(uTexture, gl_PointCoord);
+    if (texColor.a < 0.1) discard;
+
+    gl_FragColor = vec4(uColor, vAlpha * texColor.a);
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/shaders/gpu_particle.frag ===
+
+
+=== FILE: src/client/rendering/shaders/gpu_particle.vert ===
+--------------------------------------------------
+uniform float uTime;
+uniform float uScale;
+
+attribute vec3 velocity;
+attribute vec4 aLifetime; // x: maxLifetime, y: spawnTime
+
+varying float vAlpha;
+
+void main() {
+    float maxLifetime = aLifetime.x;
+    float spawnTime = aLifetime.y;
+
+    float lifeProgress = (uTime - spawnTime) / maxLifetime;
+
+    // If particle is "dead" or not yet born, hide it.
+    if (lifeProgress > 1.0 || lifeProgress < 0.0) {
+        vAlpha = 0.0;
+        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);
+        return;
+    }
+    
+    // Simple physics: pos = initial_pos + velocity * time_since_spawn
+    vec3 newPosition = position + velocity * (uTime - spawnTime);
+
+    // Add some turbulence/noise for more organic movement
+    newPosition.x += sin(newPosition.y * 2.0 + uTime) * 0.1;
+    newPosition.z += cos(newPosition.y * 2.0 + uTime) * 0.1;
+    
+    vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0);
+    
+    // Set point size based on distance to camera
+    gl_PointSize = uScale * (1.0 - lifeProgress) * (300.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+
+    // Fade out over lifetime
+    vAlpha = 1.0 - lifeProgress;
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/shaders/gpu_particle.vert ===
+
+
 === FILE: src/client/rendering/shaders/ShaderLib.js ===
 --------------------------------------------------
 export const ShaderLib = {
@@ -4626,8 +4756,10 @@ export class WorldUISystem {
     }
     
     _onNPCSpawned({ npc }) {
-        if (npc.team === 'enemy' && !this.healthBars.has(npc)) {
-            const healthBar = new HealthBar(this.scene);
+        // Create health bars for any NPC (enemy or allied).
+        // Player entity is not an NPC, so it will be skipped.
+        if ((npc.team === 'enemy' || npc.team === 'player') && !this.healthBars.has(npc)) {
+            const healthBar = new HealthBar(this.scene, npc.team);
             this.healthBars.set(npc, healthBar);
         }
     }
@@ -5022,25 +5154,29 @@ import * as THREE from 'three';
  * It is positioned and managed by a client-side system.
  */
 export class HealthBar {
-    constructor(scene) {
+    constructor(scene, team = 'enemy') {
         this.scene = scene;
+        this.team = team;
         
         const healthBarGroup = new THREE.Group();
         // Give the group a high renderOrder so it draws on top of most 3D geometry
         healthBarGroup.renderOrder = 999; 
 
+        // Determine colors based on team
+        const bgColor = this.team === 'enemy' ? 0x551111 : 0x112255; // Dark red for enemy, dark blue for ally
+        const fgColor = this.team === 'enemy' ? 0xff4757 : 0x4a90e2; // Bright red for enemy, bright blue for ally
+
         // Background
-        const bgMaterial = new THREE.SpriteMaterial({ color: 0x550000, sizeAttenuation: false, depthTest: false });
+        const bgMaterial = new THREE.SpriteMaterial({ color: bgColor, sizeAttenuation: false, depthTest: false });
         const bgSprite = new THREE.Sprite(bgMaterial);
         bgSprite.scale.set(0.25, 0.025, 1.0);
         bgSprite.renderOrder = 0; // Render background first
         healthBarGroup.add(bgSprite);
 
         // Foreground
-        const fgMaterial = new THREE.SpriteMaterial({ color: 0x00ff00, sizeAttenuation: false, depthTest: false });
+        const fgMaterial = new THREE.SpriteMaterial({ color: fgColor, sizeAttenuation: false, depthTest: false });
         this.fgSprite = new THREE.Sprite(fgMaterial);
         this.fgSprite.scale.set(0.25, 0.025, 1.0);
-        // No need for position.z offset if renderOrder is used for layering transparent sprites
         this.fgSprite.renderOrder = 1; // Render foreground on top
         healthBarGroup.add(this.fgSprite);
 
@@ -5052,12 +5188,11 @@ export class HealthBar {
     update(position, currentHealth, maxHealth) {
         const percent = Math.max(0, currentHealth / maxHealth);
         this.fgSprite.scale.x = 0.25 * percent;
+        // Adjust the position of the foreground sprite so it drains from the right
         this.fgSprite.position.x = -0.5 * (0.25 * (1 - percent));
-
-        // Update color based on health percentage
-        if (percent < 0.3) this.fgSprite.material.color.setHex(0xff0000);
-        else if (percent < 0.6) this.fgSprite.material.color.setHex(0xffff00);
-        else this.fgSprite.material.color.setHex(0x00ff00);
+        
+        // Color is now set in the constructor and doesn't change based on percentage,
+        // which provides a clear and consistent visual language (red=enemy, blue=ally).
 
         this.group.position.copy(position);
     }
@@ -8553,7 +8688,7 @@ export class AbilityFactory {
 
 === FILE: src/game/abilities/EnemyProjectile.js ===
 --------------------------------------------------
-// ~ src/game/abilities/EnemyProjectile.js
+// src/game/abilities/EnemyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -8561,12 +8696,14 @@ import { GAME_CONFIG } from '../../shared/config.js';
 import { PhysicsBodyComponent } from '../components/PhysicsBodyComponent.js';
 
 /**
- * A projectile fired by an NPC. It is a simple physics object that deals damage on impact.
+ * A generic projectile fired by an NPC (enemy or ally).
+ * It is a simple physics object that deals damage on impact to opposing teams.
+ * The collision group and mask are set dynamically based on the caster's team.
  */
 export class EnemyProjectile {
     constructor({ world, caster, initialVelocity }) {
         this.id = THREE.MathUtils.generateUUID();
-        this.type = 'enemy_projectile';
+        this.type = 'enemy_projectile'; // Kept for VFX system compatibility
         this.world = world;
         this.caster = caster;
 
@@ -8577,17 +8714,25 @@ export class EnemyProjectile {
 
         // Physics
         const shape = new CANNON.Sphere(0.2);
+        
+        // Dynamically set collision group and mask based on the caster's team.
+        const isFriendlyCaster = caster.team === 'player';
+        const group = isFriendlyCaster ? COLLISION_GROUPS.PLAYER_PROJECTILE : COLLISION_GROUPS.ENEMY_PROJECTILE;
+        const mask = isFriendlyCaster
+            ? (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY)
+            : (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY);
+
         const body = new CANNON.Body({
             mass: 0.1,
             shape,
-            collisionFilterGroup: COLLISION_GROUPS.ENEMY_PROJECTILE,
-            collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY,
+            collisionFilterGroup: group,
+            collisionFilterMask: mask,
         });
 
         const spawnDirection = new CANNON.Vec3().copy(initialVelocity);
-        spawnDirection.normalize(); // This modifies the vector in-place.
+        spawnDirection.normalize();
         const spawnPos = new CANNON.Vec3().copy(caster.physics.body.position);
-        const offset = spawnDirection.scale(2); // .scale() returns a new, scaled vector.
+        const offset = spawnDirection.scale(2);
         spawnPos.vadd(offset, spawnPos);
         
         body.position.copy(spawnPos);
@@ -8596,7 +8741,7 @@ export class EnemyProjectile {
         this.physics = new PhysicsBodyComponent(body);
         
         if (!body.userData) body.userData = {};
-        body.userData.entity = this; // Link back for collision detection
+        body.userData.entity = this;
 
         body.addEventListener('collide', (e) => this.onCollide(e));
         
@@ -8606,13 +8751,20 @@ export class EnemyProjectile {
 
     onCollide(event) {
         if (this.isDead) return;
+
         const targetEntity = event.body?.userData?.entity;
-        
-        // Projectiles from enemies damage players and allies
-        if (targetEntity?.type === 'player' || (targetEntity?.type === 'npc' && targetEntity?.team === 'player')) {
-            targetEntity.takeDamage(this.damage);
+
+        // A projectile should damage any entity on an opposing team.
+        if (targetEntity?.team && targetEntity.team !== this.caster.team) {
+            if (typeof targetEntity.takeDamage === 'function') {
+                targetEntity.takeDamage(this.damage);
+            }
         }
-        this.world.remove(this);
+        
+        // Detonate on impact with anything except a non-physical trigger volume.
+        if (!(event.body.collisionFilterGroup & COLLISION_GROUPS.TRIGGER)) {
+            this.world.remove(this);
+        }
     }
 
     update(deltaTime) {
@@ -8693,7 +8845,11 @@ export class Fireball {
         this.physics.world.addEventListener('preStep', this.preStepHandler);
 
         this.aoeSphere = new CANNON.Sphere(this.RADIUS * 40);
-        this.aoeBody = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true });
+        this.aoeBody = new CANNON.Body({
+            type: CANNON.Body.STATIC,
+            isTrigger: true,
+            collisionFilterGroup: COLLISION_GROUPS.VISION_BLOCKER // This body will now block AI sight
+        });
         this.aoeBody.addShape(this.aoeSphere);
 
         this.physics.addBody(this.body);
@@ -9988,6 +10144,7 @@ export class AbilitySystem {
 
 === FILE: src/game/systems/AISystem.js ===
 --------------------------------------------------
+// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -10083,7 +10240,10 @@ export class AISystem {
         this._losRayResult.reset();
         world.physics.world.raycastClosest(
             this._perceptionRayFrom, this._perceptionRayTo,
-            { collisionFilterMask: COLLISION_GROUPS.WORLD, skipBackfaces: true },
+            {
+                collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.VISION_BLOCKER,
+                skipBackfaces: true
+            },
             this._losRayResult
         );
         
@@ -10099,12 +10259,21 @@ export class AISystem {
             ai.state = 'IDLE';
             return;
         }
-
+    
+        // If we can see the target and are close enough, enter combat.
         if (ai.perception.hasLineOfSight && ai.perception.distanceToPlayer < ai.perception.detectionRange) {
             ai.state = 'COMBAT';
-        } else if (ai.state === 'COMBAT' && ai.perception.distanceToPlayer > ai.perception.loseSightRange) {
+        } 
+        // If we are in combat but have lost line of sight, start searching.
+        else if (ai.state === 'COMBAT' && !ai.perception.hasLineOfSight) {
             ai.state = 'SEARCHING';
-        } else if (ai.state === 'SEARCHING' && npc.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
+        }
+        // If we are in combat but the target moved too far away, start searching.
+        else if (ai.state === 'COMBAT' && ai.perception.distanceToPlayer > ai.perception.loseSightRange) {
+            ai.state = 'SEARCHING';
+        }
+        // If we were searching and have arrived at the last known position, go idle.
+        else if (ai.state === 'SEARCHING' && npc.physics.body.position.distanceTo(ai.lastKnownPlayerPosition) < 2) {
             ai.state = 'IDLE';
         }
     }
@@ -10661,7 +10830,11 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
  */
 export class TargetingSystem {
     constructor() {
-        // Reusable objects to prevent garbage collection churn
+        // --- System Performance ---
+        this.updateInterval = 0.1; // Run every 100ms
+        this.timer = Math.random() * this.updateInterval; // Stagger updates
+
+        // --- Reusable objects to prevent garbage collection churn ---
         this._targetRayOrigin = new THREE.Vector3();
         this._targetRayDirection = new THREE.Vector3();
         this._enemyPos = new THREE.Vector3();
@@ -10679,6 +10852,13 @@ export class TargetingSystem {
     update(world, deltaTime) {
         const player = world.player;
         if (!player || player.isDead) return;
+
+        // Throttle the main logic to run at a fixed interval
+        this.timer += deltaTime;
+        if (this.timer < this.updateInterval) {
+            return;
+        }
+        this.timer = 0;
 
         const currentAbility = player.abilities.abilities[player.abilities.selectedAbilityIndex];
         if (!currentAbility?.requiresLockOn) {
@@ -11715,6 +11895,7 @@ export const COLLISION_GROUPS = {
     PLAYER_PROJECTILE: 16,
     ENEMY_PROJECTILE:  32,
     TRIGGER:           64,
+    VISION_BLOCKER:    128, // Blocks AI line of sight
 };
 --------------------------------------------------
 === END OF FILE: src/shared/CollisionGroups.js ===

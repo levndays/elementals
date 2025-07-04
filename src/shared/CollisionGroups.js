@@ -11,4 +11,5 @@ export const COLLISION_GROUPS = {
     PLAYER_PROJECTILE: 16,
     ENEMY_PROJECTILE:  32,
     TRIGGER:           64,
+    VISION_BLOCKER:    128, // Blocks AI line of sight
 };

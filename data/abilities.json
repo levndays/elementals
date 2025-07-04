@@ -23,8 +23,8 @@
         "type": "Ability",
         "element": "Fire",
         "tier": 1,
-        "energyCost": 100,
-        "cooldown": 0.5,
+        "energyCost": 125,
+        "cooldown": 0.8,
         "description": "Launch a sphere of raw flame that explodes on impact, leaving a burning area.",
         "flavor": "Simple, effective, and very, very hot."
     },
@@ -34,8 +34,8 @@
         "type": "Ability",
         "element": "Fire",
         "tier": 2,
-        "energyCost": 300,
-        "cooldown": 10.0,
+        "energyCost": 250,
+        "cooldown": 12.0,
         "description": "Release a swarm of homing cinders that seek out a locked-on target.",
         "flavor": "Why aim when they can do it for you?"
     },
@@ -45,8 +45,8 @@
         "type": "Ability",
         "element": "Earth",
         "tier": 2,
-        "energyCost": 500,
-        "cooldown": 30.0,
+        "energyCost": 400,
+        "cooldown": 25.0,
         "description": "Hit hard and absorb damage at the cost of slower movement",
         "flavor": "Patience is a virtue. So is being made of rock."
     },
@@ -56,8 +56,8 @@
         "type": "Ability",
         "element": "Water",
         "tier": 2,
-        "energyCost": 400,
-        "cooldown": 8.0,
+        "energyCost": 350,
+        "cooldown": 10.0,
         "description": "When used on the ground, release a forceful wave in front of you that knocks enemies back.",
         "flavor": "Get out of the way."
     },
@@ -69,7 +69,7 @@
         "tier": 1,
         "castType": "channel",
         "energyCost": 0,
-        "cooldown": 15.0,
+        "cooldown": 18.0,
         "description": "Hold to channel your power, converting 2 Energy into 1 Health per tick. Cooldown begins on release.",
         "flavor": "Sometimes, willpower is the best medicine."
     }
