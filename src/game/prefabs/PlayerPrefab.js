@@ -1,4 +1,3 @@
-// ~ src/game/prefabs/PlayerPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';
@@ -23,7 +22,8 @@ export class PlayerPrefab {
             fixedRotation: true,
             allowSleep: false,
             collisionFilterGroup: COLLISION_GROUPS.PLAYER,
-            collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER,
+            collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER,
+            linearDamping: config.DEFAULT_DAMPING,
         });
         const playerWorldContactMaterial = new CANNON.ContactMaterial(
             physics.world.defaultMaterial, material,

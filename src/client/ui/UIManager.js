@@ -27,6 +27,7 @@ export class UIManager {
             deathQuitBtn: document.getElementById('death-quit-btn'),
             energyBarContainer: document.getElementById('energy-bar-container'),
             abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
+            underwaterOverlay: document.getElementById('vfx-underwater-overlay'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -205,6 +206,9 @@ export class UIManager {
         this.hud.updateEnemyCount(game.world.enemiesKilled, game.world.initialEnemyCount);
         this.minimap.update(player, game.world.getNPCs(), game.world.getLevelObjects());
         
+        // Update underwater overlay
+        this.elements.underwaterOverlay.classList.toggle('active', player.isSwimming);
+
         if (game.gameState === 'DEAD') {
             this.elements.respawnTimerText.textContent = `Respawning in ${Math.ceil(game.respawnTimer)}...`;
         }

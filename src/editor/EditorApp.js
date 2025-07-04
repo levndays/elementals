@@ -6,6 +6,7 @@ import { Physics } from '../core/Physics.js';
 import { InputManager } from '../core/InputManager.js';
 import { LevelManager } from '../game/world/LevelManager.js';
 import { LevelEditor } from './LevelEditor.js';
+import { WaterMaterial } from '../client/rendering/materials/WaterMaterial.js';
 
 export class EditorApp {
     constructor() {
@@ -40,8 +41,11 @@ export class EditorApp {
     getTriggers() { return this.getEntities('Trigger'); }
     getDeathTriggers() { return this.getEntities('DeathTrigger'); }
     getDirectionalLights() { return this.getEntities('DirectionalLight'); }
+    getWaterVolumes() { return this.getEntities('Water'); }
 
     async init() {
+        await WaterMaterial.init();
+
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
         this.gridHelper.material.opacity = 0.2;
         this.gridHelper.material.transparent = true;
@@ -66,6 +70,7 @@ export class EditorApp {
              this.scene.add(entity);
         } else {
             if (entity.mesh) this.scene.add(entity.mesh);
+            if (entity.helperMesh) this.scene.add(entity.helperMesh); // For water volume helpers
             if (entity.body) this.physics.addBody(entity.body);
         }
     }
@@ -133,6 +138,7 @@ export class EditorApp {
         if (!entity) return;
         const mesh = entity.mesh || entity;
         this.scene.remove(mesh);
+        if (entity.helperMesh) this.scene.remove(entity.helperMesh);
         
         if (dispose && mesh.geometry) {
             mesh.geometry.dispose();
@@ -141,6 +147,10 @@ export class EditorApp {
             } else if (mesh.material?.dispose) {
                 mesh.material.dispose();
             }
+        }
+        if (dispose && entity.helperMesh?.geometry) {
+            entity.helperMesh.geometry.dispose();
+            entity.helperMesh.material.dispose();
         }
         if (entity.body) this.physics.queueForRemoval(entity.body);
     }
@@ -182,6 +192,12 @@ export class EditorApp {
 
     animate() {
         const deltaTime = this.clock.getDelta();
+        const elapsedTime = this.clock.elapsedTime;
+        [...this.getWaterVolumes()].forEach(water => {
+            if (water.mesh.material.time !== undefined) {
+                water.mesh.material.time = elapsedTime;
+            }
+        });
         this.physics.update(deltaTime);
         this.editor.update(deltaTime);
         this.renderer.render();

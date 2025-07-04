@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPCPrefab } from '../prefabs/NPCPrefab.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { WaterMaterial } from '../../client/rendering/materials/WaterMaterial.js';
 
 export class LevelManager {
     constructor(world) {
@@ -60,7 +61,63 @@ export class LevelManager {
         return light;
     }
 
+    recreateEntity(definition) {
+        switch(definition.type) {
+            case 'Water':
+            case 'Box':
+            case 'Plane':
+                return this.createObject(definition);
+            case 'Dummy':
+                return this.createNPC(definition);
+            case 'Trigger':
+                return this.createTrigger(definition, 'Trigger');
+            case 'DeathTrigger':
+                return this.createTrigger(definition, 'DeathTrigger');
+            // Note: Lights are handled differently in editor and not recreated this way
+            default:
+                return null;
+        }
+    }
+    
+    createWater(objData) {
+        const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+        
+        const waterMaterial = new WaterMaterial();
+        const visualMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[2]), waterMaterial);
+        visualMesh.rotation.x = -Math.PI / 2;
+        visualMesh.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
+        visualMesh.receiveShadow = true;
+        
+        const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
+        const body = new CANNON.Body({
+            type: CANNON.Body.STATIC, isTrigger: true, shape,
+            position: new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z),
+            collisionFilterGroup: COLLISION_GROUPS.WATER,
+            collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY,
+        });
+
+        const helperMaterial = new THREE.MeshBasicMaterial({ color: 0x2288ee, transparent: true, opacity: 0.35, wireframe: true });
+        const helperMesh = new THREE.Mesh(new THREE.BoxGeometry(...size), helperMaterial);
+        helperMesh.position.copy(body.position);
+        helperMesh.quaternion.copy(body.quaternion);
+
+        const entity = { type: 'Water', mesh: visualMesh, helperMesh, body, definition: objData };
+        const link = { type: 'Water', entity };
+        entity.userData = { gameEntity: link };
+        visualMesh.userData.gameEntity = link;
+        helperMesh.userData.gameEntity = link;
+
+        if (!body.userData) body.userData = {};
+        body.userData.entity = entity;
+        
+        return entity;
+    }
+
     createObject(objData) {
+        if (objData.type === 'Water') {
+            return this.createWater(objData);
+        }
+
         let mesh, body, shape;
         const mat = new THREE.MeshStandardMaterial({ color: parseInt(objData.material?.color, 16) || 0xcccccc, roughness: objData.material?.roughness ?? 0.8 });
         const size = (objData.size || [1,1,1]).map(s => Math.abs(s) || 0.1);

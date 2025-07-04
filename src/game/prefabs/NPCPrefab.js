@@ -1,4 +1,3 @@
-// + src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
@@ -33,10 +32,10 @@ export class NPCPrefab {
         let group, mask;
         if (team === 'enemy') {
             group = COLLISION_GROUPS.ENEMY;
-            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER;
+            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
         } else { // ally
             group = COLLISION_GROUPS.ALLY;
-            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER;
+            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
         }
         
         const body = new CANNON.Body({

@@ -1,6 +1,5 @@
-// ~ src/editor/EditorUI.js
-
 import * as THREE from 'three';
+import { StateChangeCommand } from './UndoManager.js';
 
 export class EditorUI {
     constructor(editor) {
@@ -31,6 +30,7 @@ export class EditorUI {
         document.getElementById('view-toggle-spawn-helpers').onchange = (e) => this.setHelpersVisibility('SpawnAndDeath', e.target.checked);
         document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('Trigger', e.target.checked);
         document.getElementById('view-toggle-death-triggers').onchange = (e) => this.setHelpersVisibility('DeathTrigger', e.target.checked);
+        document.getElementById('view-toggle-water-volumes').onchange = (e) => this.setHelpersVisibility('Water', e.target.checked);
         
         // --- Help Menu ---
         document.getElementById('menu-help-metrics').onclick = (event) => {
@@ -42,6 +42,7 @@ export class EditorUI {
         document.getElementById('tool-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('tool-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('tool-scale').onclick = () => this.editor.controls.setTransformMode('scale');
+        document.getElementById('tool-space').onclick = () => this.editor.controls.toggleTransformSpace();
         
         // --- Snapping Controls ---
         const snapToggle = document.getElementById('snap-toggle');
@@ -80,7 +81,20 @@ export class EditorUI {
         this.outlinerContent = document.getElementById('outliner-content');
         this.outlinerContent.onclick = (e) => {
             const item = e.target.closest('.outliner-item');
-            if (item) this.editor.selectByUUID(item.dataset.uuid);
+            if (item) {
+                if (e.shiftKey) {
+                    const entity = this.findEntityByUUID(item.dataset.uuid);
+                    if (entity) {
+                        if (this.editor.selectedObjects.has(entity)) {
+                            this.editor.removeFromSelection(entity);
+                        } else {
+                            this.editor.addToSelection(entity);
+                        }
+                    }
+                } else {
+                    this.editor.selectByUUID(item.dataset.uuid);
+                }
+            }
         };
         
         // --- Inspector ---
@@ -104,7 +118,25 @@ export class EditorUI {
         });
     }
 
+    findEntityByUUID(uuid) {
+        return [...this.app.entities].find(e => {
+            const mesh = e.mesh || e.picker || e.targetHelper || e;
+            return mesh?.uuid === uuid;
+        });
+    }
+
+    /**
+     * REWORKED: Robustly checks if coordinates are over any UI panel.
+     * This now uses elementFromPoint to correctly handle any element,
+     * including inputs and their pop-ups (like the color picker).
+     * @param {number} x - The screen X coordinate.
+     * @param {number} y - The screen Y coordinate.
+     * @returns {boolean}
+     */
     isClickOnUI(x, y) {
+        const el = document.elementFromPoint(x, y);
+        if (!el) return false;
+
         const uiAreas = [
             document.getElementById('editor-menu-bar'),
             document.getElementById('editor-toolbar'),
@@ -113,44 +145,29 @@ export class EditorUI {
             document.getElementById('create-button-container'),
         ];
     
-        for (const area of uiAreas) {
-            if (!area) continue;
-            const rect = area.getBoundingClientRect();
-            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                return true;
-            }
-        }
-        return false;
+        return uiAreas.some(area => area && area.contains(el));
     }
 
     showInfoModal() {
-        // --- Player & Physics Parameters (from Player.js and Physics.js) ---
         const playerRadius = 0.8;
         const speed = 8;
         const jumpVy = 8;
         const dashMultiplier = 4;
         const dashDuration = 0.2;
-        const gravity = 9.82; // Absolute value
+        const gravity = 9.82; 
 
-        // --- Calculations ---
         const playerHeight = playerRadius * 2;
         const dashSpeed = speed * dashMultiplier;
         const groundDashDist = dashSpeed * dashDuration;
-
-        // Single Jump
         const timeToPeak1 = jumpVy / gravity;
         const height1 = (jumpVy * jumpVy) / (2 * gravity);
         const airTime1 = 2 * timeToPeak1;
         const distance1 = speed * airTime1;
-
-        // Double Jump (Max Height: jump at peak of first)
-        const height2 = height1 + height1; // Second jump from peak (v=0) gains same height
+        const height2 = height1 + height1;
         const timeToFallFromH2 = Math.sqrt((2 * height2) / gravity);
         const airTime2_height = timeToPeak1 + timeToFallFromH2;
         const distance2_height = speed * airTime2_height;
         const horizontalDistToPeak = speed * timeToPeak1;
-        
-        // Jump + Dash (for max distance)
         const jumpDashDist = horizontalDistToPeak + groundDashDist + (speed * timeToPeak1);
 
         const infoText = `
@@ -183,11 +200,14 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         document.getElementById('editor-info-modal').style.display = 'flex';
     }
 
-
     updateTransformModeButtons(mode) {
         ['translate', 'rotate', 'scale'].forEach(m => {
             document.getElementById(`tool-${m}`).classList.toggle('active', m === mode);
         });
+    }
+
+    updateSpaceToggle(space) {
+        document.getElementById('tool-space').textContent = space === 'world' ? 'World' : 'Local';
     }
 
     updateOutliner() {
@@ -197,7 +217,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             item.className = 'outliner-item';
             item.textContent = `${prefix} ${name}`;
             item.dataset.uuid = uuid;
-            if (entity === this.editor.selectedObject) item.classList.add('selected');
+            if (this.editor.selectedObjects.has(entity)) {
+                item.classList.add('selected');
+            }
             parent.appendChild(item);
         };
     
@@ -210,8 +232,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             details.appendChild(summary);
             entities.forEach(e => {
                  const name = e.definition?.[nameField] || e.name || (e.userData?.gameEntity?.type) || 'Unnamed';
-                 // Use a consistent way to get a unique identifier (mesh, picker, or helper itself)
-                 const uuidProvider = e.mesh || e.picker || e;
+                 const uuidProvider = e.mesh || e.picker || e.helperMesh || e;
                  if(uuidProvider) {
                     createItem(details, e, name, uuidProvider.uuid, prefix);
                  }
@@ -230,16 +251,34 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         createCategory('Enemies', this.app.getEnemies(), '[E]');
         createCategory('Message Triggers', this.app.getTriggers(), '[T]');
         createCategory('Death Zones', this.app.getDeathTriggers(), '[D]');
+        createCategory('Water Volumes', this.app.getWaterVolumes(), '[W]');
     }
 
     updatePropertiesPanel() {
-        this.inspectorContent.innerHTML = ''; // Clear previous content
-        if (!this.editor.selectedObject) {
+        // FIX: If an input inside the inspector is focused, do not redraw the panel.
+        // This prevents losing focus while typing or using a color picker.
+        if (this.inspectorContent.contains(document.activeElement)) {
+            return;
+        }
+
+        this.inspectorContent.innerHTML = '';
+        
+        if (this.editor.selectedObjects.size > 1) {
+            const multiSelectInfo = document.createElement('div');
+            multiSelectInfo.className = 'placeholder-text';
+            multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
+            this.inspectorContent.appendChild(multiSelectInfo);
+        } else if (this.editor.selectedObjects.size === 0) {
             this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
             return;
         }
+
+        const entity = this.editor.primarySelectedObject;
+        if (!entity) {
+            if (this.editor.selectedObjects.size === 0) this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
+            return;
+        }
     
-        const entity = this.editor.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         if (!entityType) return;
     
@@ -310,7 +349,6 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             parent.appendChild(inputGroup);
         };
     
-        // --- Build UI based on Entity Type ---
         const def = entity.definition;
         const mesh = entity.mesh || entity.picker || entity;
     
@@ -332,12 +370,46 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         }
     
         if (def && def.size) {
-            const sizeGroup = createPropGroup('Size');
-            const sizeVec = { x: def.size[0], y: def.size[1], z: def.size[2] };
-            createVec3Inputs(sizeGroup, sizeVec, 0.25, (axis, val) => {
-                const map = { x: 0, y: 1, z: 2 };
-                this.editor.updateSelectedProp('size', map[axis], val);
-            });
+            if (def.type === 'Plane') {
+                const widthGroup = createPropGroup('Width');
+                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => {
+                    this.editor.updateSelectedProp('size', 0, val);
+                });
+                const depthGroup = createPropGroup('Depth');
+                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => {
+                    this.editor.updateSelectedProp('size', 1, val);
+                });
+            } else {
+                const sizeGroup = createPropGroup('Size');
+                const displaySize = {
+                    x: def.size[0] * mesh.scale.x,
+                    y: def.size[1] * mesh.scale.y,
+                    z: def.size[2] * mesh.scale.z
+                };
+                createVec3Inputs(sizeGroup, displaySize, 0.25, (axis, val) => {
+                    const changes = [];
+                    this.editor.selectedObjects.forEach(selEntity => {
+                        const selMesh = selEntity.mesh || selEntity.picker || selEntity;
+                        if (!selEntity.definition?.size || !selMesh) return;
+                        
+                        const beforeDef = JSON.parse(JSON.stringify(selEntity.definition));
+                        beforeDef.size[0] *= selMesh.scale.x;
+                        beforeDef.size[1] *= selMesh.scale.y;
+                        beforeDef.size[2] *= selMesh.scale.z;
+                        
+                        const afterDef = JSON.parse(JSON.stringify(beforeDef));
+                        const map = { x: 0, y: 1, z: 2 };
+                        afterDef.size[map[axis]] = val;
+                        
+                        changes.push({ entity: selEntity, beforeState: beforeDef, afterState: afterDef });
+                    });
+            
+                    if (changes.length > 0) {
+                        const command = new StateChangeCommand(this.editor, changes);
+                        this.editor.undoManager.execute(command);
+                    }
+                });
+            }
         }
     
         if (def && def.material) {
@@ -396,6 +468,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             case 'DirectionalLight': entities = this.app.getDirectionalLights(); break;
             case 'Trigger': entities = this.app.getTriggers(); break;
             case 'DeathTrigger': entities = this.app.getDeathTriggers(); break;
+            case 'Water': entities = this.app.getWaterVolumes(); break;
             default: entities = [];
         }
     
@@ -403,6 +476,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             if (type === 'DirectionalLight') {
                 if (e.helper) e.helper.visible = isVisible;
                 if (e.targetHelper) e.targetHelper.visible = isVisible;
+            } else if (e.helperMesh) {
+                // For water, we toggle the helper box, not the visible surface
+                e.helperMesh.visible = isVisible;
             } else if (e.mesh) {
                 e.mesh.visible = isVisible;
             }

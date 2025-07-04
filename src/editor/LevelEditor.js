@@ -16,7 +16,8 @@ export class LevelEditor {
         this.input = app.input;
 
         // Core State
-        this.selectedObject = null;
+        this.selectedObjects = new Set();
+        this.primarySelectedObject = null; // The one whose properties are shown in inspector
         this.clipboard = null;
         this.isSnapEnabled = false;
         this.translationSnapValue = 1;
@@ -27,10 +28,10 @@ export class LevelEditor {
             DirectionalLight: true,
             SpawnAndDeath: true,
         };
-
-        // Internal state for rotation logic
-        this._initialLightPos = null;
-        this._initialPickerQuat = null;
+        
+        // Group for multi-object transforms
+        this.selectionGroup = new THREE.Group();
+        this.scene.add(this.selectionGroup);
 
         // Modules
         this.undoManager = new UndoManager(this);
@@ -53,7 +54,7 @@ export class LevelEditor {
 
         if (event.ctrlKey) {
             switch (event.code) {
-                case 'KeyC': event.preventDefault(); this.actions.copySelected(); break;
+                case 'KeyC': event.preventDefault(); if (this.selectedObjects.size > 0) this.actions.copySelected(); break;
                 case 'KeyV': event.preventDefault(); this.actions.pasteFromClipboard(); break;
                 case 'KeyZ': event.preventDefault(); this.undoManager.undo(); break;
                 case 'KeyY': event.preventDefault(); this.undoManager.redo(); break;
@@ -65,7 +66,7 @@ export class LevelEditor {
                 case 'KeyS': this.controls.setTransformMode('scale'); break;
                 case 'KeyQ': this.controls.toggleTransformSpace(); break;
                 case 'Delete':
-                case 'Backspace': this.actions.deleteSelected(); break;
+                case 'Backspace': if (this.selectedObjects.size > 0) this.actions.deleteSelected(); break;
             }
         }
     }
@@ -73,45 +74,47 @@ export class LevelEditor {
     // --- State & Selection Management ---
 
     select(entity) {
-        if (!entity || this.selectedObject === entity) return;
         this.deselect();
-        
-        this.selectedObject = entity;
-        const entityType = entity.userData?.gameEntity?.type;
-        let objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
+        this.addToSelection(entity);
+    }
 
-        if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
+    addToSelection(entity) {
+        if (!entity || this.selectedObjects.has(entity)) return;
 
-        this.controls.transformControls.attach(objectToAttach);
-        this.controls.selectionBox.setFromObject(objectToAttach);
-        this.controls.selectionBox.visible = true;
-        
+        this.selectedObjects.add(entity);
+        this.primarySelectedObject = entity;
+        this.controls.updateSelection();
         this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
-        
-        const isEnemy = entityType === 'Enemy';
-        const isLightTarget = entityType === 'LightTarget';
-
-        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isEnemy || isLightTarget);
-        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isLightTarget);
-        
-        document.getElementById('tool-rotate').disabled = !canRotate;
-        document.getElementById('tool-scale').disabled = !canScale;
-
-        if (!canRotate && this.controls.transformControls.getMode() === 'rotate') this.controls.setTransformMode('translate');
-        if (!canScale && this.controls.transformControls.getMode() === 'scale') this.controls.setTransformMode('translate');
+    }
+    
+    removeFromSelection(entity) {
+        if (!entity || !this.selectedObjects.has(entity)) return;
+        this.selectedObjects.delete(entity);
+        if (this.primarySelectedObject === entity) {
+            this.primarySelectedObject = this.selectedObjects.size > 0 ? this.selectedObjects.values().next().value : null;
+        }
+        this.controls.updateSelection();
+        this.ui.updatePropertiesPanel();
+        this.ui.updateOutliner();
     }
 
     deselect() {
-        if (!this.selectedObject) return;
-        
-        if (this.selectedObject.userData?.gameEntity?.type === 'DirectionalLight') {
-            this.selectedObject.picker.material.visible = false;
-        }
-
-        this.selectedObject = null;
+        if (this.selectedObjects.size === 0) return;
+    
+        this.controls.detachFromGroup();
         this.controls.transformControls.detach();
-        this.controls.selectionBox.visible = false;
+        this.controls.clearSelectionBoxes();
+        
+        this.selectedObjects.forEach(obj => {
+            if (obj.userData?.gameEntity?.type === 'DirectionalLight') {
+                obj.picker.material.visible = false;
+            }
+        });
+
+        this.selectedObjects.clear();
+        this.primarySelectedObject = null;
+        
         this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
         
@@ -148,34 +151,49 @@ export class LevelEditor {
     // --- Data & Property Manipulation ---
 
     updateSelectedProp(prop, key, value) {
-        if (!this.selectedObject) return;
-        let entity = this.selectedObject;
-        
-        // If a light target is selected, apply the change to the parent light's definition
-        if (entity.userData?.gameEntity?.type === 'LightTarget') {
-            entity = entity.userData.gameEntity.parentLight;
+        if (this.selectedObjects.size === 0) return;
+    
+        const changes = [];
+        this.selectedObjects.forEach(entity => {
+            let currentEntity = entity;
+            if (currentEntity.userData?.gameEntity?.type === 'LightTarget') {
+                currentEntity = currentEntity.userData.gameEntity.parentLight;
+            }
+    
+            const beforeState = JSON.parse(JSON.stringify(currentEntity.definition));
+            const afterState = JSON.parse(JSON.stringify(beforeState));
+            
+            const path = prop.split('.');
+            let parentTarget = afterState;
+            let canApply = true;
+            for(let i = 0; i < path.length - 1; i++) {
+                if (parentTarget[path[i]] !== undefined) {
+                    parentTarget = parentTarget[path[i]];
+                } else {
+                    canApply = false;
+                    break;
+                }
+            }
+            if (!canApply) return; // Skips to next iteration of forEach
+    
+            const finalKey = path[path.length - 1];
+            let targetProperty = parentTarget[finalKey];
+            if (targetProperty === undefined) return;
+    
+            // Apply the change
+            if (key !== null) { // e.g., position.x or size[0]
+                targetProperty[key] = value;
+            } else { // e.g., name, material.color
+                 parentTarget[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
+            }
+            
+            changes.push({ entity: currentEntity, beforeState, afterState });
+        });
+    
+        if (changes.length > 0) {
+            const command = new StateChangeCommand(this, changes);
+            this.undoManager.execute(command);
         }
-
-        const beforeState = entity.definition;
-        const afterState = JSON.parse(JSON.stringify(beforeState)); // Create a working copy
-        let target = afterState;
-
-        const path = prop.split('.');
-        for(let i = 0; i < path.length - 1; i++) {
-            if(!target[path[i]]) target[path[i]] = {};
-            target = target[path[i]];
-        }
-        const finalKey = path[path.length - 1];
-        
-        if (key !== null) {
-            if(!target[finalKey]) target[finalKey] = {};
-            target[finalKey][key] = value;
-        } else {
-            target[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
-        }
-
-        const command = new StateChangeCommand(this, entity, beforeState, afterState);
-        this.undoManager.execute(command);
     }
     
     applyDefinition(obj) {
@@ -188,7 +206,6 @@ export class LevelEditor {
     
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
             this.syncObjectTransforms(obj); // Sync position from mesh to internal state
-            this.controls.selectionBox.setFromObject(obj);
             return;
         }
     
@@ -204,7 +221,6 @@ export class LevelEditor {
             obj.targetHelper.position.copy(light.target.position);
             light.target.updateMatrixWorld(true);
             obj.helper.update();
-            this.controls.selectionBox.setFromObject(obj.picker);
             return;
         }
     
@@ -229,6 +245,9 @@ export class LevelEditor {
                 if (type === 'Trigger' && def.color) {
                     mesh.material.color.set(parseInt(def.color, 16));
                 }
+            } else if (def.type === 'Plane') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
             } else if (def.type === 'Box' && body?.shapes[0]) {
                 const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
                 body.shapes[0].halfExtents.copy(halfExtents);
@@ -240,11 +259,10 @@ export class LevelEditor {
         }
     
         this.syncObjectTransforms(obj);
-        this.controls.selectionBox.setFromObject(mesh);
     }
     
     syncObjectTransforms(entityToSync) {
-        const entity = entityToSync || this.selectedObject;
+        const entity = entityToSync || this.primarySelectedObject;
         if (!entity) return;
         
         const entityType = entity.userData?.gameEntity?.type;
@@ -259,7 +277,6 @@ export class LevelEditor {
             light.position.copy(picker.position);
             light.target.position.copy(entity.targetHelper.position);
             entity.helper.update();
-            if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);
         } else if (entity.body) {
             entity.body.position.copy(entity.mesh.position);
             entity.body.quaternion.copy(entity.mesh.quaternion);
@@ -280,5 +297,6 @@ export class LevelEditor {
     
     update(deltaTime) {
         this.cameraController.update(deltaTime);
+        this.controls.updateSelectionBoxes();
     }
 }

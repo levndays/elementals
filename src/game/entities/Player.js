@@ -1,4 +1,3 @@
-// ~ src/game/entities/Player.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -41,6 +40,11 @@ export class Player {
         this.dashStateTimer = 0;
         this.dashDirection = new THREE.Vector3();
         this.targetFov = GAME_CONFIG.PLAYER.FOV;
+
+        // Water interaction state
+        this.isSwimming = false;
+        this.isWaterSpecialist = false;
+        this.currentWaterVolume = null;
 
         if (!body.userData) body.userData = {};
         body.userData.entity = this;
@@ -136,6 +140,16 @@ export class Player {
         this.abilities.abilities = cardIds.map(cardId => 
             cardId ? AbilityFactory.create(cardId, this) : null
         );
+        this.updateWaterSpecialistStatus();
+    }
+
+    updateWaterSpecialistStatus() {
+        if (!this.abilities?.abilities) {
+            this.isWaterSpecialist = false;
+            return;
+        }
+        const waterAbilities = this.abilities.abilities.filter(a => a && a.data.element === 'Water').length;
+        this.isWaterSpecialist = waterAbilities >= 2;
     }
 
     takeDamage(amount) {
@@ -165,6 +179,8 @@ export class Player {
         this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
         this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
         this.dashStateTimer = 0;
+        this.isSwimming = false;
+        this.currentWaterVolume = null;
         this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
         this.abilities.lastAbilityTime = -Infinity;
         this.statusEffects.activeEffects.clear();

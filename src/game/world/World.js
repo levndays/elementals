@@ -1,4 +1,3 @@
-// ~ src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -12,6 +11,7 @@ import { DeathSystem } from '../systems/DeathSystem.js';
 import { TriggerSystem } from '../systems/TriggerSystem.js';
 import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
 import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
+import { WaterSystem } from '../systems/WaterSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -38,6 +38,7 @@ export class World {
 
         this.levelManager = new LevelManager(this);
         this.systems = [
+            new WaterSystem(),
             new MovementSystem(),
             new AISystem(),
             new AbilitySystem(),
@@ -135,6 +136,7 @@ export class World {
     getLevelObjects() { return Array.from(this._entitiesByType.get('Object') || []); }
     getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
     getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
+    getWaterVolumes() { return Array.from(this._entitiesByType.get('Water') || []); }
 
     resetPlayer() {
         if (this.player) {
@@ -148,8 +150,16 @@ export class World {
     createFireflyProjectile(data) { new FireflyProjectile({ world: this, ...data }); }
 
     update(deltaTime) {
+        const elapsedTime = this.core.clock.getElapsedTime();
         for (const system of this.systems) system.update(this, deltaTime);
         for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
+
+        // Update water shader time uniform
+        for (const water of this.getWaterVolumes()) {
+            if (water.mesh.material.time !== undefined) {
+                water.mesh.material.time = elapsedTime;
+            }
+        }
     }
     
     dispose() {

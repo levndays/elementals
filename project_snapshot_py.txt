@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-04T18:10:29.614886
+Snapshot created on: 2025-07-04T21:01:12.251563
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -101,6 +101,7 @@ Snapshot created on: 2025-07-04T18:10:29.614886
                     <div class="checkbox-row"><input type="checkbox" id="view-toggle-spawn-helpers" checked><label for="view-toggle-spawn-helpers">Spawn Helpers</label></div>
                     <div class="checkbox-row"><input type="checkbox" id="view-toggle-msg-triggers" checked><label for="view-toggle-msg-triggers">Message Triggers</label></div>
                     <div class="checkbox-row"><input type="checkbox" id="view-toggle-death-triggers" checked><label for="view-toggle-death-triggers">Death Zones</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-water-volumes" checked><label for="view-toggle-water-volumes">Water Volumes</label></div>
                 </div>
             </details>
              <details class="menu-dropdown">
@@ -155,6 +156,7 @@ Snapshot created on: 2025-07-04T18:10:29.614886
                     <div class="context-menu-section">Volumes</div>
                     <button data-action="addMessageTrigger">Message Trigger</button>
                     <button data-action="addDeathTrigger">Death Zone</button>
+                    <button data-action="addWaterVolume">Water Volume</button>
                     <div class="context-menu-section">Scene Points</div>
                     <button data-action="setSpawnPointToCamera">Set Initial Spawn</button>
                     <button data-action="setDeathSpawnPointToCamera">Set Death Spawn</button>
@@ -269,6 +271,7 @@ Snapshot created on: 2025-07-04T18:10:29.614886
     <div id="vfx-ground-slam" class="vfx-overlay"></div>
     <div id="vfx-earth-buff" class="vfx-overlay"></div>
     <div id="vfx-channeling-glow" class="vfx-overlay"></div>
+    <div id="vfx-underwater-overlay" class="vfx-overlay"></div>
     <div id="target-frame"></div>
     <div id="tutorial-text-container" style="display: none;">
         <p id="tutorial-text"></p>
@@ -1137,6 +1140,16 @@ body:not(.game-active) #tutorial-text-container {
     50% { opacity: 1; }
 }
 
+/* NEW: Underwater VFX */
+#vfx-underwater-overlay {
+    background-color: hsla(195, 100%, 50%, 0.2);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.5s ease-in-out;
+}
+#vfx-underwater-overlay.active {
+    opacity: 1;
+}
+
 
 /* REWORKED: CROSSHAIR & TARGETING */
 #crosshair-container {
@@ -1881,8 +1894,8 @@ body:not(.game-active) #tutorial-text-container {
         "type": "Ability",
         "element": "Fire",
         "tier": 1,
-        "energyCost": 100,
-        "cooldown": 0.5,
+        "energyCost": 125,
+        "cooldown": 0.8,
         "description": "Launch a sphere of raw flame that explodes on impact, leaving a burning area.",
         "flavor": "Simple, effective, and very, very hot."
     },
@@ -1892,8 +1905,8 @@ body:not(.game-active) #tutorial-text-container {
         "type": "Ability",
         "element": "Fire",
         "tier": 2,
-        "energyCost": 300,
-        "cooldown": 10.0,
+        "energyCost": 250,
+        "cooldown": 12.0,
         "description": "Release a swarm of homing cinders that seek out a locked-on target.",
         "flavor": "Why aim when they can do it for you?"
     },
@@ -1903,8 +1916,8 @@ body:not(.game-active) #tutorial-text-container {
         "type": "Ability",
         "element": "Earth",
         "tier": 2,
-        "energyCost": 500,
-        "cooldown": 30.0,
+        "energyCost": 400,
+        "cooldown": 25.0,
         "description": "Hit hard and absorb damage at the cost of slower movement",
         "flavor": "Patience is a virtue. So is being made of rock."
     },
@@ -1914,8 +1927,8 @@ body:not(.game-active) #tutorial-text-container {
         "type": "Ability",
         "element": "Water",
         "tier": 2,
-        "energyCost": 400,
-        "cooldown": 8.0,
+        "energyCost": 350,
+        "cooldown": 10.0,
         "description": "When used on the ground, release a forceful wave in front of you that knocks enemies back.",
         "flavor": "Get out of the way."
     },
@@ -1927,7 +1940,7 @@ body:not(.game-active) #tutorial-text-container {
         "tier": 1,
         "castType": "channel",
         "energyCost": 0,
-        "cooldown": 15.0,
+        "cooldown": 18.0,
         "description": "Hold to channel your power, converting 2 Energy into 1 Health per tick. Cooldown begins on release.",
         "flavor": "Sometimes, willpower is the best medicine."
     }
@@ -2718,6 +2731,125 @@ body:not(.game-active) #tutorial-text-container {
 === END OF FILE: levels/level-tutorial.json ===
 
 
+=== FILE: levels/level-waterfall.json ===
+--------------------------------------------------
+{
+  "name": "Veridian Falls",
+  "spawnPoint": { "x": 0, "y": 42, "z": 0 },
+  "deathSpawnPoint": { "x": 0, "y": 42, "z": 0 },
+  "settings": {
+    "backgroundColor": "0x082030",
+    "fogColor": "0x082030",
+    "fogNear": 20,
+    "fogFar": 180,
+    "ambientLight": {
+      "color": "0x408090",
+      "intensity": 1.2
+    },
+    "directionalLights": [
+      {
+        "color": "0xffffff",
+        "intensity": 2.5,
+        "position": { "x": 50, "y": 100, "z": 30 },
+        "targetPosition": { "x": 0, "y": 0, "z": 0 }
+      }
+    ]
+  },
+  "objects": [
+    {
+      "type": "Water",
+      "name": "MainPool_Water",
+      "size": [100, 8, 100],
+      "position": { "x": 0, "y": 0, "z": 0 }
+    },
+    {
+      "type": "Water",
+      "name": "Main_Waterfall",
+      "size": [20, 30, 2],
+      "position": { "x": 0, "y": 25, "z": -20 }
+    },
+    {
+      "type": "Water",
+      "name": "Side_Waterfall_1",
+      "size": [10, 20, 2],
+      "position": { "x": -25, "y": 18, "z": -15 }
+    },
+    {
+      "type": "Water",
+      "name": "Side_Waterfall_2",
+      "size": [10, 20, 2],
+      "position": { "x": 25, "y": 18, "z": -15 }
+    },
+    {
+      "type": "Box", "name": "Ground_Bedrock", "size": [100, 2, 100],
+      "position": { "x": 0, "y": -2, "z": 0 },
+      "material": { "color": "0x1A2B38" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Start_Platform", "size": [15, 4, 15],
+      "position": { "x": 0, "y": 40, "z": 0 },
+      "material": { "color": "0x334455" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Top_Cliffs", "size": [50, 8, 20],
+      "position": { "x": 0, "y": 36, "z": -20 },
+      "material": { "color": "0x283845" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Mid_Platform_1", "size": [12, 4, 12],
+      "position": { "x": -25, "y": 26, "z": -5 },
+      "material": { "color": "0x334455" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Mid_Platform_2", "size": [12, 4, 12],
+      "position": { "x": 25, "y": 26, "z": -5 },
+      "material": { "color": "0x334455" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Lower_Platform_Center", "size": [20, 4, 20],
+      "position": { "x": 0, "y": 15, "z": 20 },
+      "material": { "color": "0x334455" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Rock_Pillar_1", "size": [6, 20, 6],
+      "position": { "x": -30, "y": 10, "z": 30 },
+      "material": { "color": "0x283845" },
+      "physics": { "mass": 0 }
+    },
+    {
+      "type": "Box", "name": "Rock_Pillar_2", "size": [6, 20, 6],
+      "position": { "x": 30, "y": 10, "z": 30 },
+      "material": { "color": "0x283845" },
+      "physics": { "mass": 0 }
+    }
+  ],
+  "npcs": [
+    { "type": "NPC", "team": "enemy", "attackType": "ranged", "position": { "x": -25, "y": 30, "z": -5 } },
+    { "type": "NPC", "team": "enemy", "attackType": "ranged", "position": { "x": 25, "y": 30, "z": -5 } },
+    { "type": "NPC", "team": "enemy", "attackType": "ranged", "position": { "x": 0, "y": 19, "z": 20 } },
+    { "type": "NPC", "team": "enemy", "attackType": "melee", "position": { "x": -15, "y": 8, "z": 0 } },
+    { "type": "NPC", "team": "enemy", "attackType": "melee", "position": { "x": 15, "y": 8, "z": 0 } }
+  ],
+  "triggers": [],
+  "deathTriggers": [
+    {
+      "type": "DeathTrigger",
+      "name": "Abyss",
+      "size": [200, 2, 200],
+      "position": { "x": 0, "y": -50, "z": 0 }
+    }
+  ]
+}
+--------------------------------------------------
+=== END OF FILE: levels/level-waterfall.json ===
+
+
 === FILE: levels/manifest.json ===
 --------------------------------------------------
 [
@@ -2728,6 +2860,10 @@ body:not(.game-active) #tutorial-text-container {
   {
     "name": "Corrupt Arena",
     "path": "./levels/level-stadium.json"
+  },
+  {
+    "name": "Veridian Falls",
+    "path": "./levels/level-waterfall.json"
   }
 ]
 --------------------------------------------------
@@ -2736,7 +2872,6 @@ body:not(.game-active) #tutorial-text-container {
 
 === FILE: src/client/client_main.js ===
 --------------------------------------------------
-// src/client/client_main.js
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.js';
 import { Physics } from '../core/Physics.js';
@@ -2749,6 +2884,7 @@ import { VFXSystem } from './systems/VFXSystem.js';
 import { WorldUISystem } from './systems/WorldUISystem.js';
 import { PhysicsSyncSystem } from '../game/systems/PhysicsSyncSystem.js';
 import { AbilityIconService } from './ui/AbilityIconService.js';
+import { WaterMaterial } from './rendering/materials/WaterMaterial.js';
 
 class App {
     constructor() {
@@ -2764,8 +2900,12 @@ class App {
     }
 
     async init() {
+        // 0. Initialize shader-based materials
+        await WaterMaterial.init();
+
         // 1. Initialize Core Engine Modules
         const canvas = document.getElementById('game-canvas');
+        this.core.clock = this.clock;
         this.core.renderer = new Renderer(canvas);
         this.core.physics = new Physics();
         this.core.input = new InputManager();
@@ -4164,6 +4304,151 @@ export class WaveVFX {
 }
 --------------------------------------------------
 === END OF FILE: src/client/rendering/WaveVFX.js ===
+
+
+=== FILE: src/client/rendering/materials/WaterMaterial.js ===
+--------------------------------------------------
+// src/client/rendering/materials/WaterMaterial.js
+import * as THREE from 'three';
+import { ShaderLib } from '../shaders/ShaderLib.js';
+
+let _noiseShader = null;
+
+export class WaterMaterial extends THREE.MeshPhongMaterial {
+    constructor(options = {}) {
+        if (!_noiseShader) {
+            throw new Error('WaterMaterial.init() must be called before instantiation.');
+        }
+
+        super({
+            color: 0x9bd8ff,
+            transparent: true,
+            opacity: 0.85,
+            shininess: 90,
+            specular: 0x888888,
+            ...options
+        });
+
+        this.customUniforms = {
+            uTime: { value: 0 },
+            uBigWavesElevation: { value: 0.1 },
+            uBigWavesFrequency: { value: new THREE.Vector2(2, 1.0) },
+            uBigWavesSpeed: { value: 0.5 },
+            uSmallWavesElevation: { value: 0.05 },
+            uSmallWavesFrequency: { value: 3.0 },
+            uSmallWavesIterations: { value: 3.0 },
+            uSmallWavesSpeed: { value: 0.2 },
+            uColorOffset: { value: 0.08 },
+            uColorMultiplier: { value: 5.0 },
+            uDepthColor: { value: new THREE.Color(0x001e0f) },
+            uSurfaceColor: { value: new THREE.Color(0x9bd8ff) },
+        };
+
+        this.onBeforeCompile = (shader) => {
+            shader.uniforms = { ...shader.uniforms, ...this.customUniforms };
+
+            shader.vertexShader = _noiseShader + '\n' + shader.vertexShader;
+            
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uTime;
+                uniform float uBigWavesElevation;
+                uniform vec2 uBigWavesFrequency;
+                uniform float uBigWavesSpeed;
+                uniform float uSmallWavesElevation;
+                uniform float uSmallWavesFrequency;
+                uniform float uSmallWavesSpeed;
+                uniform float uSmallWavesIterations;
+                varying float vElevation;
+                `
+            );
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+
+                // --- Custom Water Logic START ---
+                vec4 worldPosition_local = modelMatrix * vec4(position, 1.0);
+
+                // Big waves
+                float bigWaveX = cnoise(vec2(worldPosition_local.x * uBigWavesFrequency.x * 0.5, uTime * uBigWavesSpeed));
+                float bigWaveZ = cnoise(vec2(worldPosition_local.z * uBigWavesFrequency.y * 0.5, uTime * uBigWavesSpeed));
+                float elevation = (bigWaveX + bigWaveZ) * 0.5 * uBigWavesElevation;
+
+                // Small waves
+                float smallWaves = 0.0;
+                float frequency = uSmallWavesFrequency;
+                float amplitude = uSmallWavesElevation;
+                for(float i = 0.0; i < uSmallWavesIterations; i++) {
+                    smallWaves += sin(dot(normalize(vec2(cos(i * 1.3), sin(i * 1.3))), worldPosition_local.xz) * frequency + uTime * uSmallWavesSpeed * (i+1.0)*0.5) * amplitude;
+                    frequency *= 1.8;
+                    amplitude *= 0.6;
+                }
+                elevation += smallWaves;
+                vElevation = elevation;
+
+                transformed.y += elevation;
+                // --- Custom Water Logic END ---
+                `
+            );
+            
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uTime;
+                uniform float uColorOffset;
+                uniform float uColorMultiplier;
+                uniform vec3 uDepthColor;
+                uniform vec3 uSurfaceColor;
+                varying float vElevation;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+
+                // Fresnel calculation
+                float fresnel = pow(1.0 - abs(dot(normalize(vViewPosition), vNormal)), 3.0);
+                
+                // Mix water color with specular highlights based on fresnel
+                gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), fresnel);
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                'vec4 diffuseColor = vec4( diffuse, opacity );',
+                `
+                float mixStrength = (vElevation + uColorOffset) * uColorMultiplier;
+                vec3 waterColor = mix(uDepthColor, uSurfaceColor, mixStrength);
+                vec4 diffuseColor = vec4(waterColor, opacity);
+                `
+            );
+        };
+    }
+
+    set time(value) {
+        if (this.customUniforms) {
+            this.customUniforms.uTime.value = value;
+        }
+    }
+
+    get time() {
+        return this.customUniforms?.uTime.value || 0;
+    }
+
+    static async init() {
+        if (_noiseShader) return;
+        _noiseShader = ShaderLib.noise;
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/materials/WaterMaterial.js ===
 
 
 === FILE: src/client/rendering/shaders/card.frag ===
@@ -6180,6 +6465,7 @@ export class UIManager {
             deathQuitBtn: document.getElementById('death-quit-btn'),
             energyBarContainer: document.getElementById('energy-bar-container'),
             abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
+            underwaterOverlay: document.getElementById('vfx-underwater-overlay'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -6358,6 +6644,9 @@ export class UIManager {
         this.hud.updateEnemyCount(game.world.enemiesKilled, game.world.initialEnemyCount);
         this.minimap.update(player, game.world.getNPCs(), game.world.getLevelObjects());
         
+        // Update underwater overlay
+        this.elements.underwaterOverlay.classList.toggle('active', player.isSwimming);
+
         if (game.gameState === 'DEAD') {
             this.elements.respawnTimerText.textContent = `Respawning in ${Math.ceil(game.respawnTimer)}...`;
         }
@@ -6721,8 +7010,6 @@ export class Renderer {
 
 === FILE: src/editor/EditorActions.js ===
 --------------------------------------------------
-// ~ src/editor/EditorActions.js
-
 import * as THREE from 'three';
 import { StateChangeCommand } from './UndoManager.js';
 
@@ -6761,13 +7048,29 @@ export class EditorActions {
         const newObj = this.app.levelManager.createObject(boxData);
         this._createAndExecuteCreationCommand(newObj);
     }
+
+    addWaterVolume() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const waterData = {
+            type: "Water",
+            name: `WaterVolume_${Date.now()}`,
+            size: [20, 5, 20],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            rotation: { x: 0, y: 0, z: 0 },
+            material: { color: "0x2288ee" }
+        };
+        const newWater = this.app.levelManager.createObject(waterData);
+        this._createAndExecuteCreationCommand(newWater);
+    }
     
     addEnemy() {
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
         const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const enemyData = { type: "Dummy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
-        const newEnemy = this.app.levelManager.createEnemy(enemyData);
+        const enemyData = { type: "Dummy", team: "enemy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
+        const newEnemy = this.app.levelManager.createNPC(enemyData);
         this._createAndExecuteCreationCommand(newEnemy);
     }
 
@@ -6818,28 +7121,35 @@ export class EditorActions {
     }
 
     deleteSelected() {
-        if (!this.editor.selectedObject) return;
-        const entity = this.editor.selectedObject;
-        const entityType = entity.userData.gameEntity.type;
-        
-        if (['SpawnPoint', 'DeathSpawnPoint'].includes(entityType)) return;
+        if (this.editor.selectedObjects.size === 0) return;
+
+        const entitiesToDelete = [...this.editor.selectedObjects].filter(entity => {
+            const entityType = entity.userData.gameEntity.type;
+            return !['SpawnPoint', 'DeathSpawnPoint'].includes(entityType);
+        });
     
-        const definition = JSON.parse(JSON.stringify(entity.definition));
-        let recreatedEntity = null; // Closure variable
+        if (entitiesToDelete.length === 0) return;
+    
+        const definitions = entitiesToDelete.map(entity => JSON.parse(JSON.stringify(entity.definition)));
+        let recreatedEntities = [];
     
         const command = {
             execute: () => {
-                const entityToRemove = recreatedEntity || entity;
-                this.app.remove(entityToRemove);
+                const targets = recreatedEntities.length > 0 ? recreatedEntities : entitiesToDelete;
+                targets.forEach(entity => this.app.remove(entity));
                 this.editor.deselect();
-                recreatedEntity = null;
+                recreatedEntities = [];
             },
             undo: () => {
-                recreatedEntity = this.app.levelManager.recreateEntity(definition);
-                if (recreatedEntity) {
-                    this.app.add(recreatedEntity);
-                    this.editor.select(recreatedEntity);
-                }
+                this.editor.deselect();
+                definitions.forEach(def => {
+                    const newEntity = this.app.levelManager.recreateEntity(def);
+                    if (newEntity) {
+                        recreatedEntities.push(newEntity);
+                        this.app.add(newEntity);
+                        this.editor.addToSelection(newEntity);
+                    }
+                });
             }
         };
         this.editor.undoManager.execute(command);
@@ -6859,60 +7169,95 @@ export class EditorActions {
     }
     
     copySelected() {
-        if (!this.editor.selectedObject) return;
-        
-        const entity = this.editor.selectedObject;
-        const entityType = entity.userData?.gameEntity?.type;
-        const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger'];
+        if (this.editor.selectedObjects.size === 0) return;
     
-        if (validTypes.includes(entityType)) {
-            this._bakeScaleIntoDefinition(entity); // Bake scale into definition size
-            this.editor.syncObjectTransforms(); // Sync position to definition
+        const clipboardData = {
+            centroid: new THREE.Vector3(),
+            definitions: []
+        };
+        const tempCentroid = new THREE.Vector3();
+        let validObjects = 0;
     
-            // Manually sync rotation into definition
-            if (entity.definition.rotation) {
-                const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
-                entity.definition.rotation = {
-                    x: THREE.MathUtils.radToDeg(rot.x),
-                    y: THREE.MathUtils.radToDeg(rot.y),
-                    z: THREE.MathUtils.radToDeg(rot.z)
-                };
+        this.editor.selectedObjects.forEach(entity => {
+            const entityType = entity.userData?.gameEntity?.type;
+            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water'];
+    
+            if (validTypes.includes(entityType)) {
+                this._bakeScaleIntoDefinition(entity);
+                this.editor.syncObjectTransforms(entity);
+    
+                const mesh = entity.mesh || entity.picker || entity;
+                tempCentroid.add(mesh.position);
+                validObjects++;
+                
+                if (entity.definition.rotation) {
+                    const rot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
+                    entity.definition.rotation = {
+                        x: THREE.MathUtils.radToDeg(rot.x),
+                        y: THREE.MathUtils.radToDeg(rot.y),
+                        z: THREE.MathUtils.radToDeg(rot.z)
+                    };
+                }
+    
+                clipboardData.definitions.push(JSON.parse(JSON.stringify(entity.definition)));
             }
-            
-            this.editor.clipboard = JSON.parse(JSON.stringify(entity.definition));
+        });
+    
+        if (validObjects > 0) {
+            tempCentroid.divideScalar(validObjects);
+            clipboardData.centroid = tempCentroid.toArray();
+            this.editor.clipboard = clipboardData;
         } else {
             this.editor.clipboard = null;
         }
     }
 
     pasteFromClipboard() {
-        if (!this.editor.clipboard) return;
-
+        if (!this.editor.clipboard || !this.editor.clipboard.definitions || this.editor.clipboard.definitions.length === 0) return;
+    
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const newCenter = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
         
-        const newDef = JSON.parse(JSON.stringify(this.editor.clipboard));
-        newDef.position = { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z };
-        newDef.name = `${newDef.name || newDef.type}_copy`;
-
-        let newEntity;
-        switch(newDef.type) {
-            case 'Dummy':
-                newEntity = this.app.levelManager.createEnemy(newDef);
-                break;
-            case 'Trigger':
-                newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger');
-                break;
-            case 'DeathTrigger':
-                newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger');
-                break;
-            default:
-                newEntity = this.app.levelManager.createObject(newDef);
-                break;
-        }
-        
-        if (newEntity) this._createAndExecuteCreationCommand(newEntity);
+        const originalCenter = new THREE.Vector3().fromArray(this.editor.clipboard.centroid);
+        const createdEntities = [];
+        const definitionsToCreate = this.editor.clipboard.definitions;
+    
+        const command = {
+            execute: () => {
+                this.editor.deselect();
+                definitionsToCreate.forEach(def => {
+                    const newDef = JSON.parse(JSON.stringify(def));
+                    const originalPos = new THREE.Vector3().copy(newDef.position);
+                    const offset = new THREE.Vector3().subVectors(originalPos, originalCenter);
+                    
+                    newDef.position = { x: newCenter.x + offset.x, y: newCenter.y + offset.y, z: newCenter.z + offset.z };
+                    newDef.name = `${newDef.name || newDef.type}_copy_${Math.floor(Math.random() * 1000)}`;
+                    
+                    let newEntity;
+                    switch(newDef.type) {
+                        case 'Dummy': newEntity = this.app.levelManager.createNPC(newDef); break;
+                        case 'Trigger': newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger'); break;
+                        case 'DeathTrigger': newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger'); break;
+                        case 'Water':
+                        default: newEntity = this.app.levelManager.createObject(newDef); break;
+                    }
+    
+                    if (newEntity) {
+                        this.app.add(newEntity);
+                        this.editor.addToSelection(newEntity);
+                        createdEntities.push(newEntity);
+                    }
+                });
+            },
+            undo: () => {
+                createdEntities.forEach(entity => this.app.remove(entity));
+                createdEntities.length = 0;
+                this.editor.deselect();
+            }
+        };
+    
+        this.editor.undoManager.execute(command);
     }
 
     newLevel() {
@@ -7020,20 +7365,8 @@ export class EditorActions {
         }
     }
     
-    updateSkyboxColor(color) {
-        this.app.scene.background = new THREE.Color(color);
-        this.app.settings.backgroundColor = color.replace('#', '0x');
-    }
-    
-    updateAmbientLight(prop, value) {
-        const light = this.app.ambientLight;
-        const setting = this.app.settings.ambientLight;
-        if (prop === 'color') { light.color.set(value); setting.color = value.replace('#', '0x'); }
-        if (prop === 'intensity') { light.intensity = parseFloat(value); setting.intensity = parseFloat(value); }
-    }
-    
-    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.editor.syncObjectTransforms(); }
-    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.editor.syncObjectTransforms(); }
+    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.editor.syncObjectTransforms(this.app.spawnPointHelper); }
+    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.editor.syncObjectTransforms(this.app.deathSpawnPointHelper); }
 }
 --------------------------------------------------
 === END OF FILE: src/editor/EditorActions.js ===
@@ -7049,6 +7382,7 @@ import { Physics } from '../core/Physics.js';
 import { InputManager } from '../core/InputManager.js';
 import { LevelManager } from '../game/world/LevelManager.js';
 import { LevelEditor } from './LevelEditor.js';
+import { WaterMaterial } from '../client/rendering/materials/WaterMaterial.js';
 
 export class EditorApp {
     constructor() {
@@ -7083,8 +7417,11 @@ export class EditorApp {
     getTriggers() { return this.getEntities('Trigger'); }
     getDeathTriggers() { return this.getEntities('DeathTrigger'); }
     getDirectionalLights() { return this.getEntities('DirectionalLight'); }
+    getWaterVolumes() { return this.getEntities('Water'); }
 
     async init() {
+        await WaterMaterial.init();
+
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
         this.gridHelper.material.opacity = 0.2;
         this.gridHelper.material.transparent = true;
@@ -7109,6 +7446,7 @@ export class EditorApp {
              this.scene.add(entity);
         } else {
             if (entity.mesh) this.scene.add(entity.mesh);
+            if (entity.helperMesh) this.scene.add(entity.helperMesh); // For water volume helpers
             if (entity.body) this.physics.addBody(entity.body);
         }
     }
@@ -7176,6 +7514,7 @@ export class EditorApp {
         if (!entity) return;
         const mesh = entity.mesh || entity;
         this.scene.remove(mesh);
+        if (entity.helperMesh) this.scene.remove(entity.helperMesh);
         
         if (dispose && mesh.geometry) {
             mesh.geometry.dispose();
@@ -7184,6 +7523,10 @@ export class EditorApp {
             } else if (mesh.material?.dispose) {
                 mesh.material.dispose();
             }
+        }
+        if (dispose && entity.helperMesh?.geometry) {
+            entity.helperMesh.geometry.dispose();
+            entity.helperMesh.material.dispose();
         }
         if (entity.body) this.physics.queueForRemoval(entity.body);
     }
@@ -7225,6 +7568,12 @@ export class EditorApp {
 
     animate() {
         const deltaTime = this.clock.getDelta();
+        const elapsedTime = this.clock.elapsedTime;
+        [...this.getWaterVolumes()].forEach(water => {
+            if (water.mesh.material.time !== undefined) {
+                water.mesh.material.time = elapsedTime;
+            }
+        });
         this.physics.update(deltaTime);
         this.editor.update(deltaTime);
         this.renderer.render();
@@ -7289,8 +7638,6 @@ export class EditorCamera {
 
 === FILE: src/editor/EditorControls.js ===
 --------------------------------------------------
-// src/editor/EditorControls.js
-
 import * as THREE from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { StateChangeCommand } from './UndoManager.js';
@@ -7305,13 +7652,13 @@ export class EditorControls {
         this.app = editor.app;
         this.scene = editor.scene;
         this.camera = editor.camera;
-        this.renderer = editor.app.renderer.renderer; // FIX: Get the WebGLRenderer directly from the app
+        this.renderer = editor.app.renderer.renderer;
         this.input = editor.input;
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
-        this._initialDragState = null; // For Undo/Redo
+        this._initialDragState = null;
 
         this._onMouseDownHandler = this.onMouseDown.bind(this);
         this._onContextMenuHandler = (e) => e.preventDefault();
@@ -7325,11 +7672,9 @@ export class EditorControls {
         this.transformControls.addEventListener('objectChange', () => this.onObjectChange());
         this.scene.add(this.transformControls);
 
-        this.selectionBox = new THREE.BoxHelper();
-        this.selectionBox.material.depthTest = false;
-        this.selectionBox.material.transparent = true;
-        this.selectionBox.visible = false;
-        this.scene.add(this.selectionBox);
+        this.selectionBoxGroup = new THREE.Group();
+        this.selectionBoxGroup.renderOrder = 999;
+        this.scene.add(this.selectionBoxGroup);
         
         this.applySnapSettings();
         
@@ -7342,75 +7687,82 @@ export class EditorControls {
         this.renderer.domElement.removeEventListener('contextmenu', this._onContextMenuHandler, false);
         this.transformControls.dispose();
         this.scene.remove(this.transformControls);
-        this.scene.remove(this.selectionBox);
-        this.selectionBox.geometry.dispose();
-        this.selectionBox.material.dispose();
+        this.scene.remove(this.selectionBoxGroup);
+        this.clearSelectionBoxes();
     }
 
     onDraggingChanged(event) {
-        this.input.enabled = !event.value; // Disable camera controller while dragging
-        let entity = this.editor.selectedObject;
-        if (!entity) return;
-
-        // If a target is being dragged, the command should apply to the parent light
-        if (this.transformControls.object?.userData.gameEntity?.type === 'LightTarget') {
-            entity = this.transformControls.object.userData.gameEntity.parentLight;
-        }
+        this.input.enabled = !event.value;
+        const selected = this.editor.selectedObjects;
+        if (selected.size === 0) return;
 
         if (event.value) { // Drag started
-            this._initialDragState = {
-                definition: JSON.parse(JSON.stringify(entity.definition)),
-            };
-        } else { // Drag ended
-            const beforeState = this._initialDragState.definition;
-            const afterState = JSON.parse(JSON.stringify(entity.definition));
-            
-            this.editor.syncObjectTransforms(entity); // Ensure latest positions are synced first
-
-            if (entity.userData.gameEntity.type === 'DirectionalLight') {
-                afterState.position = { x: entity.light.position.x, y: entity.light.position.y, z: entity.light.position.z };
-                afterState.targetPosition = { x: entity.light.target.position.x, y: entity.light.target.position.y, z: entity.light.target.position.z };
-            } else {
-                 const mesh = entity.mesh || entity.picker || entity;
-                 afterState.position = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
-                 const euler = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
-                 if(afterState.rotation) {
-                    afterState.rotation = { x: THREE.MathUtils.radToDeg(euler.x), y: THREE.MathUtils.radToDeg(euler.y), z: THREE.MathUtils.radToDeg(euler.z) };
-                 }
-                if (this.transformControls.mode === 'scale' && afterState.size) {
-                     const initialSize = new THREE.Vector3().fromArray(this._initialDragState.definition.size);
-                     const absScale = new THREE.Vector3().copy(mesh.scale).abs();
-                     const newSize = initialSize.clone().multiply(absScale);
-                     afterState.size = newSize.toArray();
-                     mesh.scale.set(1, 1, 1);
-                }
+            this._initialDragState = [];
+            selected.forEach(entity => {
+                this._initialDragState.push({
+                    entity,
+                    definition: JSON.parse(JSON.stringify(entity.definition))
+                });
+            });
+            // For group scaling, we need the initial mesh scales
+            if (this.transformControls.mode === 'scale' && selected.size > 1) {
+                this._initialDragState.forEach(state => {
+                    const mesh = state.entity.mesh || state.entity.picker || state.entity;
+                    state.initialScale = mesh.scale.clone();
+                });
             }
+        } else { // Drag ended
+            this.detachFromGroup();
             
-            const command = new StateChangeCommand(this.editor, entity, beforeState, afterState);
+            const changes = [];
+            this._initialDragState.forEach(state => {
+                const { entity, definition, initialScale } = state;
+                const afterState = JSON.parse(JSON.stringify(entity.definition));
+                const mesh = entity.mesh || entity.picker || entity;
+                
+                afterState.position = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
+                if (afterState.rotation) {
+                    const euler = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
+                    afterState.rotation = { x: THREE.MathUtils.radToDeg(euler.x), y: THREE.MathUtils.radToDeg(euler.y), z: THREE.MathUtils.radToDeg(euler.z) };
+                }
+                
+                if (this.transformControls.mode === 'scale' && afterState.size) {
+                    const groupScale = this.editor.selectionGroup.scale;
+                    const finalScale = selected.size > 1 ? groupScale : mesh.scale;
+                    const baseSize = new THREE.Vector3().fromArray(definition.size);
+                    const newSize = baseSize.clone().multiply(finalScale);
+                    afterState.size = newSize.toArray();
+                }
+
+                changes.push({ entity, beforeState: definition, afterState });
+            });
+            
+            const command = new StateChangeCommand(this.editor, changes);
             this.editor.undoManager.execute(command);
+            
             this._initialDragState = null;
+            this.updateSelection();
         }
     }
 
     onObjectChange() {
-        if (this.editor.selectedObject && !this.transformControls.dragging) {
+        if (this.editor.primarySelectedObject && !this.transformControls.dragging) {
             this.editor.syncObjectTransforms();
             this.editor.ui.updatePropertiesPanel();
         } else if (this.transformControls.dragging) {
-            const selectedEntity = this.editor.selectedObject;
             const draggedObject = this.transformControls.object;
-            const draggedEntityType = draggedObject?.userData?.gameEntity?.type;
-
-            if (draggedEntityType === 'LightTarget') {
+            if (draggedObject?.userData.gameEntity?.type === 'LightTarget') {
                 this.editor.syncObjectTransforms(draggedObject.userData.gameEntity.parentLight);
-            } else if(selectedEntity) {
-                this.editor.syncObjectTransforms(selectedEntity);
+            } else if (draggedObject === this.editor.selectionGroup) {
+                // No need to sync individual objects while group is transforming
+            } else if (this.editor.primarySelectedObject) {
+                this.editor.syncObjectTransforms(this.editor.primarySelectedObject);
             }
+            this.editor.ui.updatePropertiesPanel();
         }
     }
 
     onMouseDown(event) {
-        // REVISED: Select with right-click (button 2)
         if (event.button !== 2 || this.transformControls.dragging || this.editor.ui.isClickOnUI(event.clientX, event.clientY)) return;
         
         const rect = this.renderer.domElement.getBoundingClientRect();
@@ -7420,8 +7772,8 @@ export class EditorControls {
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
         const pickableMeshes = [...this.app.entities]
-            .map(e => e.mesh || e.picker || e.targetHelper || e) // Get all possible meshes
-            .flat() // Flatten in case of groups
+            .map(e => e.mesh || e.picker || e.targetHelper || e)
+            .flat()
             .filter(Boolean);
             
         const intersects = this.raycaster.intersectObjects(pickableMeshes.filter(m => m.visible), true);
@@ -7432,11 +7784,118 @@ export class EditorControls {
             if (entity.definition?.editorSelectable === false) {
                  this.editor.deselect();
             } else {
-                 this.editor.select(entity);
+                 if (event.shiftKey) {
+                     if (this.editor.selectedObjects.has(entity)) {
+                         this.editor.removeFromSelection(entity);
+                     } else {
+                         this.editor.addToSelection(entity);
+                     }
+                 } else {
+                    this.editor.select(entity);
+                 }
             }
         } else {
-            this.editor.deselect();
+            if (!event.shiftKey) {
+                this.editor.deselect();
+            }
         }
+    }
+    
+    updateSelection() {
+        this.detachFromGroup();
+        this.transformControls.detach();
+        this.clearSelectionBoxes();
+    
+        const selected = this.editor.selectedObjects;
+        if (selected.size === 0) return;
+    
+        if (selected.size === 1) {
+            const entity = selected.values().next().value;
+            const objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
+            
+            this.transformControls.attach(objectToAttach);
+            this.addSelectionBox(objectToAttach);
+    
+        } else {
+            const selectionGroup = this.editor.selectionGroup;
+            const centroid = new THREE.Vector3();
+            selected.forEach(entity => {
+                const mesh = entity.mesh || entity.picker || entity;
+                centroid.add(mesh.position);
+            });
+            centroid.divideScalar(selected.size);
+            selectionGroup.position.copy(centroid);
+            selectionGroup.rotation.set(0,0,0);
+            selectionGroup.scale.set(1,1,1);
+    
+            selected.forEach(entity => {
+                const mesh = entity.mesh || entity.picker || entity;
+                this.scene.remove(mesh);
+                selectionGroup.add(mesh);
+                this.addSelectionBox(mesh);
+            });
+    
+            this.transformControls.attach(selectionGroup);
+        }
+        
+        this.updateToolAvailability();
+    }
+
+    detachFromGroup() {
+        const selectionGroup = this.editor.selectionGroup;
+        const children = [...selectionGroup.children];
+        for (const child of children) {
+            child.updateWorldMatrix(true, false);
+            selectionGroup.remove(child);
+            this.scene.add(child);
+        }
+        selectionGroup.position.set(0,0,0);
+        selectionGroup.rotation.set(0,0,0);
+        selectionGroup.scale.set(1,1,1);
+        selectionGroup.updateWorldMatrix(true, false);
+    }
+    
+    updateSelectionBoxes() {
+        this.selectionBoxGroup.children.forEach(box => box.update());
+    }
+    
+    addSelectionBox(object) {
+        const selectionBox = new THREE.BoxHelper(object, 0xffff00);
+        selectionBox.material.depthTest = false;
+        selectionBox.material.transparent = true;
+        this.selectionBoxGroup.add(selectionBox);
+    }
+    
+    clearSelectionBoxes() {
+        while(this.selectionBoxGroup.children.length) {
+            const box = this.selectionBoxGroup.children[0];
+            this.selectionBoxGroup.remove(box);
+            box.geometry.dispose();
+            box.material.dispose();
+        }
+    }
+    
+    updateToolAvailability() {
+        let canRotate = true, canScale = true;
+        this.editor.selectedObjects.forEach(entity => {
+            const entityType = entity.userData?.gameEntity?.type;
+            const isEnemy = entityType === 'Enemy';
+            const isLightTarget = entityType === 'LightTarget';
+            const isSpecialPoint = ['SpawnPoint', 'DeathSpawnPoint', 'DirectionalLight'].includes(entityType);
+
+            if (isSpecialPoint || isEnemy || isLightTarget) {
+                canRotate = false;
+                canScale = false;
+            }
+        });
+
+        document.getElementById('tool-rotate').disabled = !canRotate;
+        document.getElementById('tool-scale').disabled = !canScale;
+
+        const mode = this.transformControls.getMode();
+        // FIX: Changed this.controls.setTransformMode to this.setTransformMode
+        if (!canRotate && mode === 'rotate') this.setTransformMode('translate');
+        if (!canScale && mode === 'scale') this.setTransformMode('translate');
     }
 
     setTransformSpace(space) {
@@ -7475,9 +7934,8 @@ export class EditorControls {
 
 === FILE: src/editor/EditorUI.js ===
 --------------------------------------------------
-// ~ src/editor/EditorUI.js
-
 import * as THREE from 'three';
+import { StateChangeCommand } from './UndoManager.js';
 
 export class EditorUI {
     constructor(editor) {
@@ -7508,6 +7966,7 @@ export class EditorUI {
         document.getElementById('view-toggle-spawn-helpers').onchange = (e) => this.setHelpersVisibility('SpawnAndDeath', e.target.checked);
         document.getElementById('view-toggle-msg-triggers').onchange = (e) => this.setHelpersVisibility('Trigger', e.target.checked);
         document.getElementById('view-toggle-death-triggers').onchange = (e) => this.setHelpersVisibility('DeathTrigger', e.target.checked);
+        document.getElementById('view-toggle-water-volumes').onchange = (e) => this.setHelpersVisibility('Water', e.target.checked);
         
         // --- Help Menu ---
         document.getElementById('menu-help-metrics').onclick = (event) => {
@@ -7519,6 +7978,7 @@ export class EditorUI {
         document.getElementById('tool-translate').onclick = () => this.editor.controls.setTransformMode('translate');
         document.getElementById('tool-rotate').onclick = () => this.editor.controls.setTransformMode('rotate');
         document.getElementById('tool-scale').onclick = () => this.editor.controls.setTransformMode('scale');
+        document.getElementById('tool-space').onclick = () => this.editor.controls.toggleTransformSpace();
         
         // --- Snapping Controls ---
         const snapToggle = document.getElementById('snap-toggle');
@@ -7557,7 +8017,20 @@ export class EditorUI {
         this.outlinerContent = document.getElementById('outliner-content');
         this.outlinerContent.onclick = (e) => {
             const item = e.target.closest('.outliner-item');
-            if (item) this.editor.selectByUUID(item.dataset.uuid);
+            if (item) {
+                if (e.shiftKey) {
+                    const entity = this.findEntityByUUID(item.dataset.uuid);
+                    if (entity) {
+                        if (this.editor.selectedObjects.has(entity)) {
+                            this.editor.removeFromSelection(entity);
+                        } else {
+                            this.editor.addToSelection(entity);
+                        }
+                    }
+                } else {
+                    this.editor.selectByUUID(item.dataset.uuid);
+                }
+            }
         };
         
         // --- Inspector ---
@@ -7581,7 +8054,25 @@ export class EditorUI {
         });
     }
 
+    findEntityByUUID(uuid) {
+        return [...this.app.entities].find(e => {
+            const mesh = e.mesh || e.picker || e.targetHelper || e;
+            return mesh?.uuid === uuid;
+        });
+    }
+
+    /**
+     * REWORKED: Robustly checks if coordinates are over any UI panel.
+     * This now uses elementFromPoint to correctly handle any element,
+     * including inputs and their pop-ups (like the color picker).
+     * @param {number} x - The screen X coordinate.
+     * @param {number} y - The screen Y coordinate.
+     * @returns {boolean}
+     */
     isClickOnUI(x, y) {
+        const el = document.elementFromPoint(x, y);
+        if (!el) return false;
+
         const uiAreas = [
             document.getElementById('editor-menu-bar'),
             document.getElementById('editor-toolbar'),
@@ -7590,44 +8081,29 @@ export class EditorUI {
             document.getElementById('create-button-container'),
         ];
     
-        for (const area of uiAreas) {
-            if (!area) continue;
-            const rect = area.getBoundingClientRect();
-            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                return true;
-            }
-        }
-        return false;
+        return uiAreas.some(area => area && area.contains(el));
     }
 
     showInfoModal() {
-        // --- Player & Physics Parameters (from Player.js and Physics.js) ---
         const playerRadius = 0.8;
         const speed = 8;
         const jumpVy = 8;
         const dashMultiplier = 4;
         const dashDuration = 0.2;
-        const gravity = 9.82; // Absolute value
+        const gravity = 9.82; 
 
-        // --- Calculations ---
         const playerHeight = playerRadius * 2;
         const dashSpeed = speed * dashMultiplier;
         const groundDashDist = dashSpeed * dashDuration;
-
-        // Single Jump
         const timeToPeak1 = jumpVy / gravity;
         const height1 = (jumpVy * jumpVy) / (2 * gravity);
         const airTime1 = 2 * timeToPeak1;
         const distance1 = speed * airTime1;
-
-        // Double Jump (Max Height: jump at peak of first)
-        const height2 = height1 + height1; // Second jump from peak (v=0) gains same height
+        const height2 = height1 + height1;
         const timeToFallFromH2 = Math.sqrt((2 * height2) / gravity);
         const airTime2_height = timeToPeak1 + timeToFallFromH2;
         const distance2_height = speed * airTime2_height;
         const horizontalDistToPeak = speed * timeToPeak1;
-        
-        // Jump + Dash (for max distance)
         const jumpDashDist = horizontalDistToPeak + groundDashDist + (speed * timeToPeak1);
 
         const infoText = `
@@ -7660,11 +8136,14 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         document.getElementById('editor-info-modal').style.display = 'flex';
     }
 
-
     updateTransformModeButtons(mode) {
         ['translate', 'rotate', 'scale'].forEach(m => {
             document.getElementById(`tool-${m}`).classList.toggle('active', m === mode);
         });
+    }
+
+    updateSpaceToggle(space) {
+        document.getElementById('tool-space').textContent = space === 'world' ? 'World' : 'Local';
     }
 
     updateOutliner() {
@@ -7674,7 +8153,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             item.className = 'outliner-item';
             item.textContent = `${prefix} ${name}`;
             item.dataset.uuid = uuid;
-            if (entity === this.editor.selectedObject) item.classList.add('selected');
+            if (this.editor.selectedObjects.has(entity)) {
+                item.classList.add('selected');
+            }
             parent.appendChild(item);
         };
     
@@ -7687,8 +8168,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             details.appendChild(summary);
             entities.forEach(e => {
                  const name = e.definition?.[nameField] || e.name || (e.userData?.gameEntity?.type) || 'Unnamed';
-                 // Use a consistent way to get a unique identifier (mesh, picker, or helper itself)
-                 const uuidProvider = e.mesh || e.picker || e;
+                 const uuidProvider = e.mesh || e.picker || e.helperMesh || e;
                  if(uuidProvider) {
                     createItem(details, e, name, uuidProvider.uuid, prefix);
                  }
@@ -7707,16 +8187,34 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         createCategory('Enemies', this.app.getEnemies(), '[E]');
         createCategory('Message Triggers', this.app.getTriggers(), '[T]');
         createCategory('Death Zones', this.app.getDeathTriggers(), '[D]');
+        createCategory('Water Volumes', this.app.getWaterVolumes(), '[W]');
     }
 
     updatePropertiesPanel() {
-        this.inspectorContent.innerHTML = ''; // Clear previous content
-        if (!this.editor.selectedObject) {
+        // FIX: If an input inside the inspector is focused, do not redraw the panel.
+        // This prevents losing focus while typing or using a color picker.
+        if (this.inspectorContent.contains(document.activeElement)) {
+            return;
+        }
+
+        this.inspectorContent.innerHTML = '';
+        
+        if (this.editor.selectedObjects.size > 1) {
+            const multiSelectInfo = document.createElement('div');
+            multiSelectInfo.className = 'placeholder-text';
+            multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
+            this.inspectorContent.appendChild(multiSelectInfo);
+        } else if (this.editor.selectedObjects.size === 0) {
             this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
             return;
         }
+
+        const entity = this.editor.primarySelectedObject;
+        if (!entity) {
+            if (this.editor.selectedObjects.size === 0) this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
+            return;
+        }
     
-        const entity = this.editor.selectedObject;
         const entityType = entity.userData?.gameEntity?.type;
         if (!entityType) return;
     
@@ -7787,7 +8285,6 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             parent.appendChild(inputGroup);
         };
     
-        // --- Build UI based on Entity Type ---
         const def = entity.definition;
         const mesh = entity.mesh || entity.picker || entity;
     
@@ -7809,12 +8306,46 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         }
     
         if (def && def.size) {
-            const sizeGroup = createPropGroup('Size');
-            const sizeVec = { x: def.size[0], y: def.size[1], z: def.size[2] };
-            createVec3Inputs(sizeGroup, sizeVec, 0.25, (axis, val) => {
-                const map = { x: 0, y: 1, z: 2 };
-                this.editor.updateSelectedProp('size', map[axis], val);
-            });
+            if (def.type === 'Plane') {
+                const widthGroup = createPropGroup('Width');
+                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => {
+                    this.editor.updateSelectedProp('size', 0, val);
+                });
+                const depthGroup = createPropGroup('Depth');
+                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => {
+                    this.editor.updateSelectedProp('size', 1, val);
+                });
+            } else {
+                const sizeGroup = createPropGroup('Size');
+                const displaySize = {
+                    x: def.size[0] * mesh.scale.x,
+                    y: def.size[1] * mesh.scale.y,
+                    z: def.size[2] * mesh.scale.z
+                };
+                createVec3Inputs(sizeGroup, displaySize, 0.25, (axis, val) => {
+                    const changes = [];
+                    this.editor.selectedObjects.forEach(selEntity => {
+                        const selMesh = selEntity.mesh || selEntity.picker || selEntity;
+                        if (!selEntity.definition?.size || !selMesh) return;
+                        
+                        const beforeDef = JSON.parse(JSON.stringify(selEntity.definition));
+                        beforeDef.size[0] *= selMesh.scale.x;
+                        beforeDef.size[1] *= selMesh.scale.y;
+                        beforeDef.size[2] *= selMesh.scale.z;
+                        
+                        const afterDef = JSON.parse(JSON.stringify(beforeDef));
+                        const map = { x: 0, y: 1, z: 2 };
+                        afterDef.size[map[axis]] = val;
+                        
+                        changes.push({ entity: selEntity, beforeState: beforeDef, afterState: afterDef });
+                    });
+            
+                    if (changes.length > 0) {
+                        const command = new StateChangeCommand(this.editor, changes);
+                        this.editor.undoManager.execute(command);
+                    }
+                });
+            }
         }
     
         if (def && def.material) {
@@ -7873,6 +8404,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             case 'DirectionalLight': entities = this.app.getDirectionalLights(); break;
             case 'Trigger': entities = this.app.getTriggers(); break;
             case 'DeathTrigger': entities = this.app.getDeathTriggers(); break;
+            case 'Water': entities = this.app.getWaterVolumes(); break;
             default: entities = [];
         }
     
@@ -7881,7 +8413,9 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
                 if (e.helper) e.helper.visible = isVisible;
                 if (e.targetHelper) e.targetHelper.visible = isVisible;
             } else if (e.mesh) {
-                e.mesh.visible = isVisible;
+                // For water, we toggle the helper box, not the visible surface
+                if (e.helperMesh) e.helperMesh.visible = isVisible;
+                else e.mesh.visible = isVisible;
             }
         });
     }
@@ -7942,7 +8476,8 @@ export class LevelEditor {
         this.input = app.input;
 
         // Core State
-        this.selectedObject = null;
+        this.selectedObjects = new Set();
+        this.primarySelectedObject = null; // The one whose properties are shown in inspector
         this.clipboard = null;
         this.isSnapEnabled = false;
         this.translationSnapValue = 1;
@@ -7953,10 +8488,10 @@ export class LevelEditor {
             DirectionalLight: true,
             SpawnAndDeath: true,
         };
-
-        // Internal state for rotation logic
-        this._initialLightPos = null;
-        this._initialPickerQuat = null;
+        
+        // Group for multi-object transforms
+        this.selectionGroup = new THREE.Group();
+        this.scene.add(this.selectionGroup);
 
         // Modules
         this.undoManager = new UndoManager(this);
@@ -7979,7 +8514,7 @@ export class LevelEditor {
 
         if (event.ctrlKey) {
             switch (event.code) {
-                case 'KeyC': event.preventDefault(); this.actions.copySelected(); break;
+                case 'KeyC': event.preventDefault(); if (this.selectedObjects.size > 0) this.actions.copySelected(); break;
                 case 'KeyV': event.preventDefault(); this.actions.pasteFromClipboard(); break;
                 case 'KeyZ': event.preventDefault(); this.undoManager.undo(); break;
                 case 'KeyY': event.preventDefault(); this.undoManager.redo(); break;
@@ -7991,7 +8526,7 @@ export class LevelEditor {
                 case 'KeyS': this.controls.setTransformMode('scale'); break;
                 case 'KeyQ': this.controls.toggleTransformSpace(); break;
                 case 'Delete':
-                case 'Backspace': this.actions.deleteSelected(); break;
+                case 'Backspace': if (this.selectedObjects.size > 0) this.actions.deleteSelected(); break;
             }
         }
     }
@@ -7999,45 +8534,47 @@ export class LevelEditor {
     // --- State & Selection Management ---
 
     select(entity) {
-        if (!entity || this.selectedObject === entity) return;
         this.deselect();
-        
-        this.selectedObject = entity;
-        const entityType = entity.userData?.gameEntity?.type;
-        let objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
+        this.addToSelection(entity);
+    }
 
-        if (entityType === 'DirectionalLight') entity.picker.material.visible = true;
+    addToSelection(entity) {
+        if (!entity || this.selectedObjects.has(entity)) return;
 
-        this.controls.transformControls.attach(objectToAttach);
-        this.controls.selectionBox.setFromObject(objectToAttach);
-        this.controls.selectionBox.visible = true;
-        
+        this.selectedObjects.add(entity);
+        this.primarySelectedObject = entity;
+        this.controls.updateSelection();
         this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
-        
-        const isEnemy = entityType === 'Enemy';
-        const isLightTarget = entityType === 'LightTarget';
-
-        const canRotate = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || isEnemy || isLightTarget);
-        const canScale = !(entityType === 'SpawnPoint' || entityType === 'DeathSpawnPoint' || entityType === 'DirectionalLight' || isEnemy || isLightTarget);
-        
-        document.getElementById('tool-rotate').disabled = !canRotate;
-        document.getElementById('tool-scale').disabled = !canScale;
-
-        if (!canRotate && this.controls.transformControls.getMode() === 'rotate') this.controls.setTransformMode('translate');
-        if (!canScale && this.controls.transformControls.getMode() === 'scale') this.controls.setTransformMode('translate');
+    }
+    
+    removeFromSelection(entity) {
+        if (!entity || !this.selectedObjects.has(entity)) return;
+        this.selectedObjects.delete(entity);
+        if (this.primarySelectedObject === entity) {
+            this.primarySelectedObject = this.selectedObjects.size > 0 ? this.selectedObjects.values().next().value : null;
+        }
+        this.controls.updateSelection();
+        this.ui.updatePropertiesPanel();
+        this.ui.updateOutliner();
     }
 
     deselect() {
-        if (!this.selectedObject) return;
-        
-        if (this.selectedObject.userData?.gameEntity?.type === 'DirectionalLight') {
-            this.selectedObject.picker.material.visible = false;
-        }
-
-        this.selectedObject = null;
+        if (this.selectedObjects.size === 0) return;
+    
+        this.controls.detachFromGroup();
         this.controls.transformControls.detach();
-        this.controls.selectionBox.visible = false;
+        this.controls.clearSelectionBoxes();
+        
+        this.selectedObjects.forEach(obj => {
+            if (obj.userData?.gameEntity?.type === 'DirectionalLight') {
+                obj.picker.material.visible = false;
+            }
+        });
+
+        this.selectedObjects.clear();
+        this.primarySelectedObject = null;
+        
         this.ui.updatePropertiesPanel();
         this.ui.updateOutliner();
         
@@ -8074,34 +8611,49 @@ export class LevelEditor {
     // --- Data & Property Manipulation ---
 
     updateSelectedProp(prop, key, value) {
-        if (!this.selectedObject) return;
-        let entity = this.selectedObject;
-        
-        // If a light target is selected, apply the change to the parent light's definition
-        if (entity.userData?.gameEntity?.type === 'LightTarget') {
-            entity = entity.userData.gameEntity.parentLight;
+        if (this.selectedObjects.size === 0) return;
+    
+        const changes = [];
+        this.selectedObjects.forEach(entity => {
+            let currentEntity = entity;
+            if (currentEntity.userData?.gameEntity?.type === 'LightTarget') {
+                currentEntity = currentEntity.userData.gameEntity.parentLight;
+            }
+    
+            const beforeState = JSON.parse(JSON.stringify(currentEntity.definition));
+            const afterState = JSON.parse(JSON.stringify(beforeState));
+            
+            const path = prop.split('.');
+            let parentTarget = afterState;
+            let canApply = true;
+            for(let i = 0; i < path.length - 1; i++) {
+                if (parentTarget[path[i]] !== undefined) {
+                    parentTarget = parentTarget[path[i]];
+                } else {
+                    canApply = false;
+                    break;
+                }
+            }
+            if (!canApply) return; // Skips to next iteration of forEach
+    
+            const finalKey = path[path.length - 1];
+            let targetProperty = parentTarget[finalKey];
+            if (targetProperty === undefined) return;
+    
+            // Apply the change
+            if (key !== null) { // e.g., position.x or size[0]
+                targetProperty[key] = value;
+            } else { // e.g., name, material.color
+                 parentTarget[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
+            }
+            
+            changes.push({ entity: currentEntity, beforeState, afterState });
+        });
+    
+        if (changes.length > 0) {
+            const command = new StateChangeCommand(this, changes);
+            this.undoManager.execute(command);
         }
-
-        const beforeState = entity.definition;
-        const afterState = JSON.parse(JSON.stringify(beforeState)); // Create a working copy
-        let target = afterState;
-
-        const path = prop.split('.');
-        for(let i = 0; i < path.length - 1; i++) {
-            if(!target[path[i]]) target[path[i]] = {};
-            target = target[path[i]];
-        }
-        const finalKey = path[path.length - 1];
-        
-        if (key !== null) {
-            if(!target[finalKey]) target[finalKey] = {};
-            target[finalKey][key] = value;
-        } else {
-            target[finalKey] = value.toString().startsWith('#') ? value.replace('#', '0x') : value;
-        }
-
-        const command = new StateChangeCommand(this, entity, beforeState, afterState);
-        this.undoManager.execute(command);
     }
     
     applyDefinition(obj) {
@@ -8114,7 +8666,6 @@ export class LevelEditor {
     
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
             this.syncObjectTransforms(obj); // Sync position from mesh to internal state
-            this.controls.selectionBox.setFromObject(obj);
             return;
         }
     
@@ -8130,7 +8681,6 @@ export class LevelEditor {
             obj.targetHelper.position.copy(light.target.position);
             light.target.updateMatrixWorld(true);
             obj.helper.update();
-            this.controls.selectionBox.setFromObject(obj.picker);
             return;
         }
     
@@ -8155,6 +8705,9 @@ export class LevelEditor {
                 if (type === 'Trigger' && def.color) {
                     mesh.material.color.set(parseInt(def.color, 16));
                 }
+            } else if (def.type === 'Plane') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
             } else if (def.type === 'Box' && body?.shapes[0]) {
                 const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
                 body.shapes[0].halfExtents.copy(halfExtents);
@@ -8166,11 +8719,10 @@ export class LevelEditor {
         }
     
         this.syncObjectTransforms(obj);
-        this.controls.selectionBox.setFromObject(mesh);
     }
     
     syncObjectTransforms(entityToSync) {
-        const entity = entityToSync || this.selectedObject;
+        const entity = entityToSync || this.primarySelectedObject;
         if (!entity) return;
         
         const entityType = entity.userData?.gameEntity?.type;
@@ -8185,7 +8737,6 @@ export class LevelEditor {
             light.position.copy(picker.position);
             light.target.position.copy(entity.targetHelper.position);
             entity.helper.update();
-            if (this.selectedObject === entity) this.controls.selectionBox.setFromObject(picker);
         } else if (entity.body) {
             entity.body.position.copy(entity.mesh.position);
             entity.body.quaternion.copy(entity.mesh.quaternion);
@@ -8206,6 +8757,7 @@ export class LevelEditor {
     
     update(deltaTime) {
         this.cameraController.update(deltaTime);
+        this.controls.updateSelectionBoxes();
     }
 }
 --------------------------------------------------
@@ -8218,24 +8770,65 @@ export class LevelEditor {
  * A command representing a state change on an entity. It holds the "before"
  * and "after" states, allowing the change to be executed and undone.
  */
+
 export class StateChangeCommand {
-    constructor(editor, entity, beforeState, afterState) {
+    /**
+     * Can be constructed in two ways:
+     * 1. new StateChangeCommand(editor, changes) where changes is an array of {entity, beforeState, afterState}
+     * 2. new StateChangeCommand(editor, entity, beforeState, afterState) for a single object change
+     * @param {import('./LevelEditor.js').LevelEditor} editor
+     * @param {Array|object} changesOrEntity
+     * @param {object} [beforeState]
+     * @param {object} [afterState]
+     */
+    constructor(editor, changesOrEntity, beforeState, afterState) {
         this.editor = editor;
-        this.entity = entity;
-        this.beforeState = JSON.parse(JSON.stringify(beforeState));
-        this.afterState = JSON.parse(JSON.stringify(afterState));
+        
+        if (Array.isArray(changesOrEntity)) {
+            // New signature for multi-object changes
+            this.changes = changesOrEntity.map(c => ({
+                entity: c.entity,
+                beforeState: JSON.parse(JSON.stringify(c.beforeState)),
+                afterState: JSON.parse(JSON.stringify(c.afterState)),
+            }));
+        } else {
+            // Original signature for single-object changes
+            this.changes = [{
+                entity: changesOrEntity,
+                beforeState: JSON.parse(JSON.stringify(beforeState)),
+                afterState: JSON.parse(JSON.stringify(afterState)),
+            }];
+        }
     }
 
     execute() {
-        this.entity.definition = JSON.parse(JSON.stringify(this.afterState));
-        this.editor.applyDefinition(this.entity);
-        this.editor.select(this.entity);
+        this.changes.forEach(change => {
+            change.entity.definition = JSON.parse(JSON.stringify(change.afterState));
+            const mesh = change.entity.mesh || change.entity.picker || change.entity;
+            if (mesh && change.afterState.size) {
+                 mesh.scale.set(1, 1, 1);
+            }
+            this.editor.applyDefinition(change.entity);
+        });
+        
+        this.editor.deselect();
+        this.changes.forEach(change => this.editor.addToSelection(change.entity));
+        this.editor.ui.updatePropertiesPanel();
     }
 
     undo() {
-        this.entity.definition = JSON.parse(JSON.stringify(this.beforeState));
-        this.editor.applyDefinition(this.entity);
-        this.editor.select(this.entity);
+        this.changes.forEach(change => {
+            change.entity.definition = JSON.parse(JSON.stringify(change.beforeState));
+            const mesh = change.entity.mesh || change.entity.picker || change.entity;
+            if (mesh && change.beforeState.size) {
+                mesh.scale.set(1, 1, 1);
+            }
+            this.editor.applyDefinition(change.entity);
+        });
+        
+        this.editor.deselect();
+        this.changes.forEach(change => this.editor.addToSelection(change.entity));
+        this.editor.ui.updatePropertiesPanel();
     }
 }
 
@@ -8255,7 +8848,7 @@ export class UndoManager {
         if (this.undoStack.length > this.maxHistory) {
             this.undoStack.shift();
         }
-        this.redoStack = [];
+        this.redoStack = []; // Clear redo stack on new command
         command.execute();
     }
 
@@ -8688,7 +9281,6 @@ export class AbilityFactory {
 
 === FILE: src/game/abilities/EnemyProjectile.js ===
 --------------------------------------------------
-// src/game/abilities/EnemyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -8720,7 +9312,7 @@ export class EnemyProjectile {
         const group = isFriendlyCaster ? COLLISION_GROUPS.PLAYER_PROJECTILE : COLLISION_GROUPS.ENEMY_PROJECTILE;
         const mask = isFriendlyCaster
             ? (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY)
-            : (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY);
+            : (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.WATER);
 
         const body = new CANNON.Body({
             mass: 0.1,
@@ -8762,7 +9354,8 @@ export class EnemyProjectile {
         }
         
         // Detonate on impact with anything except a non-physical trigger volume.
-        if (!(event.body.collisionFilterGroup & COLLISION_GROUPS.TRIGGER)) {
+        const otherGroup = event.body.collisionFilterGroup;
+        if (!(otherGroup & COLLISION_GROUPS.TRIGGER)) {
             this.world.remove(this);
         }
     }
@@ -9793,7 +10386,6 @@ export class NPC {
 
 === FILE: src/game/entities/Player.js ===
 --------------------------------------------------
-// ~ src/game/entities/Player.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -9836,6 +10428,11 @@ export class Player {
         this.dashStateTimer = 0;
         this.dashDirection = new THREE.Vector3();
         this.targetFov = GAME_CONFIG.PLAYER.FOV;
+
+        // Water interaction state
+        this.isSwimming = false;
+        this.isWaterSpecialist = false;
+        this.currentWaterVolume = null;
 
         if (!body.userData) body.userData = {};
         body.userData.entity = this;
@@ -9931,6 +10528,16 @@ export class Player {
         this.abilities.abilities = cardIds.map(cardId => 
             cardId ? AbilityFactory.create(cardId, this) : null
         );
+        this.updateWaterSpecialistStatus();
+    }
+
+    updateWaterSpecialistStatus() {
+        if (!this.abilities?.abilities) {
+            this.isWaterSpecialist = false;
+            return;
+        }
+        const waterAbilities = this.abilities.abilities.filter(a => a && a.data.element === 'Water').length;
+        this.isWaterSpecialist = waterAbilities >= 2;
     }
 
     takeDamage(amount) {
@@ -9960,6 +10567,8 @@ export class Player {
         this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
         this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
         this.dashStateTimer = 0;
+        this.isSwimming = false;
+        this.currentWaterVolume = null;
         this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
         this.abilities.lastAbilityTime = -Infinity;
         this.statusEffects.activeEffects.clear();
@@ -9978,7 +10587,6 @@ export class Player {
 
 === FILE: src/game/prefabs/NPCPrefab.js ===
 --------------------------------------------------
-// + src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
@@ -10013,10 +10621,10 @@ export class NPCPrefab {
         let group, mask;
         if (team === 'enemy') {
             group = COLLISION_GROUPS.ENEMY;
-            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER;
+            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
         } else { // ally
             group = COLLISION_GROUPS.ALLY;
-            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER;
+            mask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
         }
         
         const body = new CANNON.Body({
@@ -10040,7 +10648,6 @@ export class NPCPrefab {
 
 === FILE: src/game/prefabs/PlayerPrefab.js ===
 --------------------------------------------------
-// ~ src/game/prefabs/PlayerPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';
@@ -10065,7 +10672,8 @@ export class PlayerPrefab {
             fixedRotation: true,
             allowSleep: false,
             collisionFilterGroup: COLLISION_GROUPS.PLAYER,
-            collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER,
+            collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER,
+            linearDamping: config.DEFAULT_DAMPING,
         });
         const playerWorldContactMaterial = new CANNON.ContactMaterial(
             physics.world.defaultMaterial, material,
@@ -10545,173 +11153,186 @@ export class DeathSystem {
 
 === FILE: src/game/systems/MovementSystem.js ===
 --------------------------------------------------
- // src/game/systems/MovementSystem.js
-    
-    import * as THREE from 'three';
-    import * as CANNON from 'cannon-es';
-    import { GAME_CONFIG } from '../../shared/config.js';
-    import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-    
-    /**
-     * Handles player movement based on input, including jumping, dashing, and ground slams.
-     */
-    export class MovementSystem {
-        constructor() {
-            // No properties needed for ground check
-        }
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { GAME_CONFIG } from '../../shared/config.js';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
         
-        /**
-         * @param {import('../world/World.js').World} world
-         * @param {number} deltaTime
-         */
-        update(world, deltaTime) {
-            const player = world.player;
-            if (!player || player.isDead) return;
-    
-            player.physics.body.wakeUp();
-    
-            const { input, physics } = player;
-    
-            // Ground checking and jump reset is now handled in Player.js via onCollide
-            this._handleCooldowns(player, deltaTime);
-            this._handleLook(player);
-            this._handleFOV(player, deltaTime);
-            
-            this._initiateDash(player);
-    
-            if (player.isSlamming) {
-                physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
-            } else if (player.isDashing) {
-                this._applyDashMovement(player);
-            } else {
-                this._applyStandardMovement(player, input.moveDirection);
+/**
+* Handles player movement based on input, including jumping, dashing, and ground slams.
+*/
+export class MovementSystem {
+            constructor() {
+                // No properties needed for ground check
             }
             
-            this._handleJump(player);
-            this._handleSlam(player);
-    
-            input.jumpRequested = false;
-        }
-    
-        _initiateDash(player) {
-            if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
-                player.isDashing = true;
-                player.dashOnCooldown = true;
-                player.dashStateTimer = 0;
-                player.dashCooldownTimer = 0;
-                
-                const cameraDir = new THREE.Vector3();
-                player.camera.getWorldDirection(cameraDir);
-                cameraDir.y = 0;
-                cameraDir.normalize();
-    
-                const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
-                
-                const forwardDot = player.dashDirection.dot(cameraDir);
-                const rightDot = player.dashDirection.dot(rightDir);
+            /**
+             * @param {import('../world/World.js').World} world
+             * @param {number} deltaTime
+             */
+            update(world, deltaTime) {
+                const player = world.player;
+                if (!player || player.isDead) return;
         
-                player.world.emit('playerDashed', { forwardDot, rightDot });
+                player.physics.body.wakeUp();
         
-                if (Math.abs(forwardDot) > Math.abs(rightDot)) {
-                    player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
+                const { input, physics } = player;
+        
+                // Ground checking and jump reset is now handled in Player.js via onCollide
+                this._handleCooldowns(player, deltaTime);
+                this._handleLook(player);
+                this._handleFOV(player, deltaTime);
+                
+                this._initiateDash(player);
+        
+                if (player.isSlamming) {
+                    physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
+                } else if (player.isDashing) {
+                    this._applyDashMovement(player);
+                } else {
+                    this._applyStandardMovement(player, input.moveDirection);
                 }
                 
-                player.input.dashRequested = false;
-            }
-        }
-    
-        _handleFOV(player, deltaTime) {
-            if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
-                player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
-                player.camera.updateProjectionMatrix();
-            }
-            
-            if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
-                player.targetFov = GAME_CONFIG.PLAYER.FOV;
-            }
-        }
-    
-        _handleCooldowns(player, deltaTime) {
-            const config = GAME_CONFIG.PLAYER;
-            
-            if (player.doubleJumpOnCooldown) {
-                player.doubleJumpCooldownTimer += deltaTime;
-                if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
-                    player.doubleJumpOnCooldown = false;
-                    player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
-                }
-            }
-            
-            if (player.dashOnCooldown) {
-                player.dashCooldownTimer += deltaTime;
-                if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
-                    player.dashOnCooldown = false;
-                }
-            }
-    
-            if (player.isDashing) {
-                player.dashStateTimer += deltaTime;
-                if (player.dashStateTimer >= config.DASH_DURATION) {
-                    player.isDashing = false;
-                }
-            }
-        }
-    
-        _handleLook(player) {
-            player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
-        }
-    
-        _applyStandardMovement(player, moveDirection) {
-            let speed = GAME_CONFIG.PLAYER.SPEED;
-            if (player.statusEffects.has('stonePlating')) {
-                speed *= 0.8; // Reduce speed by 20%
-            }
-            
-            const velocity = player.physics.body.velocity;
-            velocity.x = moveDirection.x * speed;
-            velocity.z = moveDirection.z * speed;
-        }
-    
-        _applyDashMovement(player) {
-            const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
-            const velocity = player.physics.body.velocity;
-            velocity.x = player.dashDirection.x * dashSpeed;
-            velocity.z = player.dashDirection.z * dashSpeed;
-        }
+                this._handleJump(player);
+                this._handleSlam(player);
         
-        _handleJump(player) {
-            if (!player.input.jumpRequested || player.jumpsRemaining <= 0) return;
-    
-            const performJump = () => {
-                player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
-                player.world.emit('playerJumped');
-                player.jumpsRemaining--;
-            };
+                input.jumpRequested = false;
+            }
+        
+            _initiateDash(player) {
+                if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
+                    player.isDashing = true;
+                    player.dashOnCooldown = true;
+                    player.dashStateTimer = 0;
+                    player.dashCooldownTimer = 0;
+                    
+                    const cameraDir = new THREE.Vector3();
+                    player.camera.getWorldDirection(cameraDir);
+                    cameraDir.y = 0;
+                    cameraDir.normalize();
+        
+                    const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
+                    
+                    const forwardDot = player.dashDirection.dot(cameraDir);
+                    const rightDot = player.dashDirection.dot(rightDir);
             
-            // This logic mirrors the old implementation correctly now.
-            if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
-                if (!player.doubleJumpOnCooldown) {
-                    player.doubleJumpOnCooldown = true;
-                    player.doubleJumpCooldownTimer = 0;
+                    player.world.emit('playerDashed', { forwardDot, rightDot });
+            
+                    if (Math.abs(forwardDot) > Math.abs(rightDot)) {
+                        player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
+                    }
+                    
+                    player.input.dashRequested = false;
+                }
+            }
+        
+            _handleFOV(player, deltaTime) {
+                if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
+                    player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
+                    player.camera.updateProjectionMatrix();
+                }
+                
+                if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
+                    player.targetFov = GAME_CONFIG.PLAYER.FOV;
+                }
+            }
+        
+            _handleCooldowns(player, deltaTime) {
+                const config = GAME_CONFIG.PLAYER;
+                
+                if (player.doubleJumpOnCooldown) {
+                    player.doubleJumpCooldownTimer += deltaTime;
+                    if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
+                        player.doubleJumpOnCooldown = false;
+                        player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
+                    }
+                }
+                
+                if (player.dashOnCooldown) {
+                    player.dashCooldownTimer += deltaTime;
+                    if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
+                        player.dashOnCooldown = false;
+                    }
+                }
+        
+                if (player.isDashing) {
+                    player.dashStateTimer += deltaTime;
+                    if (player.dashStateTimer >= config.DASH_DURATION) {
+                        player.isDashing = false;
+                    }
+                }
+            }
+        
+            _handleLook(player) {
+                player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
+            }
+        
+            _applyStandardMovement(player, moveDirection) {
+                let speed = player.isSwimming ? GAME_CONFIG.PLAYER.SPEED * 0.6 : GAME_CONFIG.PLAYER.SPEED;
+
+                if (player.statusEffects.has('stonePlating')) {
+                    speed *= 0.8; // Reduce speed by 20%
+                }
+                
+                const velocity = player.physics.body.velocity;
+                velocity.x = moveDirection.x * speed;
+                velocity.z = moveDirection.z * speed;
+            }
+        
+            _applyDashMovement(player) {
+                const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
+                const velocity = player.physics.body.velocity;
+                velocity.x = player.dashDirection.x * dashSpeed;
+                velocity.z = player.dashDirection.z * dashSpeed;
+            }
+            
+            _handleJump(player) {
+                if (!player.input.jumpRequested) return;
+
+                if (player.isSwimming) {
+                    player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT / 2; // Swim up
+                    return;
+                }
+                
+                if (player.jumpsRemaining <= 0) return;
+        
+                const performJump = () => {
+                    player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
+                    player.world.emit('playerJumped');
+                    player.jumpsRemaining--;
+                };
+                
+                // This logic mirrors the old implementation correctly now.
+                if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
+                    if (!player.doubleJumpOnCooldown) {
+                        player.doubleJumpOnCooldown = true;
+                        player.doubleJumpCooldownTimer = 0;
+                        performJump();
+                    }
+                } else {
                     performJump();
                 }
-            } else {
-                performJump();
             }
-        }
-        
-        _handleSlam(player) {
-            const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
             
-            if (player.input.slamRequested && !player.isSlamming) {
-                if (isAirborne && player.physics.body.velocity.y < 0) {
-                    player.isSlamming = true;
+            _handleSlam(player) {
+                if (player.isSwimming) {
+                    if (player.input.slamRequested) {
+                        player.physics.body.velocity.y = -GAME_CONFIG.PLAYER.JUMP_HEIGHT / 2; // Swim down
+                    }
+                    return;
                 }
-            } else if (player.isSlamming && !player.input.slamHeld) {
-                player.isSlamming = false;
+                
+                const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
+                
+                if (player.input.slamRequested && !player.isSlamming) {
+                    if (isAirborne && player.physics.body.velocity.y < 0) {
+                        player.isSlamming = true;
+                    }
+                } else if (player.isSlamming && !player.input.slamHeld) {
+                    player.isSlamming = false;
+                }
             }
         }
-    }
 --------------------------------------------------
 === END OF FILE: src/game/systems/MovementSystem.js ===
 
@@ -11009,6 +11630,90 @@ export class TriggerSystem {
 }
 --------------------------------------------------
 === END OF FILE: src/game/systems/TriggerSystem.js ===
+
+
+=== FILE: src/game/systems/WaterSystem.js ===
+--------------------------------------------------
+// src/game/systems/WaterSystem.js
+import * as CANNON from 'cannon-es';
+import { GAME_CONFIG } from '../../shared/config.js';
+
+export class WaterSystem {
+    constructor() {
+        // Buoyancy force is removed. We will use damping instead.
+    }
+
+    update(world, deltaTime) {
+        const waterVolumes = world.getWaterVolumes();
+        if (waterVolumes.length === 0) return;
+        
+        // For now, just check the player. This could be expanded to NPCs.
+        const player = world.player;
+        if (!player || player.isDead) return;
+
+        this.processEntity(player, waterVolumes);
+    }
+
+    processEntity(entity, waterVolumes) {
+        const body = entity.physics.body;
+        let inWater = false;
+        let currentVolume = null;
+
+        for (const volume of waterVolumes) {
+            // AABB check is a quick way to see if they *might* be intersecting
+            if (body.aabb.overlaps(volume.body.aabb)) {
+                // For box triggers, a simple position check is often sufficient and fast
+                const entityPos = body.position;
+                const volumePos = volume.body.position;
+                const halfSize = volume.body.shapes[0].halfExtents;
+
+                if (
+                    entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
+                    entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
+                    entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
+                ) {
+                    inWater = true;
+                    currentVolume = volume;
+                    break;
+                }
+            }
+        }
+        
+        entity.currentWaterVolume = currentVolume;
+        
+        if (inWater) {
+            this.applyWaterEffects(entity, currentVolume);
+        } else if (entity.isSwimming) { // Was swimming, now is not
+            this.removeWaterEffects(entity);
+        }
+    }
+
+    applyWaterEffects(entity, volume) {
+        const body = entity.physics.body;
+        const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+
+        if (entity.isWaterSpecialist) {
+            entity.isSwimming = false;
+            // Only apply water walking if player is on or just above the surface
+            if (body.position.y <= surfaceY + 0.5) {
+                body.position.y = surfaceY;
+                body.velocity.y = Math.max(0, body.velocity.y);
+                entity.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+            }
+        } else {
+            // Not a specialist, so they swim. Apply heavy damping for viscous feel.
+            entity.isSwimming = true;
+            body.linearDamping = 0.8;
+        }
+    }
+
+    removeWaterEffects(entity) {
+        entity.isSwimming = false;
+        entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/systems/WaterSystem.js ===
 
 
 === FILE: src/game/systems/WeaponSystem.js ===
@@ -11583,6 +12288,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPCPrefab } from '../prefabs/NPCPrefab.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { WaterMaterial } from '../../client/rendering/materials/WaterMaterial.js';
 
 export class LevelManager {
     constructor(world) {
@@ -11640,7 +12346,63 @@ export class LevelManager {
         return light;
     }
 
+    recreateEntity(definition) {
+        switch(definition.type) {
+            case 'Water':
+            case 'Box':
+            case 'Plane':
+                return this.createObject(definition);
+            case 'Dummy':
+                return this.createNPC(definition);
+            case 'Trigger':
+                return this.createTrigger(definition, 'Trigger');
+            case 'DeathTrigger':
+                return this.createTrigger(definition, 'DeathTrigger');
+            // Note: Lights are handled differently in editor and not recreated this way
+            default:
+                return null;
+        }
+    }
+    
+    createWater(objData) {
+        const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+        
+        const waterMaterial = new WaterMaterial();
+        const visualMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[2]), waterMaterial);
+        visualMesh.rotation.x = -Math.PI / 2;
+        visualMesh.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
+        visualMesh.receiveShadow = true;
+        
+        const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
+        const body = new CANNON.Body({
+            type: CANNON.Body.STATIC, isTrigger: true, shape,
+            position: new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z),
+            collisionFilterGroup: COLLISION_GROUPS.WATER,
+            collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY,
+        });
+
+        const helperMaterial = new THREE.MeshBasicMaterial({ color: 0x2288ee, transparent: true, opacity: 0.35, wireframe: true });
+        const helperMesh = new THREE.Mesh(new THREE.BoxGeometry(...size), helperMaterial);
+        helperMesh.position.copy(body.position);
+        helperMesh.quaternion.copy(body.quaternion);
+
+        const entity = { type: 'Water', mesh: visualMesh, helperMesh, body, definition: objData };
+        const link = { type: 'Water', entity };
+        entity.userData = { gameEntity: link };
+        visualMesh.userData.gameEntity = link;
+        helperMesh.userData.gameEntity = link;
+
+        if (!body.userData) body.userData = {};
+        body.userData.entity = entity;
+        
+        return entity;
+    }
+
     createObject(objData) {
+        if (objData.type === 'Water') {
+            return this.createWater(objData);
+        }
+
         let mesh, body, shape;
         const mat = new THREE.MeshStandardMaterial({ color: parseInt(objData.material?.color, 16) || 0xcccccc, roughness: objData.material?.roughness ?? 0.8 });
         const size = (objData.size || [1,1,1]).map(s => Math.abs(s) || 0.1);
@@ -11710,7 +12472,6 @@ export class LevelManager {
 
 === FILE: src/game/world/World.js ===
 --------------------------------------------------
-// ~ src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -11724,6 +12485,7 @@ import { DeathSystem } from '../systems/DeathSystem.js';
 import { TriggerSystem } from '../systems/TriggerSystem.js';
 import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
 import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
+import { WaterSystem } from '../systems/WaterSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -11750,6 +12512,7 @@ export class World {
 
         this.levelManager = new LevelManager(this);
         this.systems = [
+            new WaterSystem(),
             new MovementSystem(),
             new AISystem(),
             new AbilitySystem(),
@@ -11847,6 +12610,7 @@ export class World {
     getLevelObjects() { return Array.from(this._entitiesByType.get('Object') || []); }
     getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
     getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
+    getWaterVolumes() { return Array.from(this._entitiesByType.get('Water') || []); }
 
     resetPlayer() {
         if (this.player) {
@@ -11860,8 +12624,16 @@ export class World {
     createFireflyProjectile(data) { new FireflyProjectile({ world: this, ...data }); }
 
     update(deltaTime) {
+        const elapsedTime = this.core.clock.getElapsedTime();
         for (const system of this.systems) system.update(this, deltaTime);
         for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
+
+        // Update water shader time uniform
+        for (const water of this.getWaterVolumes()) {
+            if (water.mesh.material.time !== undefined) {
+                water.mesh.material.time = elapsedTime;
+            }
+        }
     }
     
     dispose() {
@@ -11896,6 +12668,7 @@ export const COLLISION_GROUPS = {
     ENEMY_PROJECTILE:  32,
     TRIGGER:           64,
     VISION_BLOCKER:    128, // Blocks AI line of sight
+    WATER:             256,
 };
 --------------------------------------------------
 === END OF FILE: src/shared/CollisionGroups.js ===

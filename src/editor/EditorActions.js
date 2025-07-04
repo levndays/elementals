@@ -1,5 +1,3 @@
-// ~ src/editor/EditorActions.js
-
 import * as THREE from 'three';
 import { StateChangeCommand } from './UndoManager.js';
 
@@ -38,13 +36,29 @@ export class EditorActions {
         const newObj = this.app.levelManager.createObject(boxData);
         this._createAndExecuteCreationCommand(newObj);
     }
+
+    addWaterVolume() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const waterData = {
+            type: "Water",
+            name: `WaterVolume_${Date.now()}`,
+            size: [20, 5, 20],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            rotation: { x: 0, y: 0, z: 0 },
+            material: { color: "0x2288ee" }
+        };
+        const newWater = this.app.levelManager.createObject(waterData);
+        this._createAndExecuteCreationCommand(newWater);
+    }
     
     addEnemy() {
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
         const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-        const enemyData = { type: "Dummy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
-        const newEnemy = this.app.levelManager.createEnemy(enemyData);
+        const enemyData = { type: "Dummy", team: "enemy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
+        const newEnemy = this.app.levelManager.createNPC(enemyData);
         this._createAndExecuteCreationCommand(newEnemy);
     }
 
@@ -95,28 +109,35 @@ export class EditorActions {
     }
 
     deleteSelected() {
-        if (!this.editor.selectedObject) return;
-        const entity = this.editor.selectedObject;
-        const entityType = entity.userData.gameEntity.type;
-        
-        if (['SpawnPoint', 'DeathSpawnPoint'].includes(entityType)) return;
+        if (this.editor.selectedObjects.size === 0) return;
+
+        const entitiesToDelete = [...this.editor.selectedObjects].filter(entity => {
+            const entityType = entity.userData.gameEntity.type;
+            return !['SpawnPoint', 'DeathSpawnPoint'].includes(entityType);
+        });
     
-        const definition = JSON.parse(JSON.stringify(entity.definition));
-        let recreatedEntity = null; // Closure variable
+        if (entitiesToDelete.length === 0) return;
+    
+        const definitions = entitiesToDelete.map(entity => JSON.parse(JSON.stringify(entity.definition)));
+        let recreatedEntities = [];
     
         const command = {
             execute: () => {
-                const entityToRemove = recreatedEntity || entity;
-                this.app.remove(entityToRemove);
+                const targets = recreatedEntities.length > 0 ? recreatedEntities : entitiesToDelete;
+                targets.forEach(entity => this.app.remove(entity));
                 this.editor.deselect();
-                recreatedEntity = null;
+                recreatedEntities = [];
             },
             undo: () => {
-                recreatedEntity = this.app.levelManager.recreateEntity(definition);
-                if (recreatedEntity) {
-                    this.app.add(recreatedEntity);
-                    this.editor.select(recreatedEntity);
-                }
+                this.editor.deselect();
+                definitions.forEach(def => {
+                    const newEntity = this.app.levelManager.recreateEntity(def);
+                    if (newEntity) {
+                        recreatedEntities.push(newEntity);
+                        this.app.add(newEntity);
+                        this.editor.addToSelection(newEntity);
+                    }
+                });
             }
         };
         this.editor.undoManager.execute(command);
@@ -136,60 +157,95 @@ export class EditorActions {
     }
     
     copySelected() {
-        if (!this.editor.selectedObject) return;
-        
-        const entity = this.editor.selectedObject;
-        const entityType = entity.userData?.gameEntity?.type;
-        const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger'];
+        if (this.editor.selectedObjects.size === 0) return;
     
-        if (validTypes.includes(entityType)) {
-            this._bakeScaleIntoDefinition(entity); // Bake scale into definition size
-            this.editor.syncObjectTransforms(); // Sync position to definition
+        const clipboardData = {
+            centroid: new THREE.Vector3(),
+            definitions: []
+        };
+        const tempCentroid = new THREE.Vector3();
+        let validObjects = 0;
     
-            // Manually sync rotation into definition
-            if (entity.definition.rotation) {
-                const rot = new THREE.Euler().setFromQuaternion(entity.mesh.quaternion, 'YXZ');
-                entity.definition.rotation = {
-                    x: THREE.MathUtils.radToDeg(rot.x),
-                    y: THREE.MathUtils.radToDeg(rot.y),
-                    z: THREE.MathUtils.radToDeg(rot.z)
-                };
+        this.editor.selectedObjects.forEach(entity => {
+            const entityType = entity.userData?.gameEntity?.type;
+            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water'];
+    
+            if (validTypes.includes(entityType)) {
+                this._bakeScaleIntoDefinition(entity);
+                this.editor.syncObjectTransforms(entity);
+    
+                const mesh = entity.mesh || entity.picker || entity;
+                tempCentroid.add(mesh.position);
+                validObjects++;
+                
+                if (entity.definition.rotation) {
+                    const rot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
+                    entity.definition.rotation = {
+                        x: THREE.MathUtils.radToDeg(rot.x),
+                        y: THREE.MathUtils.radToDeg(rot.y),
+                        z: THREE.MathUtils.radToDeg(rot.z)
+                    };
+                }
+    
+                clipboardData.definitions.push(JSON.parse(JSON.stringify(entity.definition)));
             }
-            
-            this.editor.clipboard = JSON.parse(JSON.stringify(entity.definition));
+        });
+    
+        if (validObjects > 0) {
+            tempCentroid.divideScalar(validObjects);
+            clipboardData.centroid = tempCentroid.toArray();
+            this.editor.clipboard = clipboardData;
         } else {
             this.editor.clipboard = null;
         }
     }
 
     pasteFromClipboard() {
-        if (!this.editor.clipboard) return;
-
+        if (!this.editor.clipboard || !this.editor.clipboard.definitions || this.editor.clipboard.definitions.length === 0) return;
+    
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
-        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const newCenter = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
         
-        const newDef = JSON.parse(JSON.stringify(this.editor.clipboard));
-        newDef.position = { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z };
-        newDef.name = `${newDef.name || newDef.type}_copy`;
-
-        let newEntity;
-        switch(newDef.type) {
-            case 'Dummy':
-                newEntity = this.app.levelManager.createEnemy(newDef);
-                break;
-            case 'Trigger':
-                newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger');
-                break;
-            case 'DeathTrigger':
-                newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger');
-                break;
-            default:
-                newEntity = this.app.levelManager.createObject(newDef);
-                break;
-        }
-        
-        if (newEntity) this._createAndExecuteCreationCommand(newEntity);
+        const originalCenter = new THREE.Vector3().fromArray(this.editor.clipboard.centroid);
+        const createdEntities = [];
+        const definitionsToCreate = this.editor.clipboard.definitions;
+    
+        const command = {
+            execute: () => {
+                this.editor.deselect();
+                definitionsToCreate.forEach(def => {
+                    const newDef = JSON.parse(JSON.stringify(def));
+                    const originalPos = new THREE.Vector3().copy(newDef.position);
+                    const offset = new THREE.Vector3().subVectors(originalPos, originalCenter);
+                    
+                    newDef.position = { x: newCenter.x + offset.x, y: newCenter.y + offset.y, z: newCenter.z + offset.z };
+                    newDef.name = `${newDef.name || newDef.type}_copy_${Math.floor(Math.random() * 1000)}`;
+                    
+                    let newEntity;
+                    switch(newDef.type) {
+                        case 'Dummy': newEntity = this.app.levelManager.createNPC(newDef); break;
+                        case 'Trigger': newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger'); break;
+                        case 'DeathTrigger': newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger'); break;
+                        case 'Water':
+                        default: newEntity = this.app.levelManager.createObject(newDef); break;
+                    }
+    
+                    if (newEntity) {
+                        this.app.add(newEntity);
+                        this.editor.addToSelection(newEntity);
+                        createdEntities.push(newEntity);
+                    }
+                });
+            },
+            undo: () => {
+                createdEntities.forEach(entity => this.app.remove(entity));
+                createdEntities.length = 0;
+                this.editor.deselect();
+            }
+        };
+    
+        this.editor.undoManager.execute(command);
     }
 
     newLevel() {
@@ -297,18 +353,6 @@ export class EditorActions {
         }
     }
     
-    updateSkyboxColor(color) {
-        this.app.scene.background = new THREE.Color(color);
-        this.app.settings.backgroundColor = color.replace('#', '0x');
-    }
-    
-    updateAmbientLight(prop, value) {
-        const light = this.app.ambientLight;
-        const setting = this.app.settings.ambientLight;
-        if (prop === 'color') { light.color.set(value); setting.color = value.replace('#', '0x'); }
-        if (prop === 'intensity') { light.intensity = parseFloat(value); setting.intensity = parseFloat(value); }
-    }
-    
-    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.editor.syncObjectTransforms(); }
-    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.editor.syncObjectTransforms(); }
+    setSpawnPointToCamera() { this.camera.getWorldPosition(this.app.spawnPointHelper.position); this.editor.syncObjectTransforms(this.app.spawnPointHelper); }
+    setDeathSpawnPointToCamera() { this.camera.getWorldPosition(this.app.deathSpawnPointHelper.position); this.editor.syncObjectTransforms(this.app.deathSpawnPointHelper); }
 }

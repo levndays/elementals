@@ -1,4 +1,3 @@
-// src/client/client_main.js
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.js';
 import { Physics } from '../core/Physics.js';
@@ -11,6 +10,7 @@ import { VFXSystem } from './systems/VFXSystem.js';
 import { WorldUISystem } from './systems/WorldUISystem.js';
 import { PhysicsSyncSystem } from '../game/systems/PhysicsSyncSystem.js';
 import { AbilityIconService } from './ui/AbilityIconService.js';
+import { WaterMaterial } from './rendering/materials/WaterMaterial.js';
 
 class App {
     constructor() {
@@ -26,8 +26,12 @@ class App {
     }
 
     async init() {
+        // 0. Initialize shader-based materials
+        await WaterMaterial.init();
+
         // 1. Initialize Core Engine Modules
         const canvas = document.getElementById('game-canvas');
+        this.core.clock = this.clock;
         this.core.renderer = new Renderer(canvas);
         this.core.physics = new Physics();
         this.core.input = new InputManager();

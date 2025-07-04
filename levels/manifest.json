@@ -6,5 +6,9 @@
   {
     "name": "Corrupt Arena",
     "path": "./levels/level-stadium.json"
+  },
+  {
+    "name": "Veridian Falls",
+    "path": "./levels/level-waterfall.json"
   }
 ]

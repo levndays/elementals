@@ -1,4 +1,3 @@
-// src/game/abilities/EnemyProjectile.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -30,7 +29,7 @@ export class EnemyProjectile {
         const group = isFriendlyCaster ? COLLISION_GROUPS.PLAYER_PROJECTILE : COLLISION_GROUPS.ENEMY_PROJECTILE;
         const mask = isFriendlyCaster
             ? (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY)
-            : (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY);
+            : (COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.WATER);
 
         const body = new CANNON.Body({
             mass: 0.1,
@@ -72,7 +71,8 @@ export class EnemyProjectile {
         }
         
         // Detonate on impact with anything except a non-physical trigger volume.
-        if (!(event.body.collisionFilterGroup & COLLISION_GROUPS.TRIGGER)) {
+        const otherGroup = event.body.collisionFilterGroup;
+        if (!(otherGroup & COLLISION_GROUPS.TRIGGER)) {
             this.world.remove(this);
         }
     }

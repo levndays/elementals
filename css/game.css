@@ -95,6 +95,16 @@ body:not(.game-active) #tutorial-text-container {
     50% { opacity: 1; }
 }
 
+/* NEW: Underwater VFX */
+#vfx-underwater-overlay {
+    background-color: hsla(195, 100%, 50%, 0.2);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.5s ease-in-out;
+}
+#vfx-underwater-overlay.active {
+    opacity: 1;
+}
+
 
 /* REWORKED: CROSSHAIR & TARGETING */
 #crosshair-container {
