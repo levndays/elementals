@@ -225,13 +225,15 @@ body:not(.game-active) #tutorial-text-container {
     box-shadow: inset 0 1px 2px hsla(0,0%,0%,0.5);
     position: relative;
 }
-#health-bar, #energy-bar {
+#health-bar, #energy-bar, #oxygen-bar {
     height: 100%; border-radius: 2px;
     transition: width 0.2s ease-out;
     position: relative;
 }
 #health-bar { background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(0, 100%, 75%)); }
 #energy-bar { background: linear-gradient(to right, hsl(190, 100%, 45%), hsl(190, 100%, 65%)); }
+#oxygen-bar { background: linear-gradient(to right, hsl(200, 100%, 70%), hsl(200, 100%, 85%)); }
+
 .resource-text { display: none; }
 
 #energy-bar-container.flash-error #energy-bar::after {

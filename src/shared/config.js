@@ -13,8 +13,12 @@ export const GAME_CONFIG = {
     PLAYER: {
         MAX_HEALTH: 1000,
         MAX_ENERGY: 1000,
+        MAX_OXYGEN: 1000,
         ENERGY_REGEN_RATE: 25, // points per second
         ENERGY_REGEN_DELAY: 5.0, // seconds after last ability use
+        OXYGEN_CONSUMPTION_RATE: 50, // 1000 / 20 seconds = 50/s
+        OXYGEN_REGEN_RATE: 200, // points per second
+        OXYGEN_DAMAGE_PER_SECOND: 50,
         
         FOV: 75, // Default field of view
         SPEED: 8.0, // meters per second
@@ -32,6 +36,7 @@ export const GAME_CONFIG = {
         
         RADIUS: 0.8, // for physics body
         MASS: 70, // kg
+        DEFAULT_DAMPING: 0.01,
     },
 
     // Weapon parameters

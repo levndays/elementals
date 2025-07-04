@@ -27,6 +27,10 @@ export class Player {
         this.physics = new PhysicsBodyComponent(body);
         this.abilities = new AbilityLoadoutComponent();
         this.statusEffects = new StatusEffectComponent();
+
+        // Oxygen state
+        this.maxOxygen = GAME_CONFIG.PLAYER.MAX_OXYGEN;
+        this.currentOxygen = GAME_CONFIG.PLAYER.MAX_OXYGEN;
         
         this.jumpsRemaining = 0;
         this.isSlamming = false;
@@ -174,6 +178,7 @@ export class Player {
     reset(spawnPosition) {
         this.health.currentHealth = this.health.maxHealth;
         this.abilities.currentEnergy = this.abilities.maxEnergy;
+        this.currentOxygen = this.maxOxygen;
         this.isDead = false; this.isSlamming = false; this.isDashing = false; this.lockedTarget = null;
         this.jumpsRemaining = 0;
         this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;

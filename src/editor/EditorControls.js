@@ -67,7 +67,7 @@ export class EditorControls {
             // For group scaling, we need the initial mesh scales
             if (this.transformControls.mode === 'scale' && selected.size > 1) {
                 this._initialDragState.forEach(state => {
-                    const mesh = state.entity.mesh || state.entity.picker || state.entity;
+                    const mesh = state.entity.helperMesh || state.entity.mesh || state.entity.picker || state.entity;
                     state.initialScale = mesh.scale.clone();
                 });
             }
@@ -76,9 +76,9 @@ export class EditorControls {
             
             const changes = [];
             this._initialDragState.forEach(state => {
-                const { entity, definition, initialScale } = state;
+                const { entity, definition } = state;
                 const afterState = JSON.parse(JSON.stringify(entity.definition));
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity.targetHelper || entity;
                 
                 afterState.position = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
                 if (afterState.rotation) {
@@ -114,7 +114,7 @@ export class EditorControls {
             if (draggedObject?.userData.gameEntity?.type === 'LightTarget') {
                 this.editor.syncObjectTransforms(draggedObject.userData.gameEntity.parentLight);
             } else if (draggedObject === this.editor.selectionGroup) {
-                // No need to sync individual objects while group is transforming
+                 this.editor.selectedObjects.forEach(entity => this.editor.syncObjectTransforms(entity));
             } else if (this.editor.primarySelectedObject) {
                 this.editor.syncObjectTransforms(this.editor.primarySelectedObject);
             }
@@ -132,7 +132,7 @@ export class EditorControls {
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
         const pickableMeshes = [...this.app.entities]
-            .map(e => e.mesh || e.picker || e.targetHelper || e)
+            .map(e => [e.mesh, e.picker, e.targetHelper, e.helperMesh])
             .flat()
             .filter(Boolean);
             
@@ -171,7 +171,7 @@ export class EditorControls {
     
         if (selected.size === 1) {
             const entity = selected.values().next().value;
-            const objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
+            const objectToAttach = entity.helperMesh || entity.mesh || entity.picker || entity.targetHelper || entity;
             
             this.transformControls.attach(objectToAttach);
             this.addSelectionBox(objectToAttach);
@@ -180,7 +180,7 @@ export class EditorControls {
             const selectionGroup = this.editor.selectionGroup;
             const centroid = new THREE.Vector3();
             selected.forEach(entity => {
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 centroid.add(mesh.position);
             });
             centroid.divideScalar(selected.size);
@@ -189,7 +189,7 @@ export class EditorControls {
             selectionGroup.scale.set(1,1,1);
     
             selected.forEach(entity => {
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 this.scene.remove(mesh);
                 selectionGroup.add(mesh);
                 this.addSelectionBox(mesh);
@@ -255,7 +255,7 @@ export class EditorControls {
         const mode = this.transformControls.getMode();
         // FIX: Changed this.controls.setTransformMode to this.setTransformMode
         if (!canRotate && mode === 'rotate') this.setTransformMode('translate');
-        if (!canScale && mode === 'scale') this.setTransformMode('translate');
+        if (!canScale && mode === 'scale') this.setTransformMode('scale');
     }
 
     setTransformSpace(space) {

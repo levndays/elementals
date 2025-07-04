@@ -27,6 +27,7 @@ export class LevelEditor {
             DeathTrigger: true,
             DirectionalLight: true,
             SpawnAndDeath: true,
+            Water: true,
         };
         
         // Group for multi-object transforms
@@ -124,7 +125,7 @@ export class LevelEditor {
 
     selectByUUID(uuid) {
         const entityToSelect = [...this.app.entities].find(e => {
-            const mesh = e.mesh || e.picker || e.targetHelper || e;
+            const mesh = e.mesh || e.picker || e.targetHelper || e.helperMesh;
             return mesh?.uuid === uuid;
         });
         if (entityToSelect) {
@@ -223,6 +224,34 @@ export class LevelEditor {
             obj.helper.update();
             return;
         }
+
+        if (type === 'Water') {
+            const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+            const position = def.position;
+            const rotation = def.rotation ? {
+                x: THREE.MathUtils.degToRad(def.rotation.x || 0),
+                y: THREE.MathUtils.degToRad(def.rotation.y || 0),
+                z: THREE.MathUtils.degToRad(def.rotation.z || 0),
+            } : {x:0, y:0, z:0};
+            
+            obj.helperMesh.position.set(position.x, position.y, position.z);
+            obj.helperMesh.quaternion.setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z, 'YXZ'));
+            
+            obj.helperMesh.geometry.dispose();
+            obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
+            obj.mesh.geometry.dispose();
+            obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+            
+            if(obj.body && obj.body.shapes[0]){
+                 const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
+                 obj.body.shapes[0].halfExtents.copy(halfExtents);
+                 obj.body.shapes[0].updateConvexPolyhedronRepresentation();
+                 obj.body.updateBoundingRadius();
+            }
+            
+            this.syncObjectTransforms(obj); 
+            return;
+        }
     
         mesh.position.set(def.position.x, def.position.y, def.position.z);
     
@@ -277,9 +306,22 @@ export class LevelEditor {
             light.position.copy(picker.position);
             light.target.position.copy(entity.targetHelper.position);
             entity.helper.update();
+        } else if (entityType === 'Water') {
+            const sourceTransform = entity.helperMesh;
+            entity.body.position.copy(sourceTransform.position);
+            entity.body.quaternion.copy(sourceTransform.quaternion);
+            
+            const size = entity.definition.size;
+            entity.mesh.position.copy(sourceTransform.position);
+            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(sourceTransform.quaternion);
+            entity.mesh.position.addScaledVector(upVector, size[1] / 2);
+            
+            entity.mesh.quaternion.copy(sourceTransform.quaternion);
+            entity.mesh.rotateX(-Math.PI / 2);
         } else if (entity.body) {
-            entity.body.position.copy(entity.mesh.position);
-            entity.body.quaternion.copy(entity.mesh.quaternion);
+            const sourceTransform = entity.mesh || entity.picker || entity;
+            entity.body.position.copy(sourceTransform.position);
+            entity.body.quaternion.copy(sourceTransform.quaternion);
         }
     }
     
@@ -293,6 +335,7 @@ export class LevelEditor {
         this.ui.setHelpersVisibility('DeathTrigger', document.getElementById('view-toggle-death-triggers').checked);
         this.ui.setHelpersVisibility('DirectionalLight', document.getElementById('view-toggle-light-helpers').checked);
         this.ui.setHelpersVisibility('SpawnAndDeath', document.getElementById('view-toggle-spawn-helpers').checked);
+        this.ui.setHelpersVisibility('Water', document.getElementById('view-toggle-water-volumes').checked);
     }
     
     update(deltaTime) {

@@ -190,6 +190,7 @@ export class UIManager {
             player.health.currentHealth, player.health.maxHealth, 
             player.abilities.currentEnergy, player.abilities.maxEnergy
         );
+        this.hud.updateOxygen(player.currentOxygen, player.maxOxygen);
         this.hud.updateMovementCooldowns(
             player.doubleJumpCooldownTimer, GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN,
             player.dashCooldownTimer, GAME_CONFIG.PLAYER.DASH_COOLDOWN,
@@ -208,6 +209,14 @@ export class UIManager {
         
         // Update underwater overlay
         this.elements.underwaterOverlay.classList.toggle('active', player.isSwimming);
+
+        // Update oxygen bar visibility
+        if (this.hud.elements.oxygenBarContainer) {
+            const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
+            const isRegeneratingOxygen = !isConsumingOxygen && player.currentOxygen < player.maxOxygen;
+            const shouldShowOxygenBar = isConsumingOxygen || isRegeneratingOxygen;
+            this.hud.elements.oxygenBarContainer.style.display = shouldShowOxygenBar ? 'block' : 'none';
+        }
 
         if (game.gameState === 'DEAD') {
             this.elements.respawnTimerText.textContent = `Respawning in ${Math.ceil(game.respawnTimer)}...`;

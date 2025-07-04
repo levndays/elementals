@@ -1,7 +1,8 @@
 import { GAME_CONFIG } from '../../shared/config.js';
 
 /**
- * Manages ability cooldowns and energy regeneration for entities.
+ * Manages ability cooldowns for entities.
+ * Energy regeneration is now handled by PlayerResourceSystem.
  */
 export class AbilitySystem {
     /**
@@ -12,7 +13,6 @@ export class AbilitySystem {
         for (const entity of world.getEntities()) {
             if (entity.abilities) {
                 this._updateCooldowns(entity.abilities, deltaTime);
-                this._updateEnergy(world, entity, deltaTime);
             }
         }
     }
@@ -21,20 +21,6 @@ export class AbilitySystem {
         for (const ability of abilitiesComponent.abilities) {
             if (ability) {
                 ability.update(deltaTime);
-            }
-        }
-    }
-
-    _updateEnergy(world, entity, deltaTime) {
-        const abilities = entity.abilities;
-        const config = GAME_CONFIG.PLAYER;
-
-        if (world.physics.world.time - abilities.lastAbilityTime > config.ENERGY_REGEN_DELAY) {
-            if (abilities.currentEnergy < abilities.maxEnergy) {
-                abilities.currentEnergy = Math.min(
-                    abilities.maxEnergy,
-                    abilities.currentEnergy + config.ENERGY_REGEN_RATE * deltaTime
-                );
             }
         }
     }

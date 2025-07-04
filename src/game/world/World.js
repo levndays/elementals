@@ -12,6 +12,7 @@ import { TriggerSystem } from '../systems/TriggerSystem.js';
 import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
 import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
 import { WaterSystem } from '../systems/WaterSystem.js';
+import { PlayerResourceSystem } from '../systems/PlayerResourceSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -42,6 +43,7 @@ export class World {
             new MovementSystem(),
             new AISystem(),
             new AbilitySystem(),
+            new PlayerResourceSystem(),
             new WeaponSystem(),
             new TargetingSystem(),
             new DeathSystem(),
