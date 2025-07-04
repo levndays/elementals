@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-04T21:01:12.251563
+Snapshot created on: 2025-07-04T21:24:58.669272
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1461,6 +1461,7 @@ body:not(.game-active) #tutorial-text-container {
     font-size: 2.5rem; text-align: center; color: gold;
     font-weight: 700; text-shadow: 0 0 15px gold;
 }
+
 --------------------------------------------------
 === END OF FILE: css/game.css ===
 
@@ -2884,7 +2885,6 @@ import { VFXSystem } from './systems/VFXSystem.js';
 import { WorldUISystem } from './systems/WorldUISystem.js';
 import { PhysicsSyncSystem } from '../game/systems/PhysicsSyncSystem.js';
 import { AbilityIconService } from './ui/AbilityIconService.js';
-import { WaterMaterial } from './rendering/materials/WaterMaterial.js';
 
 class App {
     constructor() {
@@ -2900,9 +2900,6 @@ class App {
     }
 
     async init() {
-        // 0. Initialize shader-based materials
-        await WaterMaterial.init();
-
         // 1. Initialize Core Engine Modules
         const canvas = document.getElementById('game-canvas');
         this.core.clock = this.clock;
@@ -4304,151 +4301,6 @@ export class WaveVFX {
 }
 --------------------------------------------------
 === END OF FILE: src/client/rendering/WaveVFX.js ===
-
-
-=== FILE: src/client/rendering/materials/WaterMaterial.js ===
---------------------------------------------------
-// src/client/rendering/materials/WaterMaterial.js
-import * as THREE from 'three';
-import { ShaderLib } from '../shaders/ShaderLib.js';
-
-let _noiseShader = null;
-
-export class WaterMaterial extends THREE.MeshPhongMaterial {
-    constructor(options = {}) {
-        if (!_noiseShader) {
-            throw new Error('WaterMaterial.init() must be called before instantiation.');
-        }
-
-        super({
-            color: 0x9bd8ff,
-            transparent: true,
-            opacity: 0.85,
-            shininess: 90,
-            specular: 0x888888,
-            ...options
-        });
-
-        this.customUniforms = {
-            uTime: { value: 0 },
-            uBigWavesElevation: { value: 0.1 },
-            uBigWavesFrequency: { value: new THREE.Vector2(2, 1.0) },
-            uBigWavesSpeed: { value: 0.5 },
-            uSmallWavesElevation: { value: 0.05 },
-            uSmallWavesFrequency: { value: 3.0 },
-            uSmallWavesIterations: { value: 3.0 },
-            uSmallWavesSpeed: { value: 0.2 },
-            uColorOffset: { value: 0.08 },
-            uColorMultiplier: { value: 5.0 },
-            uDepthColor: { value: new THREE.Color(0x001e0f) },
-            uSurfaceColor: { value: new THREE.Color(0x9bd8ff) },
-        };
-
-        this.onBeforeCompile = (shader) => {
-            shader.uniforms = { ...shader.uniforms, ...this.customUniforms };
-
-            shader.vertexShader = _noiseShader + '\n' + shader.vertexShader;
-            
-            shader.vertexShader = shader.vertexShader.replace(
-                '#include <common>',
-                `
-                #include <common>
-                uniform float uTime;
-                uniform float uBigWavesElevation;
-                uniform vec2 uBigWavesFrequency;
-                uniform float uBigWavesSpeed;
-                uniform float uSmallWavesElevation;
-                uniform float uSmallWavesFrequency;
-                uniform float uSmallWavesSpeed;
-                uniform float uSmallWavesIterations;
-                varying float vElevation;
-                `
-            );
-
-            shader.vertexShader = shader.vertexShader.replace(
-                '#include <begin_vertex>',
-                `
-                #include <begin_vertex>
-
-                // --- Custom Water Logic START ---
-                vec4 worldPosition_local = modelMatrix * vec4(position, 1.0);
-
-                // Big waves
-                float bigWaveX = cnoise(vec2(worldPosition_local.x * uBigWavesFrequency.x * 0.5, uTime * uBigWavesSpeed));
-                float bigWaveZ = cnoise(vec2(worldPosition_local.z * uBigWavesFrequency.y * 0.5, uTime * uBigWavesSpeed));
-                float elevation = (bigWaveX + bigWaveZ) * 0.5 * uBigWavesElevation;
-
-                // Small waves
-                float smallWaves = 0.0;
-                float frequency = uSmallWavesFrequency;
-                float amplitude = uSmallWavesElevation;
-                for(float i = 0.0; i < uSmallWavesIterations; i++) {
-                    smallWaves += sin(dot(normalize(vec2(cos(i * 1.3), sin(i * 1.3))), worldPosition_local.xz) * frequency + uTime * uSmallWavesSpeed * (i+1.0)*0.5) * amplitude;
-                    frequency *= 1.8;
-                    amplitude *= 0.6;
-                }
-                elevation += smallWaves;
-                vElevation = elevation;
-
-                transformed.y += elevation;
-                // --- Custom Water Logic END ---
-                `
-            );
-            
-            shader.fragmentShader = shader.fragmentShader.replace(
-                '#include <common>',
-                `
-                #include <common>
-                uniform float uTime;
-                uniform float uColorOffset;
-                uniform float uColorMultiplier;
-                uniform vec3 uDepthColor;
-                uniform vec3 uSurfaceColor;
-                varying float vElevation;
-                `
-            );
-
-            shader.fragmentShader = shader.fragmentShader.replace(
-                '#include <dithering_fragment>',
-                `
-                #include <dithering_fragment>
-
-                // Fresnel calculation
-                float fresnel = pow(1.0 - abs(dot(normalize(vViewPosition), vNormal)), 3.0);
-                
-                // Mix water color with specular highlights based on fresnel
-                gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), fresnel);
-                `
-            );
-
-            shader.fragmentShader = shader.fragmentShader.replace(
-                'vec4 diffuseColor = vec4( diffuse, opacity );',
-                `
-                float mixStrength = (vElevation + uColorOffset) * uColorMultiplier;
-                vec3 waterColor = mix(uDepthColor, uSurfaceColor, mixStrength);
-                vec4 diffuseColor = vec4(waterColor, opacity);
-                `
-            );
-        };
-    }
-
-    set time(value) {
-        if (this.customUniforms) {
-            this.customUniforms.uTime.value = value;
-        }
-    }
-
-    get time() {
-        return this.customUniforms?.uTime.value || 0;
-    }
-
-    static async init() {
-        if (_noiseShader) return;
-        _noiseShader = ShaderLib.noise;
-    }
-}
---------------------------------------------------
-=== END OF FILE: src/client/rendering/materials/WaterMaterial.js ===
 
 
 === FILE: src/client/rendering/shaders/card.frag ===
@@ -7374,7 +7226,6 @@ export class EditorActions {
 
 === FILE: src/editor/EditorApp.js ===
 --------------------------------------------------
-// src/editor/EditorApp.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Renderer } from '../core/Renderer.js';
@@ -7382,7 +7233,6 @@ import { Physics } from '../core/Physics.js';
 import { InputManager } from '../core/InputManager.js';
 import { LevelManager } from '../game/world/LevelManager.js';
 import { LevelEditor } from './LevelEditor.js';
-import { WaterMaterial } from '../client/rendering/materials/WaterMaterial.js';
 
 export class EditorApp {
     constructor() {
@@ -7420,8 +7270,6 @@ export class EditorApp {
     getWaterVolumes() { return this.getEntities('Water'); }
 
     async init() {
-        await WaterMaterial.init();
-
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
         this.gridHelper.material.opacity = 0.2;
         this.gridHelper.material.transparent = true;
@@ -7570,8 +7418,8 @@ export class EditorApp {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
         [...this.getWaterVolumes()].forEach(water => {
-            if (water.mesh.material.time !== undefined) {
-                water.mesh.material.time = elapsedTime;
+            if (water.mesh?.material?.uniforms?.time) {
+                water.mesh.material.uniforms.time.value = elapsedTime;
             }
         });
         this.physics.update(deltaTime);
@@ -8412,10 +8260,11 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             if (type === 'DirectionalLight') {
                 if (e.helper) e.helper.visible = isVisible;
                 if (e.targetHelper) e.targetHelper.visible = isVisible;
-            } else if (e.mesh) {
+            } else if (e.helperMesh) {
                 // For water, we toggle the helper box, not the visible surface
-                if (e.helperMesh) e.helperMesh.visible = isVisible;
-                else e.mesh.visible = isVisible;
+                e.helperMesh.visible = isVisible;
+            } else if (e.mesh) {
+                e.mesh.visible = isVisible;
             }
         });
     }
@@ -12141,18 +11990,25 @@ export class Revolver extends Weapon {
     }
 
     updateFireAnimation(p, deltaTime) {
-        // Kickback
-        const kickbackAmount = 0.2;
-        this.mesh.position.z = this.p_idle.z + Math.sin(p * Math.PI) * kickbackAmount;
-        
-        // Muzzle flip
-        const flipAmount = -0.5;
-        this.mesh.rotation.x = Math.sin(p * Math.PI) * flipAmount;
-        
-        // Hammer animation
+        const kickProgress = Math.sin(p * Math.PI); // A value from 0 -> 1 -> 0
+
+        // Rotational flip
+        const kickRotation = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            kickProgress * -0.5 // flip amount
+        );
+        // Apply the kick rotation relative to the base idle rotation
+        this.mesh.quaternion.copy(this.q_idle).multiply(kickRotation);
+    
+        // Positional kickback
+        const kickPosition = this.p_idle.clone();
+        kickPosition.z += kickProgress * 0.2; // kickback amount
+        this.mesh.position.copy(kickPosition);
+
+        // Hammer animation (this is safe as it's a child object's local rotation)
         const hammerCockBack = -Math.PI / 4;
         if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
-        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p-0.1) / 0.9);
+        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p - 0.1) / 0.9);
         
         // Cylinder rotation
         this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);
@@ -12288,7 +12144,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPCPrefab } from '../prefabs/NPCPrefab.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-import { WaterMaterial } from '../../client/rendering/materials/WaterMaterial.js';
+import { Water } from 'three/addons/objects/Water.js';
 
 export class LevelManager {
     constructor(world) {
@@ -12366,12 +12222,34 @@ export class LevelManager {
     
     createWater(objData) {
         const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
-        
-        const waterMaterial = new WaterMaterial();
-        const visualMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[2]), waterMaterial);
-        visualMesh.rotation.x = -Math.PI / 2;
-        visualMesh.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
-        visualMesh.receiveShadow = true;
+        const waterGeometry = new THREE.PlaneGeometry(size[0], size[2]);
+
+        let sunLight = this.world.scene.children.find(c => c.isDirectionalLight);
+        if (!sunLight) {
+            sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(0, 100, 0);
+        }
+
+        // REWORK: Create a dedicated color for water's sun reflection to prevent blowout,
+        // adjust water color, and set alpha for transparency.
+        const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
+
+        const water = new Water(waterGeometry, {
+            textureWidth: 512,
+            textureHeight: 512,
+            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', function (texture) {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            }),
+            sunDirection: sunLight.position.clone().normalize(),
+            sunColor: waterSunColor,
+            waterColor: 0x005577,
+            distortionScale: 3.7,
+            fog: this.world.scene.fog !== undefined,
+            alpha: 0.95
+        });
+
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
         
         const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
         const body = new CANNON.Body({
@@ -12386,10 +12264,10 @@ export class LevelManager {
         helperMesh.position.copy(body.position);
         helperMesh.quaternion.copy(body.quaternion);
 
-        const entity = { type: 'Water', mesh: visualMesh, helperMesh, body, definition: objData };
+        const entity = { type: 'Water', mesh: water, helperMesh, body, definition: objData };
         const link = { type: 'Water', entity };
         entity.userData = { gameEntity: link };
-        visualMesh.userData.gameEntity = link;
+        water.userData.gameEntity = link;
         helperMesh.userData.gameEntity = link;
 
         if (!body.userData) body.userData = {};
@@ -12630,8 +12508,8 @@ export class World {
 
         // Update water shader time uniform
         for (const water of this.getWaterVolumes()) {
-            if (water.mesh.material.time !== undefined) {
-                water.mesh.material.time = elapsedTime;
+            if (water.mesh?.material?.uniforms?.time) {
+                water.mesh.material.uniforms.time.value = elapsedTime;
             }
         }
     }

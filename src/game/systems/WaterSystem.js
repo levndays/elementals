@@ -4,75 +4,82 @@ import { GAME_CONFIG } from '../../shared/config.js';
 
 export class WaterSystem {
     constructor() {
-        // Buoyancy force is removed. We will use damping instead.
+        // No properties needed.
     }
 
     update(world, deltaTime) {
         const waterVolumes = world.getWaterVolumes();
-        if (waterVolumes.length === 0) return;
-        
-        // For now, just check the player. This could be expanded to NPCs.
-        const player = world.player;
-        if (!player || player.isDead) return;
+        const entitiesToCheck = [world.player, ...world.getNPCs()];
 
-        this.processEntity(player, waterVolumes);
-    }
+        for (const entity of entitiesToCheck) {
+            if (!entity || entity.isDead || !entity.physics?.body) continue;
+            
+            let isNowInWater = false;
+            let currentVolume = null;
 
-    processEntity(entity, waterVolumes) {
-        const body = entity.physics.body;
-        let inWater = false;
-        let currentVolume = null;
+            if (waterVolumes.length > 0) {
+                for (const volume of waterVolumes) {
+                    if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
+                        const entityPos = entity.physics.body.position;
+                        const volumePos = volume.body.position;
+                        const halfSize = volume.body.shapes[0].halfExtents;
 
-        for (const volume of waterVolumes) {
-            // AABB check is a quick way to see if they *might* be intersecting
-            if (body.aabb.overlaps(volume.body.aabb)) {
-                // For box triggers, a simple position check is often sufficient and fast
-                const entityPos = body.position;
-                const volumePos = volume.body.position;
-                const halfSize = volume.body.shapes[0].halfExtents;
-
-                if (
-                    entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
-                    entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
-                    entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
-                ) {
-                    inWater = true;
-                    currentVolume = volume;
-                    break;
+                        if (
+                            entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
+                            entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
+                            entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
+                        ) {
+                            isNowInWater = true;
+                            currentVolume = volume;
+                            break;
+                        }
+                    }
                 }
             }
-        }
-        
-        entity.currentWaterVolume = currentVolume;
-        
-        if (inWater) {
-            this.applyWaterEffects(entity, currentVolume);
-        } else if (entity.isSwimming) { // Was swimming, now is not
-            this.removeWaterEffects(entity);
+            
+            const wasInWater = entity.isInWater || false;
+
+            if (isNowInWater && !wasInWater) {
+                this.applyWaterEffects(entity, currentVolume);
+            } else if (!isNowInWater && wasInWater) {
+                this.removeWaterEffects(entity);
+            }
+            
+            entity.isInWater = isNowInWater;
+            if (entity.type === 'player') {
+                entity.currentWaterVolume = isNowInWater ? currentVolume : null;
+            }
         }
     }
 
     applyWaterEffects(entity, volume) {
         const body = entity.physics.body;
-        const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
 
-        if (entity.isWaterSpecialist) {
-            entity.isSwimming = false;
-            // Only apply water walking if player is on or just above the surface
-            if (body.position.y <= surfaceY + 0.5) {
-                body.position.y = surfaceY;
-                body.velocity.y = Math.max(0, body.velocity.y);
-                entity.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+        if (entity.type === 'player') {
+            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+
+            if (entity.isWaterSpecialist) {
+                entity.isSwimming = false;
+                if (body.position.y <= surfaceY + 0.5) {
+                    body.position.y = surfaceY;
+                    body.velocity.y = Math.max(0, body.velocity.y);
+                    entity.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+                }
+            } else {
+                entity.isSwimming = true;
+                body.linearDamping = 0.8;
             }
-        } else {
-            // Not a specialist, so they swim. Apply heavy damping for viscous feel.
-            entity.isSwimming = true;
+        } else if (entity.type === 'npc') {
             body.linearDamping = 0.8;
         }
     }
 
     removeWaterEffects(entity) {
-        entity.isSwimming = false;
-        entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+        if (entity.type === 'player') {
+            entity.isSwimming = false;
+            entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+        } else if (entity.type === 'npc') {
+            entity.physics.body.linearDamping = 0.1;
+        }
     }
 }

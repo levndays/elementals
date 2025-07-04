@@ -30,6 +30,7 @@ export class NPC {
         // Client-side visual state
         this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
         this.isDead = false;
+        this.isInWater = false; // For water interaction logic
 
         // Link back to entity for easy access from physics/rendering
         const gameEntityLink = { type: 'NPC', entity: this };

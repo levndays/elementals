@@ -156,8 +156,8 @@ export class World {
 
         // Update water shader time uniform
         for (const water of this.getWaterVolumes()) {
-            if (water.mesh.material.time !== undefined) {
-                water.mesh.material.time = elapsedTime;
+            if (water.mesh?.material?.uniforms?.time) {
+                water.mesh.material.uniforms.time.value = elapsedTime;
             }
         }
     }

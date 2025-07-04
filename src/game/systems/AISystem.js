@@ -16,6 +16,8 @@ export class AISystem {
         this._losRayResult = new CANNON.RaycastResult();
         this._obstacleRayResult = new CANNON.RaycastResult();
         this._groundRayResult = new CANNON.RaycastResult();
+        this._ledgeProbePoint = new CANNON.Vec3();
+        this._ledgeRayResult = new CANNON.RaycastResult();
         this._lookAtTarget = new THREE.Vector3();
         this._tempQuaternion = new CANNON.Quaternion();
         this._tempObject3D = new THREE.Object3D();
@@ -43,7 +45,7 @@ export class AISystem {
             }
             
             this._updateTimers(npc.ai, deltaTime);
-            this._applyMovement(npc);
+            this._applyMovement(world, npc);
         }
     }
     
@@ -151,6 +153,11 @@ export class AISystem {
     _handleRangedCombat(world, npc) {
         const { ai, physics } = npc;
         const { distanceToPlayer, hasLineOfSight, attackRange } = ai.perception;
+
+        if (npc.isInWater) {
+            this._navigateObstacles(world, npc);
+            return;
+        }
         
         if (hasLineOfSight && distanceToPlayer <= attackRange && ai.actionTimers.attack <= 0) {
             this._shoot(world, npc, ai.target);
@@ -172,6 +179,11 @@ export class AISystem {
         const { ai } = npc;
         const { distanceToPlayer, hasLineOfSight, meleeAttackRange } = ai.perception;
 
+        if (npc.isInWater) {
+            this._navigateObstacles(world, npc);
+            return;
+        }
+
         if (hasLineOfSight && distanceToPlayer <= meleeAttackRange && ai.actionTimers.meleeAttack <= 0) {
             this._meleeAttack(npc, ai.target);
             ai.actionTimers.meleeAttack = ai.actionCooldowns.meleeAttack;
@@ -190,23 +202,25 @@ export class AISystem {
         }
     }
 
-    _applyMovement(npc) {
+    _applyMovement(world, npc) {
         const { ai, physics } = npc;
-        const speed = GAME_CONFIG.NPC.BASE.SPEED;
-        
-        physics.body.wakeUp();
 
         if (ai.isDashing) {
-            const dashSpeed = speed * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
+            const dashSpeed = GAME_CONFIG.NPC.BASE.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
             physics.body.velocity.x = ai.dashDirection.x * dashSpeed;
-            physics.body.velocity.y = 0;
+            physics.body.velocity.y = 0; // Dashes are horizontal
             physics.body.velocity.z = ai.dashDirection.z * dashSpeed;
             return;
         }
+        
+        physics.body.wakeUp();
 
         let moveDirection = new CANNON.Vec3();
         switch(ai.state) {
-            case 'IDLE': physics.body.velocity.x *= 0.9; physics.body.velocity.z *= 0.9; break;
+            case 'IDLE':
+                physics.body.velocity.x *= 0.9;
+                physics.body.velocity.z *= 0.9;
+                return;
             case 'SEARCHING':
                 ai.lastKnownPlayerPosition.vsub(physics.body.position, moveDirection);
                 break;
@@ -214,12 +228,24 @@ export class AISystem {
                 moveDirection = this._getCombatRepositionVector(npc);
                 break;
         }
-        
-        if (moveDirection.lengthSquared() > 0) {
-            moveDirection.y = 0;
-            moveDirection.normalize();
-            physics.body.velocity.x = moveDirection.x * speed;
-            physics.body.velocity.z = moveDirection.z * speed;
+
+        if (moveDirection.lengthSquared() < 0.01) {
+            physics.body.velocity.x *= 0.9;
+            physics.body.velocity.z *= 0.9;
+            return;
+        }
+
+        moveDirection.y = 0; // Movement is planar
+        const normalizedMoveDir = moveDirection.clone();
+        normalizedMoveDir.normalize();
+
+        if (this._isLedgeAhead(world, npc, normalizedMoveDir)) {
+            physics.body.velocity.x = 0;
+            physics.body.velocity.z = 0;
+        } else {
+            const speed = GAME_CONFIG.NPC.BASE.SPEED;
+            physics.body.velocity.x = normalizedMoveDir.x * speed;
+            physics.body.velocity.z = normalizedMoveDir.z * speed;
         }
     }
     
@@ -304,5 +330,28 @@ export class AISystem {
         this._tempObject3D.lookAt(this._lookAtTarget);
         this._tempQuaternion.copy(this._tempObject3D.quaternion);
         npc.physics.body.quaternion.slerp(this._tempQuaternion, 0.1, npc.physics.body.quaternion);
+    }
+
+    _isLedgeAhead(world, npc, moveDirection) {
+        const body = npc.physics.body;
+        const config = GAME_CONFIG.NPC.BASE;
+        const probeDistance = config.RADIUS + 0.2;
+
+        this._ledgeProbePoint.copy(body.position);
+        const offset = moveDirection.scale(probeDistance);
+        this._ledgeProbePoint.vadd(offset, this._ledgeProbePoint);
+
+        const rayFrom = this._ledgeProbePoint;
+        const rayTo = rayFrom.clone();
+        rayTo.y -= 3.0; // Check for ground 3m below
+
+        this._ledgeRayResult.reset();
+        world.physics.world.raycastClosest(
+            rayFrom, rayTo,
+            { collisionFilterMask: COLLISION_GROUPS.WORLD },
+            this._ledgeRayResult
+        );
+
+        return !this._ledgeRayResult.hasHit;
     }
 }

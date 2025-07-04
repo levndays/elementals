@@ -1,4 +1,3 @@
-// src/editor/EditorApp.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Renderer } from '../core/Renderer.js';
@@ -6,7 +5,6 @@ import { Physics } from '../core/Physics.js';
 import { InputManager } from '../core/InputManager.js';
 import { LevelManager } from '../game/world/LevelManager.js';
 import { LevelEditor } from './LevelEditor.js';
-import { WaterMaterial } from '../client/rendering/materials/WaterMaterial.js';
 
 export class EditorApp {
     constructor() {
@@ -44,8 +42,6 @@ export class EditorApp {
     getWaterVolumes() { return this.getEntities('Water'); }
 
     async init() {
-        await WaterMaterial.init();
-
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
         this.gridHelper.material.opacity = 0.2;
         this.gridHelper.material.transparent = true;
@@ -194,8 +190,8 @@ export class EditorApp {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
         [...this.getWaterVolumes()].forEach(water => {
-            if (water.mesh.material.time !== undefined) {
-                water.mesh.material.time = elapsedTime;
+            if (water.mesh?.material?.uniforms?.time) {
+                water.mesh.material.uniforms.time.value = elapsedTime;
             }
         });
         this.physics.update(deltaTime);

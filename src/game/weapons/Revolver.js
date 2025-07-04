@@ -192,18 +192,25 @@ export class Revolver extends Weapon {
     }
 
     updateFireAnimation(p, deltaTime) {
-        // Kickback
-        const kickbackAmount = 0.2;
-        this.mesh.position.z = this.p_idle.z + Math.sin(p * Math.PI) * kickbackAmount;
-        
-        // Muzzle flip
-        const flipAmount = -0.5;
-        this.mesh.rotation.x = Math.sin(p * Math.PI) * flipAmount;
-        
-        // Hammer animation
+        const kickProgress = Math.sin(p * Math.PI); // A value from 0 -> 1 -> 0
+
+        // Rotational flip
+        const kickRotation = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(1, 0, 0),
+            kickProgress * -0.5 // flip amount
+        );
+        // Apply the kick rotation relative to the base idle rotation
+        this.mesh.quaternion.copy(this.q_idle).multiply(kickRotation);
+    
+        // Positional kickback
+        const kickPosition = this.p_idle.clone();
+        kickPosition.z += kickProgress * 0.2; // kickback amount
+        this.mesh.position.copy(kickPosition);
+
+        // Hammer animation (this is safe as it's a child object's local rotation)
         const hammerCockBack = -Math.PI / 4;
         if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
-        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p-0.1) / 0.9);
+        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p - 0.1) / 0.9);
         
         // Cylinder rotation
         this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);

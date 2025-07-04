@@ -45,6 +45,7 @@ export class NPCPrefab {
             fixedRotation: true,
             collisionFilterGroup: group,
             collisionFilterMask: mask,
+            linearDamping: 0.1,
         });
 
         // 3. Entity creation

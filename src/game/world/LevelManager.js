@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPCPrefab } from '../prefabs/NPCPrefab.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-import { WaterMaterial } from '../../client/rendering/materials/WaterMaterial.js';
+import { Water } from 'three/addons/objects/Water.js';
 
 export class LevelManager {
     constructor(world) {
@@ -81,12 +81,34 @@ export class LevelManager {
     
     createWater(objData) {
         const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
-        
-        const waterMaterial = new WaterMaterial();
-        const visualMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[2]), waterMaterial);
-        visualMesh.rotation.x = -Math.PI / 2;
-        visualMesh.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
-        visualMesh.receiveShadow = true;
+        const waterGeometry = new THREE.PlaneGeometry(size[0], size[2]);
+
+        let sunLight = this.world.scene.children.find(c => c.isDirectionalLight);
+        if (!sunLight) {
+            sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(0, 100, 0);
+        }
+
+        // REWORK: Create a dedicated color for water's sun reflection to prevent blowout,
+        // adjust water color, and set alpha for transparency.
+        const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
+
+        const water = new Water(waterGeometry, {
+            textureWidth: 512,
+            textureHeight: 512,
+            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', function (texture) {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            }),
+            sunDirection: sunLight.position.clone().normalize(),
+            sunColor: waterSunColor,
+            waterColor: 0x005577,
+            distortionScale: 3.7,
+            fog: this.world.scene.fog !== undefined,
+            alpha: 0.95
+        });
+
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
         
         const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
         const body = new CANNON.Body({
@@ -101,10 +123,10 @@ export class LevelManager {
         helperMesh.position.copy(body.position);
         helperMesh.quaternion.copy(body.quaternion);
 
-        const entity = { type: 'Water', mesh: visualMesh, helperMesh, body, definition: objData };
+        const entity = { type: 'Water', mesh: water, helperMesh, body, definition: objData };
         const link = { type: 'Water', entity };
         entity.userData = { gameEntity: link };
-        visualMesh.userData.gameEntity = link;
+        water.userData.gameEntity = link;
         helperMesh.userData.gameEntity = link;
 
         if (!body.userData) body.userData = {};
