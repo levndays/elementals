@@ -3,17 +3,18 @@
     "spawnPoint": { "x": 0, "y": 2, "z": 0 },
     "deathSpawnPoint": { "x": 0, "y": 2, "z": 0 },
     "settings": {
-        "backgroundColor": "0x19142B",
-        "fogColor": "0x19142B",
+        "backgroundColor": "0x302010",
+        "skybox": "./assets/skyboxes/moody-skybox/",
+        "fogColor": "0x403020",
         "fogNear": 30,
         "fogFar": 200,
         "ambientLight": {
-            "color": "0x6A4C8A",
-            "intensity": 0.8
+            "color": "0xA08070",
+            "intensity": 0.9
         },
         "directionalLights": [
             {
-                "color": "0xFF8C4C",
+                "color": "0xFFC080",
                 "intensity": 6.0,
                 "position": { "x": -150, "y": 80, "z": -50 },
                 "targetPosition": { "x": 0, "y": 0, "z": 0 }

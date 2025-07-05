@@ -10,9 +10,9 @@ export class EditorUI {
 
     init() {
         // --- File Menu ---
-        document.getElementById('menu-file-new').onclick = () => this.editor.actions.newLevel();
+        document.getElementById('menu-file-new').onclick = async () => await this.editor.actions.newLevel();
         document.getElementById('menu-file-open').onclick = () => document.getElementById('editor-file-input').click();
-        document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
+        document.getElementById('editor-file-input').onchange = async (e) => await this.editor.actions.loadFile(e);
         document.getElementById('menu-file-save').onclick = () => this.editor.actions.saveFile();
         document.getElementById('menu-file-play').onclick = () => this.editor.actions.playInDebugMode();
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
@@ -255,35 +255,13 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
     }
 
     updatePropertiesPanel() {
-        // FIX: If an input inside the inspector is focused, do not redraw the panel.
-        // This prevents losing focus while typing or using a color picker.
-        if (this.inspectorContent.contains(document.activeElement)) {
+        if (this.inspectorContent.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') {
             return;
         }
 
         this.inspectorContent.innerHTML = '';
-        
-        if (this.editor.selectedObjects.size > 1) {
-            const multiSelectInfo = document.createElement('div');
-            multiSelectInfo.className = 'placeholder-text';
-            multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
-            this.inspectorContent.appendChild(multiSelectInfo);
-        } else if (this.editor.selectedObjects.size === 0) {
-            this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
-            return;
-        }
-
-        const entity = this.editor.primarySelectedObject;
-        if (!entity) {
-            if (this.editor.selectedObjects.size === 0) this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
-            return;
-        }
-    
-        const entityType = entity.userData?.gameEntity?.type;
-        if (!entityType) return;
-    
         const fragment = document.createDocumentFragment();
-    
+        
         const handleEnterKey = (e, updateFn) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -301,7 +279,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             fragment.appendChild(group);
             return group;
         };
-    
+
         const createTextInput = (parent, value, callback) => {
             const input = document.createElement('input');
             input.type = 'text';
@@ -310,6 +288,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             input.onchange = (e) => updateValue(e.target.value);
             input.onkeydown = (e) => handleEnterKey(e, updateValue);
             parent.appendChild(input);
+            return input;
         };
     
         const createNumberInput = (parent, value, { min, max, step = 0.1 }, callback) => {
@@ -348,10 +327,69 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             });
             parent.appendChild(inputGroup);
         };
+
+        if (this.editor.selectedObjects.size === 0) {
+            this.renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput);
+        } else {
+            if (this.editor.selectedObjects.size > 1) {
+                const multiSelectInfo = document.createElement('div');
+                multiSelectInfo.className = 'placeholder-text';
+                multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
+                fragment.appendChild(multiSelectInfo);
+            }
+            this.renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs);
+        }
+
+        this.inspectorContent.appendChild(fragment);
+    }
     
+    renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput) {
+        const settings = this.app.settings;
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'placeholder-text';
+        groupTitle.innerHTML = '<b>Scene Settings</b>';
+        fragment.appendChild(groupTitle);
+        
+        const skyboxGroup = createPropGroup('Skybox Path');
+        const skyboxInput = createTextInput(skyboxGroup, settings.skybox || '', (val) => this.editor.updateSceneSetting('skybox', val));
+        skyboxInput.placeholder = './assets/skyboxes/folder/';
+        
+        fragment.appendChild(document.createElement('hr'));
+        
+        const bgGroup = createPropGroup('Background Color');
+        const bgColor = settings.backgroundColor ? '#' + new THREE.Color(parseInt(settings.backgroundColor, 16)).getHexString() : '#000000';
+        createColorInput(bgGroup, bgColor, (val) => this.editor.updateSceneSetting('backgroundColor', val.replace('#', '0x')));
+        
+        const fogGroup = createPropGroup('Fog Color');
+        const fogColor = settings.fogColor ? '#' + new THREE.Color(parseInt(settings.fogColor, 16)).getHexString() : '#000000';
+        createColorInput(fogGroup, fogColor, (val) => this.editor.updateSceneSetting('fogColor', val.replace('#', '0x')));
+        
+        const fogDistGroup = createPropGroup('Fog Distance (Near / Far)');
+        const fogDistContainer = document.createElement('div');
+        fogDistContainer.className = 'prop-input-group';
+        createNumberInput(fogDistContainer, settings.fogNear || 10, {min: 0, step: 1}, (val) => this.editor.updateSceneSetting('fogNear', val));
+        createNumberInput(fogDistContainer, settings.fogFar || 200, {min: 0, step: 1}, (val) => this.editor.updateSceneSetting('fogFar', val));
+        fogDistGroup.appendChild(fogDistContainer);
+        
+        fragment.appendChild(document.createElement('hr'));
+
+        const ambientGroup = createPropGroup('Ambient Light');
+        const ambientContainer = document.createElement('div');
+        ambientContainer.className = 'prop-input-group';
+        const ambientColor = settings.ambientLight.color ? '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString() : '#ffffff';
+        createColorInput(ambientContainer, ambientColor, (val) => this.editor.updateSceneSetting('ambientLight.color', val.replace('#', '0x')));
+        createNumberInput(ambientContainer, settings.ambientLight.intensity || 1, {min: 0, max: 5, step: 0.1}, (val) => this.editor.updateSceneSetting('ambientLight.intensity', val));
+        ambientGroup.appendChild(ambientContainer);
+    }
+    
+    renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs) {
+        const entity = this.editor.primarySelectedObject;
+        if (!entity || !entity.userData?.gameEntity?.type) return;
+
+        const entityType = entity.userData.gameEntity.type;
         const def = entity.definition;
-        const mesh = entity.mesh || entity.picker || entity;
-    
+        const mesh = entity.helperMesh || entity.mesh || entity.picker;
+
         if (def && def.name !== undefined) {
             const group = createPropGroup('Name');
             createTextInput(group, def.name, (val) => this.editor.updateSelectedProp('name', null, val));
@@ -372,38 +410,23 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         if (def && def.size) {
             if (def.type === 'Plane') {
                 const widthGroup = createPropGroup('Width');
-                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => {
-                    this.editor.updateSelectedProp('size', 0, val);
-                });
+                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 0, val); });
                 const depthGroup = createPropGroup('Depth');
-                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => {
-                    this.editor.updateSelectedProp('size', 1, val);
-                });
+                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 1, val); });
             } else {
                 const sizeGroup = createPropGroup('Size');
-                const displaySize = {
-                    x: def.size[0] * mesh.scale.x,
-                    y: def.size[1] * mesh.scale.y,
-                    z: def.size[2] * mesh.scale.z
-                };
+                const displaySize = { x: def.size[0] * mesh.scale.x, y: def.size[1] * mesh.scale.y, z: def.size[2] * mesh.scale.z };
                 createVec3Inputs(sizeGroup, displaySize, 0.25, (axis, val) => {
                     const changes = [];
                     this.editor.selectedObjects.forEach(selEntity => {
-                        const selMesh = selEntity.mesh || selEntity.picker || selEntity;
+                        const selMesh = selEntity.mesh || selEntity.picker || selEntity.helperMesh;
                         if (!selEntity.definition?.size || !selMesh) return;
-                        
                         const beforeDef = JSON.parse(JSON.stringify(selEntity.definition));
-                        beforeDef.size[0] *= selMesh.scale.x;
-                        beforeDef.size[1] *= selMesh.scale.y;
-                        beforeDef.size[2] *= selMesh.scale.z;
-                        
                         const afterDef = JSON.parse(JSON.stringify(beforeDef));
                         const map = { x: 0, y: 1, z: 2 };
-                        afterDef.size[map[axis]] = val;
-                        
+                        afterDef.size[map[axis]] = val / selMesh.scale[axis];
                         changes.push({ entity: selEntity, beforeState: beforeDef, afterState: afterDef });
                     });
-            
                     if (changes.length > 0) {
                         const command = new StateChangeCommand(this.editor, changes);
                         this.editor.undoManager.execute(command);
@@ -423,10 +446,8 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             fragment.appendChild(document.createElement('hr'));
             const msgGroup = createPropGroup('Message');
             createTextInput(msgGroup, def.message || '', val => this.editor.updateSelectedProp('message', null, val));
-    
             const durGroup = createPropGroup('Duration (s)');
             createNumberInput(durGroup, def.duration || 5, { min: 0.1, max: 100, step: 0.1 }, val => this.editor.updateSelectedProp('duration', null, val));
-    
             const colorGroup = createPropGroup('Helper Color');
             const initialColor = def.color ? '#' + new THREE.Color(parseInt(def.color, 16)).getHexString() : '#00ff00';
             createColorInput(colorGroup, initialColor, val => this.editor.updateSelectedProp('color', null, val));
@@ -445,13 +466,11 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             createVec3Inputs(targetGroup, entity.light.target.position, 0.25, (axis, val) => this.editor.updateSelectedProp('targetPosition', axis, val));
         }
     
-        this.inspectorContent.appendChild(fragment);
-    
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-button';
         deleteButton.textContent = 'Delete Selected';
         deleteButton.onclick = () => this.editor.actions.deleteSelected();
-        this.inspectorContent.appendChild(deleteButton);
+        fragment.appendChild(deleteButton);
     }
     
     setHelpersVisibility(type, isVisible) {

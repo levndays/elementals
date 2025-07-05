@@ -3,17 +3,18 @@
   "spawnPoint": { "x": 0, "y": 42, "z": 0 },
   "deathSpawnPoint": { "x": 0, "y": 42, "z": 0 },
   "settings": {
-    "backgroundColor": "0x082030",
-    "fogColor": "0x082030",
+    "backgroundColor": "0x302010",
+    "skybox": "./assets/skyboxes/moody-skybox/",
+    "fogColor": "0x403020",
     "fogNear": 20,
     "fogFar": 180,
     "ambientLight": {
-      "color": "0x408090",
-      "intensity": 1.2
+      "color": "0xA08070",
+      "intensity": 0.9
     },
     "directionalLights": [
       {
-        "color": "0xffffff",
+        "color": "0xFFC080",
         "intensity": 2.5,
         "position": { "x": 50, "y": 100, "z": 30 },
         "targetPosition": { "x": 0, "y": 0, "z": 0 }
@@ -31,19 +32,22 @@
       "type": "Water",
       "name": "Main_Waterfall",
       "size": [20, 30, 2],
-      "position": { "x": 0, "y": 25, "z": -20 }
+      "position": { "x": 0, "y": 25, "z": -20 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Water",
       "name": "Side_Waterfall_1",
       "size": [10, 20, 2],
-      "position": { "x": -25, "y": 18, "z": -15 }
+      "position": { "x": -25, "y": 18, "z": -15 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Water",
       "name": "Side_Waterfall_2",
       "size": [10, 20, 2],
-      "position": { "x": 25, "y": 18, "z": -15 }
+      "position": { "x": 25, "y": 18, "z": -15 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Box", "name": "Ground_Bedrock", "size": [100, 2, 100],

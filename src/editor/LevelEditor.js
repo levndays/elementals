@@ -151,6 +151,16 @@ export class LevelEditor {
     
     // --- Data & Property Manipulation ---
 
+    updateSceneSetting(key, value) {
+        const path = key.split('.');
+        let target = this.app.settings;
+        for (let i = 0; i < path.length - 1; i++) {
+            target = target[path[i]];
+        }
+        target[path[path.length - 1]] = value;
+        this.app.levelManager._setupScene(this.app.settings);
+    }
+    
     updateSelectedProp(prop, key, value) {
         if (this.selectedObjects.size === 0) return;
     
@@ -200,13 +210,11 @@ export class LevelEditor {
     applyDefinition(obj) {
         const type = obj.userData?.gameEntity?.type;
         const def = obj.definition;
-        const mesh = obj.mesh;
-        const body = obj.body;
     
         if (!def || !type) return;
     
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
-            this.syncObjectTransforms(obj); // Sync position from mesh to internal state
+            this.syncObjectTransforms(obj);
             return;
         }
     
@@ -228,20 +236,47 @@ export class LevelEditor {
         if (type === 'Water') {
             const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
             const position = def.position;
-            const rotation = def.rotation ? {
-                x: THREE.MathUtils.degToRad(def.rotation.x || 0),
-                y: THREE.MathUtils.degToRad(def.rotation.y || 0),
-                z: THREE.MathUtils.degToRad(def.rotation.z || 0),
-            } : {x:0, y:0, z:0};
-            
+            const rot = def.rotation ? new THREE.Euler(
+                THREE.MathUtils.degToRad(def.rotation.x || 0),
+                THREE.MathUtils.degToRad(def.rotation.y || 0),
+                THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
+            ) : new THREE.Euler();
+            const quat = new THREE.Quaternion().setFromEuler(rot);
+
             obj.helperMesh.position.set(position.x, position.y, position.z);
-            obj.helperMesh.quaternion.setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z, 'YXZ'));
-            
+            obj.helperMesh.quaternion.copy(quat);
             obj.helperMesh.geometry.dispose();
             obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
-            obj.mesh.geometry.dispose();
-            obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
-            
+
+            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+            const isNowVertical = Math.abs(upVector.y) < 0.5;
+
+            if (isNowVertical !== obj.isWaterfall) {
+                this.app.scene.remove(obj.mesh);
+                obj.mesh.geometry.dispose();
+                if(obj.mesh.material.uniforms?.uFlowTexture?.value) obj.mesh.material.uniforms.uFlowTexture.value.dispose();
+                if(obj.mesh.material.uniforms?.uNoiseTexture?.value) obj.mesh.material.uniforms.uNoiseTexture.value.dispose();
+                if(obj.mesh.material.uniforms?.waterNormals?.value) obj.mesh.material.uniforms.waterNormals.value.dispose();
+                obj.mesh.material.dispose();
+
+                const newVisualPart = isNowVertical
+                    ? this.app.levelManager.createWaterfall(def, size, obj.body)
+                    : this.app.levelManager.createWaterPool(def, size);
+
+                obj.mesh = newVisualPart.mesh;
+                obj.isWaterfall = isNowVertical;
+                this.app.scene.add(obj.mesh);
+                obj.mesh.userData.gameEntity = obj.userData.gameEntity;
+            } else {
+                if (obj.isWaterfall) {
+                    obj.mesh.geometry.dispose();
+                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[1]);
+                } else {
+                    obj.mesh.geometry.dispose();
+                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+                }
+            }
+
             if(obj.body && obj.body.shapes[0]){
                  const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
                  obj.body.shapes[0].halfExtents.copy(halfExtents);
@@ -252,7 +287,9 @@ export class LevelEditor {
             this.syncObjectTransforms(obj); 
             return;
         }
-    
+        
+        const mesh = obj.mesh;
+        const body = obj.body;
         mesh.position.set(def.position.x, def.position.y, def.position.z);
     
         if (def.rotation && obj.isDead === undefined) {
@@ -311,13 +348,13 @@ export class LevelEditor {
             entity.body.position.copy(sourceTransform.position);
             entity.body.quaternion.copy(sourceTransform.quaternion);
             
-            const size = entity.definition.size;
             entity.mesh.position.copy(sourceTransform.position);
-            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(sourceTransform.quaternion);
-            entity.mesh.position.addScaledVector(upVector, size[1] / 2);
-            
             entity.mesh.quaternion.copy(sourceTransform.quaternion);
-            entity.mesh.rotateX(-Math.PI / 2);
+
+            if (!entity.isWaterfall) {
+                entity.mesh.rotateX(-Math.PI / 2);
+            }
+
         } else if (entity.body) {
             const sourceTransform = entity.mesh || entity.picker || entity;
             entity.body.position.copy(sourceTransform.position);

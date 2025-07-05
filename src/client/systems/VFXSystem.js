@@ -4,11 +4,13 @@ import * as THREE from 'three';
  * Listens for abstract gameplay events from the World and translates them
  * into concrete visual effects using the VFXManager.
  */
+
 export class VFXSystem {
     constructor(world, vfxManager) {
         this.world = world;
         this.vfxManager = vfxManager;
         this.hitFlashTimers = new Map(); // entity -> timer
+        this.waterfallEffects = new Map(); // Map<entityId, splashVFX>
 
         // Bind handlers to ensure `this` is correct
         this._onEntityAdded = this._onEntityAdded.bind(this);
@@ -34,10 +36,31 @@ export class VFXSystem {
 
     _onEntityAdded({ entity }) {
         this.vfxManager.createVisualForEntity(entity);
+
+        // If the added entity is a waterfall, create its splash effect.
+        if (entity.isWaterfall) {
+            const size = entity.definition.size;
+            const position = entity.body.position.clone();
+            const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(entity.body.quaternion);
+            position.y -= size[1] / 2; // Move to the base of the waterfall volume
+
+            const splash = this.vfxManager.createWaterfallSplashVFX({
+                position: position,
+                size: { x: size[0], y: 1.0, z: size[2] }
+            });
+            this.waterfallEffects.set(entity.id, splash);
+        }
     }
 
     _onEntityRemoved({ entity }) {
         this.vfxManager.removeVisualForEntity(entity.id);
+
+        // If the removed entity was a waterfall, dispose its splash effect.
+        if (this.waterfallEffects.has(entity.id)) {
+            const splashVFX = this.waterfallEffects.get(entity.id);
+            splashVFX.dispose();
+            this.waterfallEffects.delete(entity.id);
+        }
     }
 
     onEntityTookDamage({ entity, amount }) {
@@ -133,7 +156,12 @@ export class VFXSystem {
     dispose() {
         this.world.off('entityAdded', this._onEntityAdded);
         this.world.off('entityRemoved', this._onEntityRemoved);
-        // In a more complex app, you'd unregister other listeners here.
+        
+        // Clean up any remaining managed effects
+        for (const splash of this.waterfallEffects.values()) {
+            splash.dispose();
+        }
+        this.waterfallEffects.clear();
         this.hitFlashTimers.clear();
     }
 }

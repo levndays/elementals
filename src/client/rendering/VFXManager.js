@@ -1,5 +1,3 @@
-// src/client/rendering/VFXManager.js
-
 import { ParticleExplosion } from './ParticleExplosion.js';
 import { DamageNumber } from '../ui/DamageNumber.js';
 import { FireballVisual } from './FireballVisual.js';
@@ -8,6 +6,7 @@ import { FireflyProjectileVisual } from './FireflyProjectileVisual.js';
 import { WaveVFX } from './WaveVFX.js';
 import { MuzzleFlash } from './MuzzleFlash.js';
 import { BulletTracer } from './BulletTracer.js';
+import { WaterfallSplashVFX } from './WaterfallSplashVFX.js';
 
 /**
  * Manages the creation and lifecycle of all visual effects,
@@ -71,6 +70,12 @@ export class VFXManager {
     createParticleExplosion(position) {
         const explosion = new ParticleExplosion({ scene: this.scene, position });
         this.updatableEffects.push(explosion);
+    }
+
+    createWaterfallSplashVFX({ position, size }) {
+        const splashVFX = new WaterfallSplashVFX(this.scene, position, size);
+        this.updatableEffects.push(splashVFX);
+        return splashVFX;
     }
 
     /**

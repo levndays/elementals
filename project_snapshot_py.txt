@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-05T18:31:34.810801
+Snapshot created on: 2025-07-05T19:01:32.692255
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -2054,6 +2054,7 @@ body:not(.game-active) #tutorial-text-container {
   },
   "settings": {
     "backgroundColor": "0x1d2938",
+    "skybox": "./assets/skyboxes/dark-storm/",
     "fogColor": "0x1d2938",
     "fogNear": 50,
     "fogFar": 250,
@@ -2732,6 +2733,7 @@ body:not(.game-active) #tutorial-text-container {
     "deathSpawnPoint": { "x": 0, "y": 2, "z": 0 },
     "settings": {
         "backgroundColor": "0x19142B",
+        "skybox": "./assets/skyboxes/sunset/",
         "fogColor": "0x19142B",
         "fogNear": 30,
         "fogFar": 200,
@@ -2788,6 +2790,7 @@ body:not(.game-active) #tutorial-text-container {
   "deathSpawnPoint": { "x": 0, "y": 42, "z": 0 },
   "settings": {
     "backgroundColor": "0x082030",
+    "skybox": "./assets/skyboxes/daylight/",
     "fogColor": "0x082030",
     "fogNear": 20,
     "fogFar": 180,
@@ -2815,19 +2818,22 @@ body:not(.game-active) #tutorial-text-container {
       "type": "Water",
       "name": "Main_Waterfall",
       "size": [20, 30, 2],
-      "position": { "x": 0, "y": 25, "z": -20 }
+      "position": { "x": 0, "y": 25, "z": -20 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Water",
       "name": "Side_Waterfall_1",
       "size": [10, 20, 2],
-      "position": { "x": -25, "y": 18, "z": -15 }
+      "position": { "x": -25, "y": 18, "z": -15 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Water",
       "name": "Side_Waterfall_2",
       "size": [10, 20, 2],
-      "position": { "x": 25, "y": 18, "z": -15 }
+      "position": { "x": 25, "y": 18, "z": -15 },
+      "rotation": { "x": -90, "y": 0, "z": 0 }
     },
     {
       "type": "Box", "name": "Ground_Bedrock", "size": [100, 2, 100],
@@ -4088,8 +4094,6 @@ export class ParticleExplosion {
 
 === FILE: src/client/rendering/VFXManager.js ===
 --------------------------------------------------
-// src/client/rendering/VFXManager.js
-
 import { ParticleExplosion } from './ParticleExplosion.js';
 import { DamageNumber } from '../ui/DamageNumber.js';
 import { FireballVisual } from './FireballVisual.js';
@@ -4098,6 +4102,7 @@ import { FireflyProjectileVisual } from './FireflyProjectileVisual.js';
 import { WaveVFX } from './WaveVFX.js';
 import { MuzzleFlash } from './MuzzleFlash.js';
 import { BulletTracer } from './BulletTracer.js';
+import { WaterfallSplashVFX } from './WaterfallSplashVFX.js';
 
 /**
  * Manages the creation and lifecycle of all visual effects,
@@ -4161,6 +4166,12 @@ export class VFXManager {
     createParticleExplosion(position) {
         const explosion = new ParticleExplosion({ scene: this.scene, position });
         this.updatableEffects.push(explosion);
+    }
+
+    createWaterfallSplashVFX({ position, size }) {
+        const splashVFX = new WaterfallSplashVFX(this.scene, position, size);
+        this.updatableEffects.push(splashVFX);
+        return splashVFX;
     }
 
     /**
@@ -4274,6 +4285,97 @@ export class VFXManager {
 }
 --------------------------------------------------
 === END OF FILE: src/client/rendering/VFXManager.js ===
+
+
+=== FILE: src/client/rendering/WaterfallSplashVFX.js ===
+--------------------------------------------------
+// src/client/rendering/WaterfallSplashVFX.js
+import * as THREE from 'three';
+
+export class WaterfallSplashVFX {
+    constructor(scene, position, size) {
+        this.scene = scene;
+        this.lifetime = Infinity; // Lives as long as the waterfall exists
+        this.particleCount = 400;
+
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(this.particleCount * 3);
+        const velocities = new Float32Array(this.particleCount * 3);
+        const lifetimes = new Float32Array(this.particleCount);
+
+        for (let i = 0; i < this.particleCount; i++) {
+            this.initParticle(i, positions, velocities, lifetimes, size);
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+
+        const material = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.2,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            depthWrite: false,
+            opacity: 0.7,
+            sizeAttenuation: true
+        });
+
+        this.points = new THREE.Points(geometry, material);
+        this.points.position.copy(position);
+        this.size = size;
+
+        this.scene.add(this.points);
+    }
+
+    initParticle(i, positions, velocities, lifetimes, size) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * size.x;
+        positions[i3 + 1] = Math.random() * 2.0;
+        positions[i3 + 2] = (Math.random() - 0.5) * size.z;
+
+        velocities[i3] = (Math.random() - 0.5) * 0.5;
+        velocities[i3 + 1] = Math.random() * 3.0 + 1.0;
+        velocities[i3 + 2] = (Math.random() - 0.5) * 0.5;
+        
+        lifetimes[i] = Math.random() * 2.5 + 0.5;
+    }
+
+    update(deltaTime) {
+        const positions = this.points.geometry.attributes.position.array;
+        const velocities = this.points.geometry.attributes.velocity.array;
+        const lifetimes = this.points.geometry.attributes.lifetime.array;
+        
+        for (let i = 0; i < this.particleCount; i++) {
+            const i3 = i * 3;
+            
+            velocities[i3 + 1] -= 9.82 * deltaTime * 0.5; // Gravity
+
+            positions[i3] += velocities[i3] * deltaTime;
+            positions[i3 + 1] += velocities[i3 + 1] * deltaTime;
+            positions[i3 + 2] += velocities[i3 + 2] * deltaTime;
+            
+            lifetimes[i] -= deltaTime;
+            if (lifetimes[i] <= 0) {
+                this.initParticle(i, positions, velocities, lifetimes, this.size);
+            }
+        }
+
+        this.points.geometry.attributes.position.needsUpdate = true;
+        this.points.geometry.attributes.velocity.needsUpdate = true;
+        this.points.geometry.attributes.lifetime.needsUpdate = true;
+        
+        return true; // Never self-destructs
+    }
+
+    dispose() {
+        this.scene.remove(this.points);
+        this.points.geometry.dispose();
+        this.points.material.dispose();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/WaterfallSplashVFX.js ===
 
 
 === FILE: src/client/rendering/WaveVFX.js ===
@@ -4705,6 +4807,76 @@ void main() {
 === END OF FILE: src/client/rendering/shaders/sigil.frag ===
 
 
+=== FILE: src/client/rendering/shaders/waterfall.frag ===
+--------------------------------------------------
+// src/client/rendering/shaders/waterfall.frag
+precision mediump float;
+
+uniform float uTime;
+uniform sampler2D uFlowTexture;
+uniform sampler2D uNoiseTexture;
+
+varying vec2 vUv;
+varying vec3 vNormal;
+
+void main() {
+    // --- Scrolling UVs ---
+    // The main flow scrolls quickly down the Y axis.
+    vec2 flowUv = vUv * vec2(1.0, 4.0) + vec2(0.0, -uTime * 0.4);
+    // The noise scrolls slower and slightly sideways for distortion.
+    vec2 noiseUv = vUv * vec2(1.5, 2.0) + vec2(uTime * 0.05, -uTime * 0.15);
+
+    // --- Texture Sampling ---
+    // Sample the flow texture and use its red channel.
+    float flow = texture2D(uFlowTexture, flowUv).r;
+    // Sample the noise texture.
+    float noise = texture2D(uNoiseTexture, noiseUv).r;
+
+    // --- Combine Textures ---
+    // Add noise to the flow UVs to create distorted, non-uniform movement.
+    vec2 distortedUv = flowUv + vec2(noise - 0.5, 0.0) * 0.1;
+    float distortedFlow = texture2D(uFlowTexture, distortedUv).r;
+
+    // --- Alpha Masking ---
+    // Fade out the sides of the waterfall plane.
+    float edgeFade = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x);
+    // Create foam at the top by fading in, and fade out at the bottom.
+    float verticalFade = smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.95, vUv.y);
+
+    float finalAlpha = distortedFlow * edgeFade * verticalFade;
+
+    // --- Final Color ---
+    // Base color is a translucent white.
+    vec3 waterColor = vec3(0.8, 0.9, 1.0);
+    // Add a subtle fresnel effect to make edges glow slightly.
+    float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+    vec3 finalColor = waterColor + fresnel * 0.2;
+
+    if (finalAlpha < 0.1) {
+        discard;
+    }
+
+    gl_FragColor = vec4(finalColor, finalAlpha * 0.7);
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/shaders/waterfall.frag ===
+
+
+=== FILE: src/client/rendering/shaders/waterfall.vert ===
+--------------------------------------------------
+// src/client/rendering/shaders/waterfall.vert
+varying vec2 vUv;
+varying vec3 vNormal;
+
+void main() {
+    vUv = uv;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+--------------------------------------------------
+=== END OF FILE: src/client/rendering/shaders/waterfall.vert ===
+
+
 === FILE: src/client/rendering/shaders/wave.frag ===
 --------------------------------------------------
 // src/client/rendering/shaders/wave.frag
@@ -4788,11 +4960,13 @@ import * as THREE from 'three';
  * Listens for abstract gameplay events from the World and translates them
  * into concrete visual effects using the VFXManager.
  */
+
 export class VFXSystem {
     constructor(world, vfxManager) {
         this.world = world;
         this.vfxManager = vfxManager;
         this.hitFlashTimers = new Map(); // entity -> timer
+        this.waterfallEffects = new Map(); // Map<entityId, splashVFX>
 
         // Bind handlers to ensure `this` is correct
         this._onEntityAdded = this._onEntityAdded.bind(this);
@@ -4818,10 +4992,31 @@ export class VFXSystem {
 
     _onEntityAdded({ entity }) {
         this.vfxManager.createVisualForEntity(entity);
+
+        // If the added entity is a waterfall, create its splash effect.
+        if (entity.isWaterfall) {
+            const size = entity.definition.size;
+            const position = entity.body.position.clone();
+            const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(entity.body.quaternion);
+            position.y -= size[1] / 2; // Move to the base of the waterfall volume
+
+            const splash = this.vfxManager.createWaterfallSplashVFX({
+                position: position,
+                size: { x: size[0], y: 1.0, z: size[2] }
+            });
+            this.waterfallEffects.set(entity.id, splash);
+        }
     }
 
     _onEntityRemoved({ entity }) {
         this.vfxManager.removeVisualForEntity(entity.id);
+
+        // If the removed entity was a waterfall, dispose its splash effect.
+        if (this.waterfallEffects.has(entity.id)) {
+            const splashVFX = this.waterfallEffects.get(entity.id);
+            splashVFX.dispose();
+            this.waterfallEffects.delete(entity.id);
+        }
     }
 
     onEntityTookDamage({ entity, amount }) {
@@ -4917,7 +5112,12 @@ export class VFXSystem {
     dispose() {
         this.world.off('entityAdded', this._onEntityAdded);
         this.world.off('entityRemoved', this._onEntityRemoved);
-        // In a more complex app, you'd unregister other listeners here.
+        
+        // Clean up any remaining managed effects
+        for (const splash of this.waterfallEffects.values()) {
+            splash.dispose();
+        }
+        this.waterfallEffects.clear();
         this.hitFlashTimers.clear();
     }
 }
@@ -7093,12 +7293,18 @@ export class EditorActions {
     }
     
     _bakeScaleIntoDefinition(entity) {
-        if (entity && entity.mesh && entity.definition?.size) {
-            const scale = entity.mesh.scale;
+        const transformSource = entity.helperMesh || entity.mesh;
+        if (entity && transformSource && entity.definition?.size) {
+            const scale = transformSource.scale;
             if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
-                entity.definition.size[0] *= scale.x;
-                entity.definition.size[1] *= scale.y;
-                entity.definition.size[2] *= scale.z;
+                if (entity.definition.type === 'Plane') {
+                    entity.definition.size[0] *= scale.x;
+                    entity.definition.size[1] *= scale.y;
+                } else {
+                    entity.definition.size[0] *= scale.x;
+                    entity.definition.size[1] *= scale.y;
+                    entity.definition.size[2] *= scale.z;
+                }
                 scale.set(1, 1, 1);
                 this.editor.applyDefinition(entity);
             }
@@ -7123,7 +7329,7 @@ export class EditorActions {
                 this._bakeScaleIntoDefinition(entity);
                 this.editor.syncObjectTransforms(entity);
     
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 tempCentroid.add(mesh.position);
                 validObjects++;
                 
@@ -7255,10 +7461,12 @@ export class EditorActions {
         
         entities.forEach(obj => {
             this._bakeScaleIntoDefinition(obj);
-            if (!obj.definition || !obj.mesh) return;
-            obj.definition.position = { x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z };
+            const transformSource = obj.helperMesh || obj.mesh || obj.picker;
+            if (!obj.definition || !transformSource) return;
+
+            obj.definition.position = { x: transformSource.position.x, y: transformSource.position.y, z: transformSource.position.z };
             if (obj.definition.rotation) {
-                const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
+                const rot = new THREE.Euler().setFromQuaternion(transformSource.quaternion, 'YXZ');
                 obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
             }
         });
@@ -7268,12 +7476,17 @@ export class EditorActions {
             lightObj.definition.targetPosition = { x: lightObj.light.target.position.x, y: lightObj.light.target.position.y, z: lightObj.light.target.position.z };
         });
 
+        const geometricObjects = [
+            ...this.app.getLevelObjects(),
+            ...this.app.getWaterVolumes()
+        ];
+
         const levelData = {
             name: this.app.levelName || "Custom Level",
             spawnPoint: { x: this.app.spawnPointHelper.position.x, y: this.app.spawnPointHelper.position.y, z: this.app.spawnPointHelper.position.z },
             deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
-            objects: this.app.getLevelObjects().map(obj => obj.definition),
+            objects: geometricObjects.map(obj => obj.definition),
             enemies: this.app.getEnemies().map(enemy => enemy.definition),
             triggers: this.app.getTriggers().map(t => t.definition),
             deathTriggers: this.app.getDeathTriggers().map(t => t.definition)
@@ -7362,7 +7575,7 @@ export class EditorApp {
 
         this.levelManager = new LevelManager(this);
         this.editor = new LevelEditor(this);
-        this.editor.actions.newLevel();
+        await this.editor.actions.newLevel();
         window.editorApp = this;
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
@@ -7397,9 +7610,9 @@ export class EditorApp {
         this.entities.delete(entity);
     }
 
-    loadLevel(levelData) {
+    async loadLevel(levelData) {
         this.clearLevel();
-        const { ambientLight } = this.levelManager.build(levelData);
+        const { ambientLight } = await this.levelManager.build(levelData);
 
         this.settings = levelData.settings;
         this.levelName = levelData.name;
@@ -7497,16 +7710,29 @@ export class EditorApp {
             this.ambientLight.dispose();
             this.ambientLight = null;
         }
+        if (this.scene.background && this.scene.background.isTexture) {
+            this.scene.background.dispose();
+            this.scene.background = null;
+        }
     }
 
     animate() {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
-        [...this.getWaterVolumes()].forEach(water => {
-            if (water.mesh?.material?.uniforms?.time) {
-                water.mesh.material.uniforms.time.value = elapsedTime;
+        
+        // This handles time-based uniforms for all water types.
+        for (const water of this.getWaterVolumes()) {
+            const uniforms = water.mesh?.material?.uniforms;
+            if (uniforms) {
+                if (uniforms.time) { // For THREE.Water pools
+                    uniforms.time.value = elapsedTime;
+                }
+                if (uniforms.uTime) { // For custom waterfall shader
+                    uniforms.uTime.value = elapsedTime;
+                }
             }
-        });
+        }
+        
         this.physics.update(deltaTime);
         this.editor.update(deltaTime);
         this.renderer.render();
@@ -7879,9 +8105,9 @@ export class EditorUI {
 
     init() {
         // --- File Menu ---
-        document.getElementById('menu-file-new').onclick = () => this.editor.actions.newLevel();
+        document.getElementById('menu-file-new').onclick = async () => await this.editor.actions.newLevel();
         document.getElementById('menu-file-open').onclick = () => document.getElementById('editor-file-input').click();
-        document.getElementById('editor-file-input').onchange = (e) => this.editor.actions.loadFile(e);
+        document.getElementById('editor-file-input').onchange = async (e) => await this.editor.actions.loadFile(e);
         document.getElementById('menu-file-save').onclick = () => this.editor.actions.saveFile();
         document.getElementById('menu-file-play').onclick = () => this.editor.actions.playInDebugMode();
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
@@ -8124,35 +8350,13 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
     }
 
     updatePropertiesPanel() {
-        // FIX: If an input inside the inspector is focused, do not redraw the panel.
-        // This prevents losing focus while typing or using a color picker.
-        if (this.inspectorContent.contains(document.activeElement)) {
+        if (this.inspectorContent.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') {
             return;
         }
 
         this.inspectorContent.innerHTML = '';
-        
-        if (this.editor.selectedObjects.size > 1) {
-            const multiSelectInfo = document.createElement('div');
-            multiSelectInfo.className = 'placeholder-text';
-            multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
-            this.inspectorContent.appendChild(multiSelectInfo);
-        } else if (this.editor.selectedObjects.size === 0) {
-            this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
-            return;
-        }
-
-        const entity = this.editor.primarySelectedObject;
-        if (!entity) {
-            if (this.editor.selectedObjects.size === 0) this.inspectorContent.appendChild(this.inspectorPlaceholder.cloneNode(true));
-            return;
-        }
-    
-        const entityType = entity.userData?.gameEntity?.type;
-        if (!entityType) return;
-    
         const fragment = document.createDocumentFragment();
-    
+        
         const handleEnterKey = (e, updateFn) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -8170,7 +8374,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             fragment.appendChild(group);
             return group;
         };
-    
+
         const createTextInput = (parent, value, callback) => {
             const input = document.createElement('input');
             input.type = 'text';
@@ -8179,6 +8383,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             input.onchange = (e) => updateValue(e.target.value);
             input.onkeydown = (e) => handleEnterKey(e, updateValue);
             parent.appendChild(input);
+            return input;
         };
     
         const createNumberInput = (parent, value, { min, max, step = 0.1 }, callback) => {
@@ -8217,10 +8422,69 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             });
             parent.appendChild(inputGroup);
         };
+
+        if (this.editor.selectedObjects.size === 0) {
+            this.renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput);
+        } else {
+            if (this.editor.selectedObjects.size > 1) {
+                const multiSelectInfo = document.createElement('div');
+                multiSelectInfo.className = 'placeholder-text';
+                multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
+                fragment.appendChild(multiSelectInfo);
+            }
+            this.renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs);
+        }
+
+        this.inspectorContent.appendChild(fragment);
+    }
     
+    renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput) {
+        const settings = this.app.settings;
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'placeholder-text';
+        groupTitle.innerHTML = '<b>Scene Settings</b>';
+        fragment.appendChild(groupTitle);
+        
+        const skyboxGroup = createPropGroup('Skybox Path');
+        const skyboxInput = createTextInput(skyboxGroup, settings.skybox || '', (val) => this.editor.updateSceneSetting('skybox', val));
+        skyboxInput.placeholder = './assets/skyboxes/folder/';
+        
+        fragment.appendChild(document.createElement('hr'));
+        
+        const bgGroup = createPropGroup('Background Color');
+        const bgColor = settings.backgroundColor ? '#' + new THREE.Color(parseInt(settings.backgroundColor, 16)).getHexString() : '#000000';
+        createColorInput(bgGroup, bgColor, (val) => this.editor.updateSceneSetting('backgroundColor', val.replace('#', '0x')));
+        
+        const fogGroup = createPropGroup('Fog Color');
+        const fogColor = settings.fogColor ? '#' + new THREE.Color(parseInt(settings.fogColor, 16)).getHexString() : '#000000';
+        createColorInput(fogGroup, fogColor, (val) => this.editor.updateSceneSetting('fogColor', val.replace('#', '0x')));
+        
+        const fogDistGroup = createPropGroup('Fog Distance (Near / Far)');
+        const fogDistContainer = document.createElement('div');
+        fogDistContainer.className = 'prop-input-group';
+        createNumberInput(fogDistContainer, settings.fogNear || 10, {min: 0, step: 1}, (val) => this.editor.updateSceneSetting('fogNear', val));
+        createNumberInput(fogDistContainer, settings.fogFar || 200, {min: 0, step: 1}, (val) => this.editor.updateSceneSetting('fogFar', val));
+        fogDistGroup.appendChild(fogDistContainer);
+        
+        fragment.appendChild(document.createElement('hr'));
+
+        const ambientGroup = createPropGroup('Ambient Light');
+        const ambientContainer = document.createElement('div');
+        ambientContainer.className = 'prop-input-group';
+        const ambientColor = settings.ambientLight.color ? '#' + new THREE.Color(parseInt(settings.ambientLight.color, 16)).getHexString() : '#ffffff';
+        createColorInput(ambientContainer, ambientColor, (val) => this.editor.updateSceneSetting('ambientLight.color', val.replace('#', '0x')));
+        createNumberInput(ambientContainer, settings.ambientLight.intensity || 1, {min: 0, max: 5, step: 0.1}, (val) => this.editor.updateSceneSetting('ambientLight.intensity', val));
+        ambientGroup.appendChild(ambientContainer);
+    }
+    
+    renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs) {
+        const entity = this.editor.primarySelectedObject;
+        if (!entity || !entity.userData?.gameEntity?.type) return;
+
+        const entityType = entity.userData.gameEntity.type;
         const def = entity.definition;
-        const mesh = entity.mesh || entity.picker || entity;
-    
+        const mesh = entity.helperMesh || entity.mesh || entity.picker;
+
         if (def && def.name !== undefined) {
             const group = createPropGroup('Name');
             createTextInput(group, def.name, (val) => this.editor.updateSelectedProp('name', null, val));
@@ -8241,38 +8505,23 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         if (def && def.size) {
             if (def.type === 'Plane') {
                 const widthGroup = createPropGroup('Width');
-                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => {
-                    this.editor.updateSelectedProp('size', 0, val);
-                });
+                createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 0, val); });
                 const depthGroup = createPropGroup('Depth');
-                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => {
-                    this.editor.updateSelectedProp('size', 1, val);
-                });
+                createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 1, val); });
             } else {
                 const sizeGroup = createPropGroup('Size');
-                const displaySize = {
-                    x: def.size[0] * mesh.scale.x,
-                    y: def.size[1] * mesh.scale.y,
-                    z: def.size[2] * mesh.scale.z
-                };
+                const displaySize = { x: def.size[0] * mesh.scale.x, y: def.size[1] * mesh.scale.y, z: def.size[2] * mesh.scale.z };
                 createVec3Inputs(sizeGroup, displaySize, 0.25, (axis, val) => {
                     const changes = [];
                     this.editor.selectedObjects.forEach(selEntity => {
-                        const selMesh = selEntity.mesh || selEntity.picker || selEntity;
+                        const selMesh = selEntity.mesh || selEntity.picker || selEntity.helperMesh;
                         if (!selEntity.definition?.size || !selMesh) return;
-                        
                         const beforeDef = JSON.parse(JSON.stringify(selEntity.definition));
-                        beforeDef.size[0] *= selMesh.scale.x;
-                        beforeDef.size[1] *= selMesh.scale.y;
-                        beforeDef.size[2] *= selMesh.scale.z;
-                        
                         const afterDef = JSON.parse(JSON.stringify(beforeDef));
                         const map = { x: 0, y: 1, z: 2 };
-                        afterDef.size[map[axis]] = val;
-                        
+                        afterDef.size[map[axis]] = val / selMesh.scale[axis];
                         changes.push({ entity: selEntity, beforeState: beforeDef, afterState: afterDef });
                     });
-            
                     if (changes.length > 0) {
                         const command = new StateChangeCommand(this.editor, changes);
                         this.editor.undoManager.execute(command);
@@ -8292,10 +8541,8 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             fragment.appendChild(document.createElement('hr'));
             const msgGroup = createPropGroup('Message');
             createTextInput(msgGroup, def.message || '', val => this.editor.updateSelectedProp('message', null, val));
-    
             const durGroup = createPropGroup('Duration (s)');
             createNumberInput(durGroup, def.duration || 5, { min: 0.1, max: 100, step: 0.1 }, val => this.editor.updateSelectedProp('duration', null, val));
-    
             const colorGroup = createPropGroup('Helper Color');
             const initialColor = def.color ? '#' + new THREE.Color(parseInt(def.color, 16)).getHexString() : '#00ff00';
             createColorInput(colorGroup, initialColor, val => this.editor.updateSelectedProp('color', null, val));
@@ -8314,13 +8561,11 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
             createVec3Inputs(targetGroup, entity.light.target.position, 0.25, (axis, val) => this.editor.updateSelectedProp('targetPosition', axis, val));
         }
     
-        this.inspectorContent.appendChild(fragment);
-    
         const deleteButton = document.createElement('button');
         deleteButton.className = 'delete-button';
         deleteButton.textContent = 'Delete Selected';
         deleteButton.onclick = () => this.editor.actions.deleteSelected();
-        this.inspectorContent.appendChild(deleteButton);
+        fragment.appendChild(deleteButton);
     }
     
     setHelpersVisibility(type, isVisible) {
@@ -8545,6 +8790,16 @@ export class LevelEditor {
     
     // --- Data & Property Manipulation ---
 
+    updateSceneSetting(key, value) {
+        const path = key.split('.');
+        let target = this.app.settings;
+        for (let i = 0; i < path.length - 1; i++) {
+            target = target[path[i]];
+        }
+        target[path[path.length - 1]] = value;
+        this.app.levelManager._setupScene(this.app.settings);
+    }
+    
     updateSelectedProp(prop, key, value) {
         if (this.selectedObjects.size === 0) return;
     
@@ -8594,13 +8849,11 @@ export class LevelEditor {
     applyDefinition(obj) {
         const type = obj.userData?.gameEntity?.type;
         const def = obj.definition;
-        const mesh = obj.mesh;
-        const body = obj.body;
     
         if (!def || !type) return;
     
         if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
-            this.syncObjectTransforms(obj); // Sync position from mesh to internal state
+            this.syncObjectTransforms(obj);
             return;
         }
     
@@ -8622,20 +8875,47 @@ export class LevelEditor {
         if (type === 'Water') {
             const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
             const position = def.position;
-            const rotation = def.rotation ? {
-                x: THREE.MathUtils.degToRad(def.rotation.x || 0),
-                y: THREE.MathUtils.degToRad(def.rotation.y || 0),
-                z: THREE.MathUtils.degToRad(def.rotation.z || 0),
-            } : {x:0, y:0, z:0};
-            
+            const rot = def.rotation ? new THREE.Euler(
+                THREE.MathUtils.degToRad(def.rotation.x || 0),
+                THREE.MathUtils.degToRad(def.rotation.y || 0),
+                THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
+            ) : new THREE.Euler();
+            const quat = new THREE.Quaternion().setFromEuler(rot);
+
             obj.helperMesh.position.set(position.x, position.y, position.z);
-            obj.helperMesh.quaternion.setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z, 'YXZ'));
-            
+            obj.helperMesh.quaternion.copy(quat);
             obj.helperMesh.geometry.dispose();
             obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
-            obj.mesh.geometry.dispose();
-            obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
-            
+
+            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+            const isNowVertical = Math.abs(upVector.y) < 0.5;
+
+            if (isNowVertical !== obj.isWaterfall) {
+                this.app.scene.remove(obj.mesh);
+                obj.mesh.geometry.dispose();
+                if(obj.mesh.material.uniforms?.uFlowTexture?.value) obj.mesh.material.uniforms.uFlowTexture.value.dispose();
+                if(obj.mesh.material.uniforms?.uNoiseTexture?.value) obj.mesh.material.uniforms.uNoiseTexture.value.dispose();
+                if(obj.mesh.material.uniforms?.waterNormals?.value) obj.mesh.material.uniforms.waterNormals.value.dispose();
+                obj.mesh.material.dispose();
+
+                const newVisualPart = isNowVertical
+                    ? this.app.levelManager.createWaterfall(def, size, obj.body)
+                    : this.app.levelManager.createWaterPool(def, size);
+
+                obj.mesh = newVisualPart.mesh;
+                obj.isWaterfall = isNowVertical;
+                this.app.scene.add(obj.mesh);
+                obj.mesh.userData.gameEntity = obj.userData.gameEntity;
+            } else {
+                if (obj.isWaterfall) {
+                    obj.mesh.geometry.dispose();
+                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[1]);
+                } else {
+                    obj.mesh.geometry.dispose();
+                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+                }
+            }
+
             if(obj.body && obj.body.shapes[0]){
                  const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
                  obj.body.shapes[0].halfExtents.copy(halfExtents);
@@ -8646,7 +8926,9 @@ export class LevelEditor {
             this.syncObjectTransforms(obj); 
             return;
         }
-    
+        
+        const mesh = obj.mesh;
+        const body = obj.body;
         mesh.position.set(def.position.x, def.position.y, def.position.z);
     
         if (def.rotation && obj.isDead === undefined) {
@@ -8705,13 +8987,13 @@ export class LevelEditor {
             entity.body.position.copy(sourceTransform.position);
             entity.body.quaternion.copy(sourceTransform.quaternion);
             
-            const size = entity.definition.size;
             entity.mesh.position.copy(sourceTransform.position);
-            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(sourceTransform.quaternion);
-            entity.mesh.position.addScaledVector(upVector, size[1] / 2);
-            
             entity.mesh.quaternion.copy(sourceTransform.quaternion);
-            entity.mesh.rotateX(-Math.PI / 2);
+
+            if (!entity.isWaterfall) {
+                entity.mesh.rotateX(-Math.PI / 2);
+            }
+
         } else if (entity.body) {
             const sourceTransform = entity.mesh || entity.picker || entity;
             entity.body.position.copy(sourceTransform.position);
@@ -8781,9 +9063,10 @@ export class StateChangeCommand {
     execute() {
         this.changes.forEach(change => {
             change.entity.definition = JSON.parse(JSON.stringify(change.afterState));
-            const mesh = change.entity.mesh || change.entity.picker || change.entity;
-            if (mesh && change.afterState.size) {
-                 mesh.scale.set(1, 1, 1);
+            // FIX: Target the correct object for scale reset (e.g., helperMesh for Water)
+            const transformedObject = change.entity.helperMesh || change.entity.mesh || change.entity.picker || change.entity;
+            if (transformedObject && change.afterState.size) {
+                 transformedObject.scale.set(1, 1, 1);
             }
             this.editor.applyDefinition(change.entity);
         });
@@ -8796,9 +9079,10 @@ export class StateChangeCommand {
     undo() {
         this.changes.forEach(change => {
             change.entity.definition = JSON.parse(JSON.stringify(change.beforeState));
-            const mesh = change.entity.mesh || change.entity.picker || change.entity;
-            if (mesh && change.beforeState.size) {
-                mesh.scale.set(1, 1, 1);
+            // FIX: Target the correct object for scale reset (e.g., helperMesh for Water)
+            const transformedObject = change.entity.helperMesh || change.entity.mesh || change.entity.picker || change.entity;
+            if (transformedObject && change.beforeState.size) {
+                transformedObject.scale.set(1, 1, 1);
             }
             this.editor.applyDefinition(change.entity);
         });
@@ -12417,14 +12701,16 @@ export class LevelManager {
     constructor(world) {
         this.world = world;
         this.scene = world.scene;
+        this.waterfallTextures = null; // Cache for waterfall textures
+        this.cubeTextureLoader = new THREE.CubeTextureLoader();
     }
 
-    build(levelData) {
+    async build(levelData) {
         this.world.levelName = levelData.name || 'Unnamed Level';
         this.world.spawnPoint.copy(levelData.spawnPoint);
         this.world.deathSpawnPoint.copy(levelData.deathSpawnPoint || levelData.spawnPoint);
 
-        const sceneSetupResult = this._setupScene(levelData.settings);
+        const sceneSetupResult = await this._setupScene(levelData.settings);
         
         (levelData.objects || []).map(d => this.createObject(d)).forEach(e => this.world.add(e));
         (levelData.npcs || []).map(d => this.createNPC(d)).forEach(e => this.world.add(e));
@@ -12439,8 +12725,19 @@ export class LevelManager {
         return sceneSetupResult;
     }
 
-    _setupScene(settings) {
-        this.scene.background = new THREE.Color(parseInt(settings.backgroundColor, 16));
+    async _setupScene(settings) {
+        // Dispose previous background if it was a texture
+        if (this.scene.background && this.scene.background.isTexture) {
+            this.scene.background.dispose();
+        }
+
+        if (settings.skybox) {
+            const urls = ['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg'].map(file => settings.skybox + file);
+            this.scene.background = await this.cubeTextureLoader.loadAsync(urls);
+        } else {
+            this.scene.background = new THREE.Color(parseInt(settings.backgroundColor, 16));
+        }
+
         this.scene.fog = new THREE.Fog(parseInt(settings.fogColor, 16), settings.fogNear, settings.fogFar);
         
         const existingLights = this.scene.children.filter(c => c.isLight);
@@ -12487,56 +12784,166 @@ export class LevelManager {
         }
     }
     
-    createWater(objData) {
-        const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
-        const waterGeometry = new THREE.PlaneGeometry(size[0], size[2]);
+    createProgrammaticTexture(drawFn, size = 256) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        drawFn(ctx, size);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
 
+    getWaterfallTextures() {
+        if (!this.waterfallTextures) {
+            const flowTexture = this.createProgrammaticTexture((ctx, size) => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, size, size);
+                ctx.fillStyle = 'black';
+                for (let i = 0; i < 1000; i++) {
+                    const x = Math.random() * size;
+                    const y = Math.random() * size;
+                    const w = Math.random() * 2 + 1;
+                    const h = Math.random() * 30 + 10;
+                    ctx.globalAlpha = Math.random() * 0.5 + 0.2;
+                    ctx.fillRect(x, y, w, h);
+                }
+            });
+
+            const noiseTexture = this.createProgrammaticTexture((ctx, size) => {
+                for (let i = 0; i < 10000; i++) {
+                    const x = Math.random() * size;
+                    const y = Math.random() * size;
+                    const c = Math.floor(Math.random() * 128 + 128);
+                    ctx.fillStyle = `rgb(${c},${c},${c})`;
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            });
+
+            this.waterfallTextures = { flowTexture, noiseTexture };
+        }
+        return this.waterfallTextures;
+    }
+
+    createWaterfall(objData, size, body) {
+        const { flowTexture, noiseTexture } = this.getWaterfallTextures();
+        const waterfallMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uFlowTexture: { value: flowTexture },
+                uNoiseTexture: { value: noiseTexture },
+            },
+            vertexShader: `varying vec2 vUv; varying vec3 vNormal; void main() { vUv = uv; vNormal = normal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `
+                precision mediump float;
+                uniform float uTime;
+                uniform sampler2D uFlowTexture;
+                uniform sampler2D uNoiseTexture;
+                varying vec2 vUv;
+                varying vec3 vNormal;
+
+                void main() {
+                    vec2 flowUv = vUv * vec2(1.0, 4.0) + vec2(0.0, -uTime * 0.4);
+                    vec2 noiseUv = vUv * vec2(1.5, 2.0) + vec2(uTime * 0.05, -uTime * 0.15);
+                    float noise = texture2D(uNoiseTexture, noiseUv).r;
+                    vec2 distortedUv = flowUv + vec2(noise - 0.5, 0.0) * 0.1;
+                    float distortedFlow = texture2D(uFlowTexture, distortedUv).r;
+                    float edgeFade = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x);
+                    float verticalFade = smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.95, vUv.y);
+                    float finalAlpha = distortedFlow * edgeFade * verticalFade;
+                    vec3 waterColor = vec3(0.8, 0.9, 1.0);
+                    float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+                    vec3 finalColor = waterColor + fresnel * 0.2;
+                    if (finalAlpha < 0.1) discard;
+                    gl_FragColor = vec4(finalColor, finalAlpha * 0.7);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+        const waterfallMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), waterfallMaterial);
+        
+        const entity = { type: 'Water', mesh: waterfallMesh, body, definition: objData, isWaterfall: true };
+        this.world.on('update', ({deltaTime, elapsedTime}) => {
+            if (waterfallMesh.material.uniforms) {
+                 waterfallMesh.material.uniforms.uTime.value = elapsedTime;
+            }
+        });
+        return entity;
+    }
+
+    createWaterPool(objData, size) {
         let sunLight = this.world.scene.children.find(c => c.isDirectionalLight);
         if (!sunLight) {
             sunLight = new THREE.DirectionalLight(0xffffff, 1);
             sunLight.position.set(0, 100, 0);
         }
 
-        // REWORK: Create a dedicated color for water's sun reflection to prevent blowout,
-        // adjust water color, and set alpha for transparency.
         const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
 
-        const water = new Water(waterGeometry, {
-            textureWidth: 512,
-            textureHeight: 512,
-            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', function (texture) {
-                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            }),
+        const water = new Water(new THREE.PlaneGeometry(size[0], size[2]), {
+            textureWidth: 512, textureHeight: 512,
+            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }),
             sunDirection: sunLight.position.clone().normalize(),
-            sunColor: waterSunColor,
-            waterColor: 0x005577,
-            distortionScale: 3.7,
-            fog: this.world.scene.fog !== undefined,
-            alpha: 0.95
+            sunColor: waterSunColor, waterColor: 0x005577,
+            distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
         });
-
+        
         water.rotation.x = -Math.PI / 2;
-        water.position.set(objData.position.x, objData.position.y + size[1] / 2, objData.position.z);
+        const entity = { type: 'Water', mesh: water, isWaterfall: false, definition: objData };
+        return entity;
+    }
+
+    createWater(objData) {
+        const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+        const position = new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z);
+        const rotation = objData.rotation ? new THREE.Euler(
+            THREE.MathUtils.degToRad(objData.rotation.x), 
+            THREE.MathUtils.degToRad(objData.rotation.y), 
+            THREE.MathUtils.degToRad(objData.rotation.z), 'YXZ') 
+        : new THREE.Euler();
+        
+        const cannonQuat = new CANNON.Quaternion().setFromEuler(rotation.x, rotation.y, rotation.z);
         
         const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
         const body = new CANNON.Body({
-            type: CANNON.Body.STATIC, isTrigger: true, shape,
-            position: new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z),
+            type: CANNON.Body.STATIC, isTrigger: true, shape, position, quaternion: cannonQuat,
             collisionFilterGroup: COLLISION_GROUPS.WATER,
             collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY,
         });
 
+        const threeQuat = new THREE.Quaternion(cannonQuat.x, cannonQuat.y, cannonQuat.z, cannonQuat.w);
+        const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(threeQuat);
+        const isVertical = Math.abs(upVector.y) < 0.5;
+
+        let entity;
+        if (isVertical) {
+            entity = this.createWaterfall(objData, size, body);
+        } else {
+            const poolEntity = this.createWaterPool(objData, size);
+            poolEntity.body = body;
+            entity = poolEntity;
+        }
+        
+        entity.mesh.position.copy(position);
+        entity.mesh.quaternion.copy(threeQuat);
+        
+        if (!entity.isWaterfall) {
+            entity.mesh.rotateX(-Math.PI / 2);
+        }
+
         const helperMaterial = new THREE.MeshBasicMaterial({ color: 0x2288ee, transparent: true, opacity: 0.35, wireframe: true });
         const helperMesh = new THREE.Mesh(new THREE.BoxGeometry(...size), helperMaterial);
-        helperMesh.position.copy(body.position);
-        helperMesh.quaternion.copy(body.quaternion);
-
-        const entity = { type: 'Water', mesh: water, helperMesh, body, definition: objData };
+        helperMesh.position.copy(position);
+        helperMesh.quaternion.copy(threeQuat);
+        entity.helperMesh = helperMesh;
+        
         const link = { type: 'Water', entity };
         entity.userData = { gameEntity: link };
-        water.userData.gameEntity = link;
-        helperMesh.userData.gameEntity = link;
-
+        entity.mesh.userData.gameEntity = link;
+        entity.helperMesh.userData.gameEntity = link;
         if (!body.userData) body.userData = {};
         body.userData.entity = entity;
         

@@ -49,7 +49,7 @@ export class EditorApp {
 
         this.levelManager = new LevelManager(this);
         this.editor = new LevelEditor(this);
-        this.editor.actions.newLevel();
+        await this.editor.actions.newLevel();
         window.editorApp = this;
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
@@ -84,9 +84,9 @@ export class EditorApp {
         this.entities.delete(entity);
     }
 
-    loadLevel(levelData) {
+    async loadLevel(levelData) {
         this.clearLevel();
-        const { ambientLight } = this.levelManager.build(levelData);
+        const { ambientLight } = await this.levelManager.build(levelData);
 
         this.settings = levelData.settings;
         this.levelName = levelData.name;
@@ -184,16 +184,29 @@ export class EditorApp {
             this.ambientLight.dispose();
             this.ambientLight = null;
         }
+        if (this.scene.background && this.scene.background.isTexture) {
+            this.scene.background.dispose();
+            this.scene.background = null;
+        }
     }
 
     animate() {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
-        [...this.getWaterVolumes()].forEach(water => {
-            if (water.mesh?.material?.uniforms?.time) {
-                water.mesh.material.uniforms.time.value = elapsedTime;
+        
+        // This handles time-based uniforms for all water types.
+        for (const water of this.getWaterVolumes()) {
+            const uniforms = water.mesh?.material?.uniforms;
+            if (uniforms) {
+                if (uniforms.time) { // For THREE.Water pools
+                    uniforms.time.value = elapsedTime;
+                }
+                if (uniforms.uTime) { // For custom waterfall shader
+                    uniforms.uTime.value = elapsedTime;
+                }
             }
-        });
+        }
+        
         this.physics.update(deltaTime);
         this.editor.update(deltaTime);
         this.renderer.render();

@@ -11,18 +11,19 @@
     "z": 0
   },
   "settings": {
-    "backgroundColor": "0x1d2938",
-    "fogColor": "0x1d2938",
+    "backgroundColor": "0x302010",
+    "skybox": "./assets/skyboxes/moody-skybox/",
+    "fogColor": "0x403020",
     "fogNear": 50,
     "fogFar": 250,
     "ambientLight": {
-      "color": "0x607080",
-      "intensity": 0.8
+      "color": "0xA08070",
+      "intensity": 0.9
     },
     "directionalLights": [
       {
-        "color": "0xffffff",
-        "intensity": 1.5,
+        "color": "0xFFC080",
+        "intensity": 1.8,
         "position": {
           "x": 0,
           "y": 100,
