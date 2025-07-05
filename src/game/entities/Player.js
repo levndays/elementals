@@ -1,3 +1,5 @@
+// ~ src/game/entities/Player.js
+
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -80,6 +82,8 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
+        if (this.isSwimming) return; // Guard against jumping in water
+
         if (this.statusEffects.has('stonePlating')) {
             // Allow first jump from the ground, but not subsequent (double) jumps.
             if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
@@ -90,7 +94,8 @@ export class Player {
     }
     
     dash(direction) {
-        if (this.statusEffects.has('stonePlating') || this.dashOnCooldown) return;
+        // Guard against dashing in water
+        if (this.isSwimming || this.statusEffects.has('stonePlating') || this.dashOnCooldown) return;
         this.input.dashRequested = true;
         this.dashDirection.copy(direction);
     }
@@ -105,6 +110,10 @@ export class Player {
         if (this.weapon && typeof this.weapon.inspect === 'function') {
             this.weapon.inspect();
         }
+    }
+    
+    requestSwim(direction) {
+        this.input.swimDirection = direction;
     }
 
     requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }

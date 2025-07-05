@@ -1,3 +1,4 @@
+// src/client/ui/HUD.js
 import * as THREE from 'three';
 
 /**
@@ -14,6 +15,9 @@ export class HUD {
             energyBar: document.getElementById('energy-bar'),
             oxygenBar: document.getElementById('oxygen-bar'),
             oxygenBarContainer: document.getElementById('oxygen-bar-container'),
+            healthText: document.getElementById('health-text'),
+            energyText: document.getElementById('energy-text'),
+            oxygenText: document.getElementById('oxygen-text'),
             
             jumpCooldownIndicator: document.getElementById('jump-cooldown-indicator'),
             jumpCooldownProgress: document.getElementById('jump-cooldown-indicator')?.querySelector('.cooldown-progress'),
@@ -47,15 +51,18 @@ export class HUD {
     updateResources(health, maxHealth, energy, maxEnergy) {
         const healthPercent = (health / maxHealth) * 100;
         this.elements.healthBar.style.width = `${healthPercent}%`;
+        this.elements.healthText.textContent = Math.floor(health);
 
         const energyPercent = (energy / maxEnergy) * 100;
         this.elements.energyBar.style.width = `${energyPercent}%`;
+        this.elements.energyText.textContent = Math.floor(energy);
     }
 
     updateOxygen(current, max) {
         if (!this.elements.oxygenBar) return;
         const oxygenPercent = (current / max) * 100;
         this.elements.oxygenBar.style.width = `${oxygenPercent}%`;
+        this.elements.oxygenText.textContent = Math.floor(current);
     }
 
     updateMovementCooldowns(jumpTimer, jumpCooldown, dashTimer, dashCooldown, isDoubleJumpOnCooldown, isDashOnCooldown) {

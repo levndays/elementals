@@ -102,13 +102,23 @@ export class PlayerController {
         }
 
         this.player.setMoveDirection(this._moveDirection);
-
-        this._handleDashInput();
-
-        if (this.input.keys['ShiftLeft']) {
-            this.player.requestSlam(true);
-        } else {
+        
+        if (this.player.isSwimming) {
+            let swimDirection = 0;
+            if (this.input.keys['Space']) swimDirection = 1;
+            else if (this.input.keys['ShiftLeft']) swimDirection = -1;
+            this.player.requestSwim(swimDirection);
             this.player.requestSlam(false);
+        } else {
+            // Only handle dash and slam on land/in air
+            this._handleDashInput();
+            if (this.input.keys['ShiftLeft']) {
+                this.player.requestSlam(true);
+            } else {
+                this.player.requestSlam(false);
+            }
+            // Ensure swim is neutral when not in water
+            this.player.requestSwim(0);
         }
     }
 
@@ -134,7 +144,10 @@ export class PlayerController {
         if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
-            this.player.jump();
+            // Only allow jumping on land. Swimming up is handled by holding space in `_handleMovement`.
+            if (!this.player.isSwimming) {
+                this.player.jump();
+            }
         }
         
         if (event.code === 'KeyR') {

@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-04T21:24:58.669272
+Snapshot created on: 2025-07-05T17:58:06.070646
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -301,9 +301,15 @@ Snapshot created on: 2025-07-04T21:24:58.669272
         <div id="hud-top-left" class="hud-corner">
             <div id="health-bar-container" class="resource-bar-container">
                 <div id="health-bar"></div>
+                <span class="resource-text" id="health-text"></span>
             </div>
             <div id="energy-bar-container" class="resource-bar-container">
                 <div id="energy-bar"></div>
+                <span class="resource-text" id="energy-text"></span>
+            </div>
+            <div id="oxygen-bar-container" class="resource-bar-container" style="display: none;">
+                <div id="oxygen-bar"></div>
+                <span class="resource-text" id="oxygen-text"></span>
             </div>
         </div>
 
@@ -1143,7 +1149,7 @@ body:not(.game-active) #tutorial-text-container {
 /* NEW: Underwater VFX */
 #vfx-underwater-overlay {
     background-color: hsla(195, 100%, 50%, 0.2);
-    backdrop-filter: blur(2px);
+    /* backdrop-filter: blur(2px); */ /* REMOVED as requested */
     transition: opacity 0.5s ease-in-out;
 }
 #vfx-underwater-overlay.active {
@@ -1270,14 +1276,57 @@ body:not(.game-active) #tutorial-text-container {
     box-shadow: inset 0 1px 2px hsla(0,0%,0%,0.5);
     position: relative;
 }
-#health-bar, #energy-bar {
+#health-bar, #energy-bar, #oxygen-bar {
     height: 100%; border-radius: 2px;
-    transition: width 0.2s ease-out;
+    /* transition: width 0.2s ease-out; */ /* REMOVED to fix update bug */
     position: relative;
 }
 #health-bar { background: linear-gradient(to right, hsl(0, 100%, 60%), hsl(0, 100%, 75%)); }
 #energy-bar { background: linear-gradient(to right, hsl(190, 100%, 45%), hsl(190, 100%, 65%)); }
-.resource-text { display: none; }
+#oxygen-bar { background: linear-gradient(to right, hsl(200, 100%, 70%), hsl(200, 100%, 85%)); }
+
+/* REWORKED: Resource bar separators and text */
+.resource-bar-container::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: 2px 100%; /* Make separators wider to create a gap effect */
+}
+
+#health-bar-container::after {
+    background-image:
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0),
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0),
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0),
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0),
+        linear-gradient(var(--color-bg-dark) 0 0);
+    background-position: 10% 0, 20% 0, 30% 0, 40% 0, 50% 0, 60% 0, 70% 0, 80% 0, 90% 0;
+}
+
+#energy-bar-container::after,
+#oxygen-bar-container::after {
+    background-image:
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0),
+        linear-gradient(var(--color-bg-dark) 0 0), linear-gradient(var(--color-bg-dark) 0 0);
+    background-position: 20% 0, 40% 0, 60% 0, 80% 0;
+}
+
+.resource-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-light);
+    text-shadow: 1px 1px 2px hsla(0, 0%, 0%, 0.8);
+    pointer-events: none;
+    z-index: 1;
+    text-align: center;
+}
 
 #energy-bar-container.flash-error #energy-bar::after {
     content: '';
@@ -1461,7 +1510,6 @@ body:not(.game-active) #tutorial-text-container {
     font-size: 2.5rem; text-align: center; color: gold;
     font-weight: 700; text-shadow: 0 0 15px gold;
 }
-
 --------------------------------------------------
 === END OF FILE: css/game.css ===
 
@@ -5350,6 +5398,7 @@ export class HealthBar {
 
 === FILE: src/client/ui/HUD.js ===
 --------------------------------------------------
+// src/client/ui/HUD.js
 import * as THREE from 'three';
 
 /**
@@ -5364,6 +5413,11 @@ export class HUD {
         this.elements = {
             healthBar: document.getElementById('health-bar'),
             energyBar: document.getElementById('energy-bar'),
+            oxygenBar: document.getElementById('oxygen-bar'),
+            oxygenBarContainer: document.getElementById('oxygen-bar-container'),
+            healthText: document.getElementById('health-text'),
+            energyText: document.getElementById('energy-text'),
+            oxygenText: document.getElementById('oxygen-text'),
             
             jumpCooldownIndicator: document.getElementById('jump-cooldown-indicator'),
             jumpCooldownProgress: document.getElementById('jump-cooldown-indicator')?.querySelector('.cooldown-progress'),
@@ -5397,9 +5451,18 @@ export class HUD {
     updateResources(health, maxHealth, energy, maxEnergy) {
         const healthPercent = (health / maxHealth) * 100;
         this.elements.healthBar.style.width = `${healthPercent}%`;
+        this.elements.healthText.textContent = Math.floor(health);
 
         const energyPercent = (energy / maxEnergy) * 100;
         this.elements.energyBar.style.width = `${energyPercent}%`;
+        this.elements.energyText.textContent = Math.floor(energy);
+    }
+
+    updateOxygen(current, max) {
+        if (!this.elements.oxygenBar) return;
+        const oxygenPercent = (current / max) * 100;
+        this.elements.oxygenBar.style.width = `${oxygenPercent}%`;
+        this.elements.oxygenText.textContent = Math.floor(current);
     }
 
     updateMovementCooldowns(jumpTimer, jumpCooldown, dashTimer, dashCooldown, isDoubleJumpOnCooldown, isDashOnCooldown) {
@@ -6480,6 +6543,7 @@ export class UIManager {
             player.health.currentHealth, player.health.maxHealth, 
             player.abilities.currentEnergy, player.abilities.maxEnergy
         );
+        this.hud.updateOxygen(player.currentOxygen, player.maxOxygen);
         this.hud.updateMovementCooldowns(
             player.doubleJumpCooldownTimer, GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN,
             player.dashCooldownTimer, GAME_CONFIG.PLAYER.DASH_COOLDOWN,
@@ -6498,6 +6562,14 @@ export class UIManager {
         
         // Update underwater overlay
         this.elements.underwaterOverlay.classList.toggle('active', player.isSwimming);
+
+        // Update oxygen bar visibility
+        if (this.hud.elements.oxygenBarContainer) {
+            const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
+            const isRegeneratingOxygen = !isConsumingOxygen && player.currentOxygen < player.maxOxygen;
+            const shouldShowOxygenBar = isConsumingOxygen || isRegeneratingOxygen;
+            this.hud.elements.oxygenBarContainer.style.display = shouldShowOxygenBar ? 'block' : 'none';
+        }
 
         if (game.gameState === 'DEAD') {
             this.elements.respawnTimerText.textContent = `Respawning in ${Math.ceil(game.respawnTimer)}...`;
@@ -7555,7 +7627,7 @@ export class EditorControls {
             // For group scaling, we need the initial mesh scales
             if (this.transformControls.mode === 'scale' && selected.size > 1) {
                 this._initialDragState.forEach(state => {
-                    const mesh = state.entity.mesh || state.entity.picker || state.entity;
+                    const mesh = state.entity.helperMesh || state.entity.mesh || state.entity.picker || state.entity;
                     state.initialScale = mesh.scale.clone();
                 });
             }
@@ -7564,9 +7636,9 @@ export class EditorControls {
             
             const changes = [];
             this._initialDragState.forEach(state => {
-                const { entity, definition, initialScale } = state;
+                const { entity, definition } = state;
                 const afterState = JSON.parse(JSON.stringify(entity.definition));
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity.targetHelper || entity;
                 
                 afterState.position = { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
                 if (afterState.rotation) {
@@ -7602,7 +7674,7 @@ export class EditorControls {
             if (draggedObject?.userData.gameEntity?.type === 'LightTarget') {
                 this.editor.syncObjectTransforms(draggedObject.userData.gameEntity.parentLight);
             } else if (draggedObject === this.editor.selectionGroup) {
-                // No need to sync individual objects while group is transforming
+                 this.editor.selectedObjects.forEach(entity => this.editor.syncObjectTransforms(entity));
             } else if (this.editor.primarySelectedObject) {
                 this.editor.syncObjectTransforms(this.editor.primarySelectedObject);
             }
@@ -7620,7 +7692,7 @@ export class EditorControls {
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
         const pickableMeshes = [...this.app.entities]
-            .map(e => e.mesh || e.picker || e.targetHelper || e)
+            .map(e => [e.mesh, e.picker, e.targetHelper, e.helperMesh])
             .flat()
             .filter(Boolean);
             
@@ -7659,7 +7731,7 @@ export class EditorControls {
     
         if (selected.size === 1) {
             const entity = selected.values().next().value;
-            const objectToAttach = entity.mesh || entity.picker || entity.targetHelper || entity;
+            const objectToAttach = entity.helperMesh || entity.mesh || entity.picker || entity.targetHelper || entity;
             
             this.transformControls.attach(objectToAttach);
             this.addSelectionBox(objectToAttach);
@@ -7668,7 +7740,7 @@ export class EditorControls {
             const selectionGroup = this.editor.selectionGroup;
             const centroid = new THREE.Vector3();
             selected.forEach(entity => {
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 centroid.add(mesh.position);
             });
             centroid.divideScalar(selected.size);
@@ -7677,7 +7749,7 @@ export class EditorControls {
             selectionGroup.scale.set(1,1,1);
     
             selected.forEach(entity => {
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 this.scene.remove(mesh);
                 selectionGroup.add(mesh);
                 this.addSelectionBox(mesh);
@@ -7743,7 +7815,7 @@ export class EditorControls {
         const mode = this.transformControls.getMode();
         // FIX: Changed this.controls.setTransformMode to this.setTransformMode
         if (!canRotate && mode === 'rotate') this.setTransformMode('translate');
-        if (!canScale && mode === 'scale') this.setTransformMode('translate');
+        if (!canScale && mode === 'scale') this.setTransformMode('scale');
     }
 
     setTransformSpace(space) {
@@ -8336,6 +8408,7 @@ export class LevelEditor {
             DeathTrigger: true,
             DirectionalLight: true,
             SpawnAndDeath: true,
+            Water: true,
         };
         
         // Group for multi-object transforms
@@ -8433,7 +8506,7 @@ export class LevelEditor {
 
     selectByUUID(uuid) {
         const entityToSelect = [...this.app.entities].find(e => {
-            const mesh = e.mesh || e.picker || e.targetHelper || e;
+            const mesh = e.mesh || e.picker || e.targetHelper || e.helperMesh;
             return mesh?.uuid === uuid;
         });
         if (entityToSelect) {
@@ -8532,6 +8605,34 @@ export class LevelEditor {
             obj.helper.update();
             return;
         }
+
+        if (type === 'Water') {
+            const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+            const position = def.position;
+            const rotation = def.rotation ? {
+                x: THREE.MathUtils.degToRad(def.rotation.x || 0),
+                y: THREE.MathUtils.degToRad(def.rotation.y || 0),
+                z: THREE.MathUtils.degToRad(def.rotation.z || 0),
+            } : {x:0, y:0, z:0};
+            
+            obj.helperMesh.position.set(position.x, position.y, position.z);
+            obj.helperMesh.quaternion.setFromEuler(new THREE.Euler(rotation.x, rotation.y, rotation.z, 'YXZ'));
+            
+            obj.helperMesh.geometry.dispose();
+            obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
+            obj.mesh.geometry.dispose();
+            obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+            
+            if(obj.body && obj.body.shapes[0]){
+                 const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
+                 obj.body.shapes[0].halfExtents.copy(halfExtents);
+                 obj.body.shapes[0].updateConvexPolyhedronRepresentation();
+                 obj.body.updateBoundingRadius();
+            }
+            
+            this.syncObjectTransforms(obj); 
+            return;
+        }
     
         mesh.position.set(def.position.x, def.position.y, def.position.z);
     
@@ -8586,9 +8687,22 @@ export class LevelEditor {
             light.position.copy(picker.position);
             light.target.position.copy(entity.targetHelper.position);
             entity.helper.update();
+        } else if (entityType === 'Water') {
+            const sourceTransform = entity.helperMesh;
+            entity.body.position.copy(sourceTransform.position);
+            entity.body.quaternion.copy(sourceTransform.quaternion);
+            
+            const size = entity.definition.size;
+            entity.mesh.position.copy(sourceTransform.position);
+            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(sourceTransform.quaternion);
+            entity.mesh.position.addScaledVector(upVector, size[1] / 2);
+            
+            entity.mesh.quaternion.copy(sourceTransform.quaternion);
+            entity.mesh.rotateX(-Math.PI / 2);
         } else if (entity.body) {
-            entity.body.position.copy(entity.mesh.position);
-            entity.body.quaternion.copy(entity.mesh.quaternion);
+            const sourceTransform = entity.mesh || entity.picker || entity;
+            entity.body.position.copy(sourceTransform.position);
+            entity.body.quaternion.copy(sourceTransform.quaternion);
         }
     }
     
@@ -8602,6 +8716,7 @@ export class LevelEditor {
         this.ui.setHelpersVisibility('DeathTrigger', document.getElementById('view-toggle-death-triggers').checked);
         this.ui.setHelpersVisibility('DirectionalLight', document.getElementById('view-toggle-light-helpers').checked);
         this.ui.setHelpersVisibility('SpawnAndDeath', document.getElementById('view-toggle-spawn-helpers').checked);
+        this.ui.setHelpersVisibility('Water', document.getElementById('view-toggle-water-volumes').checked);
     }
     
     update(deltaTime) {
@@ -10185,6 +10300,7 @@ export class NPC {
         // Client-side visual state
         this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
         this.isDead = false;
+        this.isInWater = false; // For water interaction logic
 
         // Link back to entity for easy access from physics/rendering
         const gameEntityLink = { type: 'NPC', entity: this };
@@ -10264,6 +10380,10 @@ export class Player {
         this.physics = new PhysicsBodyComponent(body);
         this.abilities = new AbilityLoadoutComponent();
         this.statusEffects = new StatusEffectComponent();
+
+        // Oxygen state
+        this.maxOxygen = GAME_CONFIG.PLAYER.MAX_OXYGEN;
+        this.currentOxygen = GAME_CONFIG.PLAYER.MAX_OXYGEN;
         
         this.jumpsRemaining = 0;
         this.isSlamming = false;
@@ -10411,6 +10531,7 @@ export class Player {
     reset(spawnPosition) {
         this.health.currentHealth = this.health.maxHealth;
         this.abilities.currentEnergy = this.abilities.maxEnergy;
+        this.currentOxygen = this.maxOxygen;
         this.isDead = false; this.isSlamming = false; this.isDashing = false; this.lockedTarget = null;
         this.jumpsRemaining = 0;
         this.doubleJumpOnCooldown = false; this.doubleJumpCooldownTimer = GAME_CONFIG.PLAYER.DOUBLE_JUMP_COOLDOWN;
@@ -10483,6 +10604,7 @@ export class NPCPrefab {
             fixedRotation: true,
             collisionFilterGroup: group,
             collisionFilterMask: mask,
+            linearDamping: 0.1,
         });
 
         // 3. Entity creation
@@ -10557,7 +10679,8 @@ export class PlayerPrefab {
 import { GAME_CONFIG } from '../../shared/config.js';
 
 /**
- * Manages ability cooldowns and energy regeneration for entities.
+ * Manages ability cooldowns for entities.
+ * Energy regeneration is now handled by PlayerResourceSystem.
  */
 export class AbilitySystem {
     /**
@@ -10568,7 +10691,6 @@ export class AbilitySystem {
         for (const entity of world.getEntities()) {
             if (entity.abilities) {
                 this._updateCooldowns(entity.abilities, deltaTime);
-                this._updateEnergy(world, entity, deltaTime);
             }
         }
     }
@@ -10577,20 +10699,6 @@ export class AbilitySystem {
         for (const ability of abilitiesComponent.abilities) {
             if (ability) {
                 ability.update(deltaTime);
-            }
-        }
-    }
-
-    _updateEnergy(world, entity, deltaTime) {
-        const abilities = entity.abilities;
-        const config = GAME_CONFIG.PLAYER;
-
-        if (world.physics.world.time - abilities.lastAbilityTime > config.ENERGY_REGEN_DELAY) {
-            if (abilities.currentEnergy < abilities.maxEnergy) {
-                abilities.currentEnergy = Math.min(
-                    abilities.maxEnergy,
-                    abilities.currentEnergy + config.ENERGY_REGEN_RATE * deltaTime
-                );
             }
         }
     }
@@ -10619,6 +10727,8 @@ export class AISystem {
         this._losRayResult = new CANNON.RaycastResult();
         this._obstacleRayResult = new CANNON.RaycastResult();
         this._groundRayResult = new CANNON.RaycastResult();
+        this._ledgeProbePoint = new CANNON.Vec3();
+        this._ledgeRayResult = new CANNON.RaycastResult();
         this._lookAtTarget = new THREE.Vector3();
         this._tempQuaternion = new CANNON.Quaternion();
         this._tempObject3D = new THREE.Object3D();
@@ -10646,7 +10756,7 @@ export class AISystem {
             }
             
             this._updateTimers(npc.ai, deltaTime);
-            this._applyMovement(npc);
+            this._applyMovement(world, npc);
         }
     }
     
@@ -10754,6 +10864,11 @@ export class AISystem {
     _handleRangedCombat(world, npc) {
         const { ai, physics } = npc;
         const { distanceToPlayer, hasLineOfSight, attackRange } = ai.perception;
+
+        if (npc.isInWater) {
+            this._navigateObstacles(world, npc);
+            return;
+        }
         
         if (hasLineOfSight && distanceToPlayer <= attackRange && ai.actionTimers.attack <= 0) {
             this._shoot(world, npc, ai.target);
@@ -10775,6 +10890,11 @@ export class AISystem {
         const { ai } = npc;
         const { distanceToPlayer, hasLineOfSight, meleeAttackRange } = ai.perception;
 
+        if (npc.isInWater) {
+            this._navigateObstacles(world, npc);
+            return;
+        }
+
         if (hasLineOfSight && distanceToPlayer <= meleeAttackRange && ai.actionTimers.meleeAttack <= 0) {
             this._meleeAttack(npc, ai.target);
             ai.actionTimers.meleeAttack = ai.actionCooldowns.meleeAttack;
@@ -10793,23 +10913,25 @@ export class AISystem {
         }
     }
 
-    _applyMovement(npc) {
+    _applyMovement(world, npc) {
         const { ai, physics } = npc;
-        const speed = GAME_CONFIG.NPC.BASE.SPEED;
-        
-        physics.body.wakeUp();
 
         if (ai.isDashing) {
-            const dashSpeed = speed * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
+            const dashSpeed = GAME_CONFIG.NPC.BASE.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
             physics.body.velocity.x = ai.dashDirection.x * dashSpeed;
-            physics.body.velocity.y = 0;
+            physics.body.velocity.y = 0; // Dashes are horizontal
             physics.body.velocity.z = ai.dashDirection.z * dashSpeed;
             return;
         }
+        
+        physics.body.wakeUp();
 
         let moveDirection = new CANNON.Vec3();
         switch(ai.state) {
-            case 'IDLE': physics.body.velocity.x *= 0.9; physics.body.velocity.z *= 0.9; break;
+            case 'IDLE':
+                physics.body.velocity.x *= 0.9;
+                physics.body.velocity.z *= 0.9;
+                return;
             case 'SEARCHING':
                 ai.lastKnownPlayerPosition.vsub(physics.body.position, moveDirection);
                 break;
@@ -10817,12 +10939,24 @@ export class AISystem {
                 moveDirection = this._getCombatRepositionVector(npc);
                 break;
         }
-        
-        if (moveDirection.lengthSquared() > 0) {
-            moveDirection.y = 0;
-            moveDirection.normalize();
-            physics.body.velocity.x = moveDirection.x * speed;
-            physics.body.velocity.z = moveDirection.z * speed;
+
+        if (moveDirection.lengthSquared() < 0.01) {
+            physics.body.velocity.x *= 0.9;
+            physics.body.velocity.z *= 0.9;
+            return;
+        }
+
+        moveDirection.y = 0; // Movement is planar
+        const normalizedMoveDir = moveDirection.clone();
+        normalizedMoveDir.normalize();
+
+        if (this._isLedgeAhead(world, npc, normalizedMoveDir)) {
+            physics.body.velocity.x = 0;
+            physics.body.velocity.z = 0;
+        } else {
+            const speed = GAME_CONFIG.NPC.BASE.SPEED;
+            physics.body.velocity.x = normalizedMoveDir.x * speed;
+            physics.body.velocity.z = normalizedMoveDir.z * speed;
         }
     }
     
@@ -10907,6 +11041,29 @@ export class AISystem {
         this._tempObject3D.lookAt(this._lookAtTarget);
         this._tempQuaternion.copy(this._tempObject3D.quaternion);
         npc.physics.body.quaternion.slerp(this._tempQuaternion, 0.1, npc.physics.body.quaternion);
+    }
+
+    _isLedgeAhead(world, npc, moveDirection) {
+        const body = npc.physics.body;
+        const config = GAME_CONFIG.NPC.BASE;
+        const probeDistance = config.RADIUS + 0.2;
+
+        this._ledgeProbePoint.copy(body.position);
+        const offset = moveDirection.scale(probeDistance);
+        this._ledgeProbePoint.vadd(offset, this._ledgeProbePoint);
+
+        const rayFrom = this._ledgeProbePoint;
+        const rayTo = rayFrom.clone();
+        rayTo.y -= 3.0; // Check for ground 3m below
+
+        this._ledgeRayResult.reset();
+        world.physics.world.raycastClosest(
+            rayFrom, rayTo,
+            { collisionFilterMask: COLLISION_GROUPS.WORLD },
+            this._ledgeRayResult
+        );
+
+        return !this._ledgeRayResult.hasHit;
     }
 }
 --------------------------------------------------
@@ -11252,6 +11409,64 @@ export class PhysicsSyncSystem {
 === END OF FILE: src/game/systems/PhysicsSyncSystem.js ===
 
 
+=== FILE: src/game/systems/PlayerResourceSystem.js ===
+--------------------------------------------------
+import { GAME_CONFIG } from '../../shared/config.js';
+
+/**
+ * Manages player-specific resources like energy and oxygen.
+ */
+export class PlayerResourceSystem {
+    /**
+     * @param {import('../world/World.js').World} world
+     * @param {number} deltaTime
+     */
+    update(world, deltaTime) {
+        const player = world.player;
+        if (!player || player.isDead) return;
+
+        this._updateEnergy(world, player, deltaTime);
+        this._updateOxygen(player, deltaTime);
+    }
+
+    _updateEnergy(world, player, deltaTime) {
+        const abilities = player.abilities;
+        const config = GAME_CONFIG.PLAYER;
+
+        if (world.physics.world.time - abilities.lastAbilityTime > config.ENERGY_REGEN_DELAY) {
+            if (abilities.currentEnergy < abilities.maxEnergy) {
+                abilities.currentEnergy = Math.min(
+                    abilities.maxEnergy,
+                    abilities.currentEnergy + config.ENERGY_REGEN_RATE * deltaTime
+                );
+            }
+        }
+    }
+
+    _updateOxygen(player, deltaTime) {
+        const config = GAME_CONFIG.PLAYER;
+        const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
+
+        if (isConsumingOxygen) {
+            player.currentOxygen -= config.OXYGEN_CONSUMPTION_RATE * deltaTime;
+            if (player.currentOxygen <= 0) {
+                player.currentOxygen = 0;
+                player.takeDamage(config.OXYGEN_DAMAGE_PER_SECOND * deltaTime);
+            }
+        } else {
+            if (player.currentOxygen < player.maxOxygen) {
+                player.currentOxygen = Math.min(
+                    player.maxOxygen,
+                    player.currentOxygen + config.OXYGEN_REGEN_RATE * deltaTime
+                );
+            }
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/systems/PlayerResourceSystem.js ===
+
+
 === FILE: src/game/systems/StatusEffectSystem.js ===
 --------------------------------------------------
 // src/game/systems/StatusEffectSystem.js
@@ -11489,76 +11704,83 @@ import { GAME_CONFIG } from '../../shared/config.js';
 
 export class WaterSystem {
     constructor() {
-        // Buoyancy force is removed. We will use damping instead.
+        // No properties needed.
     }
 
     update(world, deltaTime) {
         const waterVolumes = world.getWaterVolumes();
-        if (waterVolumes.length === 0) return;
-        
-        // For now, just check the player. This could be expanded to NPCs.
-        const player = world.player;
-        if (!player || player.isDead) return;
+        const entitiesToCheck = [world.player, ...world.getNPCs()];
 
-        this.processEntity(player, waterVolumes);
-    }
+        for (const entity of entitiesToCheck) {
+            if (!entity || entity.isDead || !entity.physics?.body) continue;
+            
+            let isNowInWater = false;
+            let currentVolume = null;
 
-    processEntity(entity, waterVolumes) {
-        const body = entity.physics.body;
-        let inWater = false;
-        let currentVolume = null;
+            if (waterVolumes.length > 0) {
+                for (const volume of waterVolumes) {
+                    if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
+                        const entityPos = entity.physics.body.position;
+                        const volumePos = volume.body.position;
+                        const halfSize = volume.body.shapes[0].halfExtents;
 
-        for (const volume of waterVolumes) {
-            // AABB check is a quick way to see if they *might* be intersecting
-            if (body.aabb.overlaps(volume.body.aabb)) {
-                // For box triggers, a simple position check is often sufficient and fast
-                const entityPos = body.position;
-                const volumePos = volume.body.position;
-                const halfSize = volume.body.shapes[0].halfExtents;
-
-                if (
-                    entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
-                    entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
-                    entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
-                ) {
-                    inWater = true;
-                    currentVolume = volume;
-                    break;
+                        if (
+                            entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
+                            entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
+                            entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
+                        ) {
+                            isNowInWater = true;
+                            currentVolume = volume;
+                            break;
+                        }
+                    }
                 }
             }
-        }
-        
-        entity.currentWaterVolume = currentVolume;
-        
-        if (inWater) {
-            this.applyWaterEffects(entity, currentVolume);
-        } else if (entity.isSwimming) { // Was swimming, now is not
-            this.removeWaterEffects(entity);
+            
+            const wasInWater = entity.isInWater || false;
+
+            if (isNowInWater && !wasInWater) {
+                this.applyWaterEffects(entity, currentVolume);
+            } else if (!isNowInWater && wasInWater) {
+                this.removeWaterEffects(entity);
+            }
+            
+            entity.isInWater = isNowInWater;
+            if (entity.type === 'player') {
+                entity.currentWaterVolume = isNowInWater ? currentVolume : null;
+            }
         }
     }
 
     applyWaterEffects(entity, volume) {
         const body = entity.physics.body;
-        const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
 
-        if (entity.isWaterSpecialist) {
-            entity.isSwimming = false;
-            // Only apply water walking if player is on or just above the surface
-            if (body.position.y <= surfaceY + 0.5) {
-                body.position.y = surfaceY;
-                body.velocity.y = Math.max(0, body.velocity.y);
-                entity.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+        if (entity.type === 'player') {
+            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+
+            if (entity.isWaterSpecialist) {
+                entity.isSwimming = false;
+                if (body.position.y <= surfaceY + 0.5) {
+                    body.position.y = surfaceY;
+                    body.velocity.y = Math.max(0, body.velocity.y);
+                    entity.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+                }
+            } else {
+                entity.isSwimming = true;
+                body.linearDamping = 0.8;
             }
-        } else {
-            // Not a specialist, so they swim. Apply heavy damping for viscous feel.
-            entity.isSwimming = true;
+        } else if (entity.type === 'npc') {
             body.linearDamping = 0.8;
         }
     }
 
     removeWaterEffects(entity) {
-        entity.isSwimming = false;
-        entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+        if (entity.type === 'player') {
+            entity.isSwimming = false;
+            entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+        } else if (entity.type === 'npc') {
+            entity.physics.body.linearDamping = 0.1;
+        }
     }
 }
 --------------------------------------------------
@@ -12364,6 +12586,7 @@ import { TriggerSystem } from '../systems/TriggerSystem.js';
 import { OutOfBoundsSystem } from '../systems/OutOfBoundsSystem.js';
 import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
 import { WaterSystem } from '../systems/WaterSystem.js';
+import { PlayerResourceSystem } from '../systems/PlayerResourceSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -12394,6 +12617,7 @@ export class World {
             new MovementSystem(),
             new AISystem(),
             new AbilitySystem(),
+            new PlayerResourceSystem(),
             new WeaponSystem(),
             new TargetingSystem(),
             new DeathSystem(),
@@ -12554,7 +12778,6 @@ export const COLLISION_GROUPS = {
 
 === FILE: src/shared/config.js ===
 --------------------------------------------------
-// ~ src/shared/config.js
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 
@@ -12569,8 +12792,12 @@ export const GAME_CONFIG = {
     PLAYER: {
         MAX_HEALTH: 1000,
         MAX_ENERGY: 1000,
+        MAX_OXYGEN: 1000,
         ENERGY_REGEN_RATE: 25, // points per second
         ENERGY_REGEN_DELAY: 5.0, // seconds after last ability use
+        OXYGEN_CONSUMPTION_RATE: 50, // 1000 / 20 seconds = 50/s
+        OXYGEN_REGEN_RATE: 200, // points per second
+        OXYGEN_DAMAGE_PER_SECOND: 75,
         
         FOV: 75, // Default field of view
         SPEED: 8.0, // meters per second
@@ -12588,6 +12815,7 @@ export const GAME_CONFIG = {
         
         RADIUS: 0.8, // for physics body
         MASS: 70, // kg
+        DEFAULT_DAMPING: 0.01,
     },
 
     // Weapon parameters
