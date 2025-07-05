@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-05T17:58:06.070646
+Snapshot created on: 2025-07-05T18:31:34.810801
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -3130,13 +3130,23 @@ export class PlayerController {
         }
 
         this.player.setMoveDirection(this._moveDirection);
-
-        this._handleDashInput();
-
-        if (this.input.keys['ShiftLeft']) {
-            this.player.requestSlam(true);
-        } else {
+        
+        if (this.player.isSwimming) {
+            let swimDirection = 0;
+            if (this.input.keys['Space']) swimDirection = 1;
+            else if (this.input.keys['ShiftLeft']) swimDirection = -1;
+            this.player.requestSwim(swimDirection);
             this.player.requestSlam(false);
+        } else {
+            // Only handle dash and slam on land/in air
+            this._handleDashInput();
+            if (this.input.keys['ShiftLeft']) {
+                this.player.requestSlam(true);
+            } else {
+                this.player.requestSlam(false);
+            }
+            // Ensure swim is neutral when not in water
+            this.player.requestSwim(0);
         }
     }
 
@@ -3162,7 +3172,10 @@ export class PlayerController {
         if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
-            this.player.jump();
+            // Only allow jumping on land. Swimming up is handled by holding space in `_handleMovement`.
+            if (!this.player.isSwimming) {
+                this.player.jump();
+            }
         }
         
         if (event.code === 'KeyR') {
@@ -10117,11 +10130,13 @@ export class PlayerInputComponent {
         this.jumpRequested = false;
         this.dashRequested = false;
         this.slamRequested = false;
+        this.slamHeld = false; // For continuous press detection
 
         this.firePrimary = false;
         this.fireSecondary = false;
         
         this.abilitySlotRequested = -1; // -1 means no request, 0-3 for slots
+        this.swimDirection = 0; // -1 for down, 0 for neutral, 1 for up
     }
 }
 --------------------------------------------------
@@ -10351,6 +10366,8 @@ export class NPC {
 
 === FILE: src/game/entities/Player.js ===
 --------------------------------------------------
+// ~ src/game/entities/Player.js
+
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -10433,6 +10450,8 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
+        if (this.isSwimming) return; // Guard against jumping in water
+
         if (this.statusEffects.has('stonePlating')) {
             // Allow first jump from the ground, but not subsequent (double) jumps.
             if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
@@ -10443,7 +10462,8 @@ export class Player {
     }
     
     dash(direction) {
-        if (this.statusEffects.has('stonePlating') || this.dashOnCooldown) return;
+        // Guard against dashing in water
+        if (this.isSwimming || this.statusEffects.has('stonePlating') || this.dashOnCooldown) return;
         this.input.dashRequested = true;
         this.dashDirection.copy(direction);
     }
@@ -10458,6 +10478,10 @@ export class Player {
         if (this.weapon && typeof this.weapon.inspect === 'function') {
             this.weapon.inspect();
         }
+    }
+    
+    requestSwim(direction) {
+        this.input.swimDirection = direction;
     }
 
     requestSlam(isSlamming) { this.input.slamRequested = this.input.slamHeld = isSlamming; }
@@ -11159,6 +11183,8 @@ export class DeathSystem {
 
 === FILE: src/game/systems/MovementSystem.js ===
 --------------------------------------------------
+// ~ src/game/systems/MovementSystem.js
+
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
@@ -11168,177 +11194,196 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 * Handles player movement based on input, including jumping, dashing, and ground slams.
 */
 export class MovementSystem {
-            constructor() {
-                // No properties needed for ground check
-            }
-            
-            /**
-             * @param {import('../world/World.js').World} world
-             * @param {number} deltaTime
-             */
-            update(world, deltaTime) {
-                const player = world.player;
-                if (!player || player.isDead) return;
-        
-                player.physics.body.wakeUp();
-        
-                const { input, physics } = player;
-        
-                // Ground checking and jump reset is now handled in Player.js via onCollide
-                this._handleCooldowns(player, deltaTime);
-                this._handleLook(player);
-                this._handleFOV(player, deltaTime);
-                
-                this._initiateDash(player);
-        
-                if (player.isSlamming) {
-                    physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
-                } else if (player.isDashing) {
-                    this._applyDashMovement(player);
-                } else {
-                    this._applyStandardMovement(player, input.moveDirection);
-                }
-                
-                this._handleJump(player);
-                this._handleSlam(player);
-        
-                input.jumpRequested = false;
-            }
-        
-            _initiateDash(player) {
-                if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
-                    player.isDashing = true;
-                    player.dashOnCooldown = true;
-                    player.dashStateTimer = 0;
-                    player.dashCooldownTimer = 0;
-                    
-                    const cameraDir = new THREE.Vector3();
-                    player.camera.getWorldDirection(cameraDir);
-                    cameraDir.y = 0;
-                    cameraDir.normalize();
-        
-                    const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
-                    
-                    const forwardDot = player.dashDirection.dot(cameraDir);
-                    const rightDot = player.dashDirection.dot(rightDir);
-            
-                    player.world.emit('playerDashed', { forwardDot, rightDot });
-            
-                    if (Math.abs(forwardDot) > Math.abs(rightDot)) {
-                        player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
-                    }
-                    
-                    player.input.dashRequested = false;
-                }
-            }
-        
-            _handleFOV(player, deltaTime) {
-                if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
-                    player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
-                    player.camera.updateProjectionMatrix();
-                }
-                
-                if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
-                    player.targetFov = GAME_CONFIG.PLAYER.FOV;
-                }
-            }
-        
-            _handleCooldowns(player, deltaTime) {
-                const config = GAME_CONFIG.PLAYER;
-                
-                if (player.doubleJumpOnCooldown) {
-                    player.doubleJumpCooldownTimer += deltaTime;
-                    if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
-                        player.doubleJumpOnCooldown = false;
-                        player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
-                    }
-                }
-                
-                if (player.dashOnCooldown) {
-                    player.dashCooldownTimer += deltaTime;
-                    if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
-                        player.dashOnCooldown = false;
-                    }
-                }
-        
-                if (player.isDashing) {
-                    player.dashStateTimer += deltaTime;
-                    if (player.dashStateTimer >= config.DASH_DURATION) {
-                        player.isDashing = false;
-                    }
-                }
-            }
-        
-            _handleLook(player) {
-                player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
-            }
-        
-            _applyStandardMovement(player, moveDirection) {
-                let speed = player.isSwimming ? GAME_CONFIG.PLAYER.SPEED * 0.6 : GAME_CONFIG.PLAYER.SPEED;
+    constructor() {
+        // No properties needed for ground check
+    }
+    
+    /**
+     * @param {import('../world/World.js').World} world
+     * @param {number} deltaTime
+     */
+    update(world, deltaTime) {
+        const player = world.player;
+        if (!player || player.isDead) return;
 
-                if (player.statusEffects.has('stonePlating')) {
-                    speed *= 0.8; // Reduce speed by 20%
-                }
-                
-                const velocity = player.physics.body.velocity;
-                velocity.x = moveDirection.x * speed;
-                velocity.z = moveDirection.z * speed;
-            }
-        
-            _applyDashMovement(player) {
-                const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
-                const velocity = player.physics.body.velocity;
-                velocity.x = player.dashDirection.x * dashSpeed;
-                velocity.z = player.dashDirection.z * dashSpeed;
-            }
-            
-            _handleJump(player) {
-                if (!player.input.jumpRequested) return;
+        player.physics.body.wakeUp();
 
-                if (player.isSwimming) {
-                    player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT / 2; // Swim up
-                    return;
-                }
-                
-                if (player.jumpsRemaining <= 0) return;
+        this._handleCooldowns(player, deltaTime);
+        this._handleLook(player);
+        this._handleFOV(player, deltaTime);
         
-                const performJump = () => {
-                    player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
-                    player.world.emit('playerJumped');
-                    player.jumpsRemaining--;
-                };
-                
-                // This logic mirrors the old implementation correctly now.
-                if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
-                    if (!player.doubleJumpOnCooldown) {
-                        player.doubleJumpOnCooldown = true;
-                        player.doubleJumpCooldownTimer = 0;
-                        performJump();
-                    }
-                } else {
-                    performJump();
-                }
+        if (player.isSwimming) {
+            this._applySwimMovement(player);
+        } else {
+            this._applyLandMovement(player, deltaTime);
+        }
+    }
+
+    _applySwimMovement(player) {
+        const { input, physics } = player;
+
+        // Dashing is disabled in water
+        player.isDashing = false;
+
+        // Apply standard horizontal movement (which is already slowed by WaterSystem's damping)
+        this._applyStandardMovement(player, input.moveDirection);
+
+        // Apply vertical movement from player input
+        let verticalVelocity = 0;
+        if (input.swimDirection > 0) { // Swim up
+            verticalVelocity = GAME_CONFIG.PLAYER.SWIM_SPEED;
+        } else if (input.swimDirection < 0) { // Swim down
+            verticalVelocity = -GAME_CONFIG.PLAYER.SWIM_SPEED;
+        } else {
+            // Neutral buoyancy with damping
+            verticalVelocity = physics.body.velocity.y * 0.9; 
+            if (Math.abs(verticalVelocity) < 0.1) verticalVelocity = 0;
+        }
+        physics.body.velocity.y = verticalVelocity;
+        
+        // Reset slam state when in water
+        player.isSlamming = false;
+    }
+
+    _applyLandMovement(player, deltaTime) {
+        const { input, physics } = player;
+        
+        this._initiateDash(player);
+
+        if (player.isSlamming) {
+            physics.body.velocity.y = GAME_CONFIG.PLAYER.GROUND_SLAM_VELOCITY;
+        } else if (player.isDashing) {
+            this._applyDashMovement(player);
+        } else {
+            this._applyStandardMovement(player, input.moveDirection);
+        }
+        
+        this._handleJump(player);
+        this._handleSlam(player);
+
+        // Reset the single-press jump request after processing
+        input.jumpRequested = false;
+    }
+        
+    _initiateDash(player) {
+        if (player.input.dashRequested && !player.isDashing && !player.dashOnCooldown) {
+            player.isDashing = true;
+            player.dashOnCooldown = true;
+            player.dashStateTimer = 0;
+            player.dashCooldownTimer = 0;
+            
+            const cameraDir = new THREE.Vector3();
+            player.camera.getWorldDirection(cameraDir);
+            cameraDir.y = 0;
+            cameraDir.normalize();
+        
+            const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0), cameraDir).normalize();
+            
+            const forwardDot = player.dashDirection.dot(cameraDir);
+            const rightDot = player.dashDirection.dot(rightDir);
+    
+            player.world.emit('playerDashed', { forwardDot, rightDot });
+    
+            if (Math.abs(forwardDot) > Math.abs(rightDot)) {
+                player.targetFov = GAME_CONFIG.PLAYER.FOV + (forwardDot > 0 ? 15 : -10);
             }
             
-            _handleSlam(player) {
-                if (player.isSwimming) {
-                    if (player.input.slamRequested) {
-                        player.physics.body.velocity.y = -GAME_CONFIG.PLAYER.JUMP_HEIGHT / 2; // Swim down
-                    }
-                    return;
-                }
-                
-                const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
-                
-                if (player.input.slamRequested && !player.isSlamming) {
-                    if (isAirborne && player.physics.body.velocity.y < 0) {
-                        player.isSlamming = true;
-                    }
-                } else if (player.isSlamming && !player.input.slamHeld) {
-                    player.isSlamming = false;
-                }
+            player.input.dashRequested = false;
+        }
+    }
+        
+    _handleFOV(player, deltaTime) {
+        if (Math.abs(player.camera.fov - player.targetFov) > 0.01) {
+            player.camera.fov = THREE.MathUtils.lerp(player.camera.fov, player.targetFov, deltaTime * 10);
+            player.camera.updateProjectionMatrix();
+        }
+        
+        if (!player.isDashing && player.targetFov !== GAME_CONFIG.PLAYER.FOV) {
+            player.targetFov = GAME_CONFIG.PLAYER.FOV;
+        }
+    }
+        
+    _handleCooldowns(player, deltaTime) {
+        const config = GAME_CONFIG.PLAYER;
+        
+        if (player.doubleJumpOnCooldown) {
+            player.doubleJumpCooldownTimer += deltaTime;
+            if (player.doubleJumpCooldownTimer >= config.DOUBLE_JUMP_COOLDOWN) {
+                player.doubleJumpOnCooldown = false;
+                player.doubleJumpCooldownTimer = config.DOUBLE_JUMP_COOLDOWN;
             }
         }
+        
+        if (player.dashOnCooldown) {
+            player.dashCooldownTimer += deltaTime;
+            if (player.dashCooldownTimer >= config.DASH_COOLDOWN) {
+                player.dashOnCooldown = false;
+            }
+        }
+        
+        if (player.isDashing) {
+            player.dashStateTimer += deltaTime;
+            if (player.dashStateTimer >= config.DASH_DURATION) {
+                player.isDashing = false;
+            }
+        }
+    }
+        
+    _handleLook(player) {
+        player.camera.quaternion.slerp(player.input.lookDirection, 0.9);
+    }
+        
+    _applyStandardMovement(player, moveDirection) {
+        let speed = player.isSwimming ? GAME_CONFIG.PLAYER.SPEED * 0.6 : GAME_CONFIG.PLAYER.SPEED;
+
+        if (player.statusEffects.has('stonePlating')) {
+            speed *= 0.8; // Reduce speed by 20%
+        }
+        
+        const velocity = player.physics.body.velocity;
+        velocity.x = moveDirection.x * speed;
+        velocity.z = moveDirection.z * speed;
+    }
+        
+    _applyDashMovement(player) {
+        const dashSpeed = GAME_CONFIG.PLAYER.SPEED * GAME_CONFIG.PLAYER.DASH_SPEED_MULTIPLIER;
+        const velocity = player.physics.body.velocity;
+        velocity.x = player.dashDirection.x * dashSpeed;
+        velocity.z = player.dashDirection.z * dashSpeed;
+    }
+            
+    _handleJump(player) {
+        if (!player.input.jumpRequested || player.jumpsRemaining <= 0) return;
+        
+        const performJump = () => {
+            player.physics.body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
+            player.world.emit('playerJumped');
+            player.jumpsRemaining--;
+        };
+        
+        if (player.jumpsRemaining === 1 && GAME_CONFIG.PLAYER.MAX_JUMPS === 2) {
+            if (!player.doubleJumpOnCooldown) {
+                player.doubleJumpOnCooldown = true;
+                player.doubleJumpCooldownTimer = 0;
+                performJump();
+            }
+        } else {
+            performJump();
+        }
+    }
+            
+    _handleSlam(player) {
+        const isAirborne = player.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS;
+        
+        if (player.input.slamRequested && !player.isSlamming) {
+            if (isAirborne && player.physics.body.velocity.y < 0) {
+                player.isSlamming = true;
+            }
+        } else if (player.isSlamming && !player.input.slamHeld) {
+            player.isSlamming = false;
+        }
+    }
+}
 --------------------------------------------------
 === END OF FILE: src/game/systems/MovementSystem.js ===
 
@@ -12778,6 +12823,8 @@ export const COLLISION_GROUPS = {
 
 === FILE: src/shared/config.js ===
 --------------------------------------------------
+// ~ src/shared/config.js
+
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 
@@ -12801,6 +12848,7 @@ export const GAME_CONFIG = {
         
         FOV: 75, // Default field of view
         SPEED: 8.0, // meters per second
+        SWIM_SPEED: 4.0, // vertical speed in water
         JUMP_HEIGHT: 8.0, // initial vertical velocity on jump
         MAX_JUMPS: 2,
         

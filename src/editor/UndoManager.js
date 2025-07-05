@@ -36,9 +36,10 @@ export class StateChangeCommand {
     execute() {
         this.changes.forEach(change => {
             change.entity.definition = JSON.parse(JSON.stringify(change.afterState));
-            const mesh = change.entity.mesh || change.entity.picker || change.entity;
-            if (mesh && change.afterState.size) {
-                 mesh.scale.set(1, 1, 1);
+            // FIX: Target the correct object for scale reset (e.g., helperMesh for Water)
+            const transformedObject = change.entity.helperMesh || change.entity.mesh || change.entity.picker || change.entity;
+            if (transformedObject && change.afterState.size) {
+                 transformedObject.scale.set(1, 1, 1);
             }
             this.editor.applyDefinition(change.entity);
         });
@@ -51,9 +52,10 @@ export class StateChangeCommand {
     undo() {
         this.changes.forEach(change => {
             change.entity.definition = JSON.parse(JSON.stringify(change.beforeState));
-            const mesh = change.entity.mesh || change.entity.picker || change.entity;
-            if (mesh && change.beforeState.size) {
-                mesh.scale.set(1, 1, 1);
+            // FIX: Target the correct object for scale reset (e.g., helperMesh for Water)
+            const transformedObject = change.entity.helperMesh || change.entity.mesh || change.entity.picker || change.entity;
+            if (transformedObject && change.beforeState.size) {
+                transformedObject.scale.set(1, 1, 1);
             }
             this.editor.applyDefinition(change.entity);
         });

@@ -144,12 +144,18 @@ export class EditorActions {
     }
     
     _bakeScaleIntoDefinition(entity) {
-        if (entity && entity.mesh && entity.definition?.size) {
-            const scale = entity.mesh.scale;
+        const transformSource = entity.helperMesh || entity.mesh;
+        if (entity && transformSource && entity.definition?.size) {
+            const scale = transformSource.scale;
             if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
-                entity.definition.size[0] *= scale.x;
-                entity.definition.size[1] *= scale.y;
-                entity.definition.size[2] *= scale.z;
+                if (entity.definition.type === 'Plane') {
+                    entity.definition.size[0] *= scale.x;
+                    entity.definition.size[1] *= scale.y;
+                } else {
+                    entity.definition.size[0] *= scale.x;
+                    entity.definition.size[1] *= scale.y;
+                    entity.definition.size[2] *= scale.z;
+                }
                 scale.set(1, 1, 1);
                 this.editor.applyDefinition(entity);
             }
@@ -174,7 +180,7 @@ export class EditorActions {
                 this._bakeScaleIntoDefinition(entity);
                 this.editor.syncObjectTransforms(entity);
     
-                const mesh = entity.mesh || entity.picker || entity;
+                const mesh = entity.helperMesh || entity.mesh || entity.picker || entity;
                 tempCentroid.add(mesh.position);
                 validObjects++;
                 
@@ -306,10 +312,12 @@ export class EditorActions {
         
         entities.forEach(obj => {
             this._bakeScaleIntoDefinition(obj);
-            if (!obj.definition || !obj.mesh) return;
-            obj.definition.position = { x: obj.mesh.position.x, y: obj.mesh.position.y, z: obj.mesh.position.z };
+            const transformSource = obj.helperMesh || obj.mesh || obj.picker;
+            if (!obj.definition || !transformSource) return;
+
+            obj.definition.position = { x: transformSource.position.x, y: transformSource.position.y, z: transformSource.position.z };
             if (obj.definition.rotation) {
-                const rot = new THREE.Euler().setFromQuaternion(obj.mesh.quaternion, 'YXZ');
+                const rot = new THREE.Euler().setFromQuaternion(transformSource.quaternion, 'YXZ');
                 obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
             }
         });
@@ -319,12 +327,17 @@ export class EditorActions {
             lightObj.definition.targetPosition = { x: lightObj.light.target.position.x, y: lightObj.light.target.position.y, z: lightObj.light.target.position.z };
         });
 
+        const geometricObjects = [
+            ...this.app.getLevelObjects(),
+            ...this.app.getWaterVolumes()
+        ];
+
         const levelData = {
             name: this.app.levelName || "Custom Level",
             spawnPoint: { x: this.app.spawnPointHelper.position.x, y: this.app.spawnPointHelper.position.y, z: this.app.spawnPointHelper.position.z },
             deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
-            objects: this.app.getLevelObjects().map(obj => obj.definition),
+            objects: geometricObjects.map(obj => obj.definition),
             enemies: this.app.getEnemies().map(enemy => enemy.definition),
             triggers: this.app.getTriggers().map(t => t.definition),
             deathTriggers: this.app.getDeathTriggers().map(t => t.definition)
