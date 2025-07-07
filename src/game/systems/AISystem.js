@@ -33,6 +33,7 @@ export class AISystem {
             if (npc.isDead) continue;
 
             this._updateAnimations(npc, deltaTime);
+            this._updateTimers(npc.ai, deltaTime);
 
             if (npc.ai.isKnockedBack) {
                 npc.ai.knockbackTimer -= deltaTime;
