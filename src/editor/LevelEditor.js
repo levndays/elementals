@@ -213,128 +213,129 @@
             }
         }
         
-        applyDefinition(obj) {
-            const type = obj.userData?.gameEntity?.type;
-            const def = obj.definition;
-        
-            if (!def || !type) return;
-        
-            if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
-                this.syncObjectTransforms(obj);
-                return;
-            }
-        
-            if (type === 'DirectionalLight') {
-                const light = obj.light;
-                light.color.set(parseInt(def.color, 16));
-                light.intensity = def.intensity;
-                light.position.set(def.position.x, def.position.y, def.position.z);
-                if (def.targetPosition) {
-                    light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
-                }
-                obj.picker.position.copy(light.position);
-                obj.targetHelper.position.copy(light.target.position);
-                light.target.updateMatrixWorld(true);
-                obj.helper.update();
-                return;
-            }
-    
-            if (type === 'Waterfall') {
-                const mesh = obj.mesh;
-                mesh.position.set(def.position.x, def.position.y, def.position.z);
-                if (def.rotation) {
-                    mesh.rotation.set(THREE.MathUtils.degToRad(def.rotation.x || 0), THREE.MathUtils.degToRad(def.rotation.y || 0), THREE.MathUtils.degToRad(def.rotation.z || 0));
-                }
-                if (def.size) {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
-                }
-                return;
-            }
-    
-            if (type === 'Water') {
-                const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
-                const position = def.position;
-                const rot = def.rotation ? new THREE.Euler(
-                    THREE.MathUtils.degToRad(def.rotation.x || 0),
-                    THREE.MathUtils.degToRad(def.rotation.y || 0),
-                    THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
-                ) : new THREE.Euler();
-                const quat = new THREE.Quaternion().setFromEuler(rot);
-    
-                obj.helperMesh.position.set(position.x, position.y, position.z);
-                obj.helperMesh.quaternion.copy(quat);
-                obj.helperMesh.geometry.dispose();
-                obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
-    
-                obj.mesh.geometry.dispose();
-                obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
-    
-                if(obj.body && obj.body.shapes[0]){
-                     const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
-                     obj.body.shapes[0].halfExtents.copy(halfExtents);
-                     obj.body.shapes[0].updateConvexPolyhedronRepresentation();
-                     obj.body.updateBoundingRadius();
-                }
-                
-                this.syncObjectTransforms(obj); 
-                return;
-            }
+        // В файле: src/editor/LevelEditor.js
 
-            if (type === 'NPC') {
-                const team = def.team || 'enemy';
-                const color = team === 'enemy' ? 0x990000 : 0x009933;
-                obj.mesh.material.color.set(color);
-        
-                if (obj.body) {
-                    if (team === 'enemy') {
-                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ENEMY;
-                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
-                    } else { // ally
-                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ALLY;
-                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
-                    }
-                }
-            }
-            
-            const mesh = obj.mesh;
-            const body = obj.body;
-            mesh.position.set(def.position.x, def.position.y, def.position.z);
-        
-            if (def.rotation && obj.isDead === undefined) {
-                 mesh.rotation.set(
-                    THREE.MathUtils.degToRad(def.rotation.x || 0),
-                    THREE.MathUtils.degToRad(def.rotation.y || 0),
-                    THREE.MathUtils.degToRad(def.rotation.z || 0)
-                );
-            }
-        
-            if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial && type !== 'NPC') {
-                mesh.material.color.set(parseInt(def.material.color, 16));
-            }
-        
-            if (def.size) {
-                if (type === 'Trigger' || type === 'DeathTrigger') {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.BoxGeometry(...def.size);
-                    if (type === 'Trigger' && def.color) {
-                        mesh.material.color.set(parseInt(def.color, 16));
-                    }
-                } else if (def.type === 'Plane') {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
-                } else if (def.type === 'Box' && body?.shapes[0]) {
-                    const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
-                    body.shapes[0].halfExtents.copy(halfExtents);
-                    body.shapes[0].updateConvexPolyhedronRepresentation();
-                    body.updateBoundingRadius();
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.BoxGeometry(...def.size);
-                }
-            }
-        
-            this.syncObjectTransforms(obj);
+applyDefinition(obj) {
+    const type = obj.userData?.gameEntity?.type;
+    const def = obj.definition;
+
+    if (!def || !type) return;
+
+    // Обработка особых случаев с явным return
+    if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
+        this.syncObjectTransforms(obj);
+        return;
+    }
+
+    if (type === 'DirectionalLight') {
+        const light = obj.light;
+        light.color.set(parseInt(def.color, 16));
+        light.intensity = def.intensity;
+        light.position.set(def.position.x, def.position.y, def.position.z);
+        if (def.targetPosition) {
+            light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
         }
+        obj.picker.position.copy(light.position);
+        obj.targetHelper.position.copy(light.target.position);
+        light.target.updateMatrixWorld(true);
+        obj.helper.update();
+        return;
+    }
+
+    if (type === 'Water') {
+        const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+        const position = def.position;
+        const rot = def.rotation ? new THREE.Euler(
+            THREE.MathUtils.degToRad(def.rotation.x || 0),
+            THREE.MathUtils.degToRad(def.rotation.y || 0),
+            THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
+        ) : new THREE.Euler();
+        const quat = new THREE.Quaternion().setFromEuler(rot);
+
+        obj.helperMesh.position.set(position.x, position.y, position.z);
+        obj.helperMesh.quaternion.copy(quat);
+        obj.helperMesh.geometry.dispose();
+        obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
+
+        obj.mesh.geometry.dispose();
+        obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+
+        if(obj.body && obj.body.shapes[0]){
+             const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
+             obj.body.shapes[0].halfExtents.copy(halfExtents);
+             obj.body.shapes[0].updateConvexPolyhedronRepresentation();
+             obj.body.updateBoundingRadius();
+        }
+        
+        this.syncObjectTransforms(obj); 
+        return;
+    }
+
+    // Обработка динамических/интерактивных объектов
+    if (type === 'NPC') {
+        const team = def.team || 'enemy';
+        const color = team === 'enemy' ? 0x990000 : 0x009933;
+        obj.mesh.material.color.set(color);
+
+        if (obj.body) {
+            if (team === 'enemy') {
+                obj.body.collisionFilterGroup = COLLISION_GROUPS.ENEMY;
+                obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+            } else { // ally
+                obj.body.collisionFilterGroup = COLLISION_GROUPS.ALLY;
+                obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+            }
+        }
+        // NPC не должен обновлять свою позицию из definition, так как им управляет AI
+        // Но мы все равно синхронизируем на случай, если его переместили в редакторе
+        this.syncObjectTransforms(obj);
+
+        // Обработка статической геометрии и триггеров
+        } else {
+        const mesh = obj.mesh;
+        const body = obj.body;
+        
+        mesh.position.set(def.position.x, def.position.y, def.position.z);
+    
+        if (def.rotation) {
+             mesh.rotation.set(
+                THREE.MathUtils.degToRad(def.rotation.x || 0),
+                THREE.MathUtils.degToRad(def.rotation.y || 0),
+                THREE.MathUtils.degToRad(def.rotation.z || 0)
+            );
+        }
+    
+        if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial) {
+            mesh.material.color.set(parseInt(def.material.color, 16));
+        }
+    
+        if (def.size) {
+            if (type === 'Trigger' || type === 'DeathTrigger') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
+                if (type === 'Trigger' && def.color) {
+                    mesh.material.color.set(parseInt(def.color, 16));
+                }
+            } else if (type === 'Waterfall') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
+            } else if (def.type === 'Plane') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
+            } else if (def.type === 'Box' && body?.shapes[0]) {
+                const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
+                body.shapes[0].halfExtents.copy(halfExtents);
+                body.shapes[0].updateConvexPolyhedronRepresentation();
+                body.updateBoundingRadius();
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
+            }
+        }
+    
+        // После всех обновлений mesh, синхронизируем физическое тело
+        this.syncObjectTransforms(obj);
+        }
+        }       
         
         syncObjectTransforms(entityToSync) {
             const entity = entityToSync || this.primarySelectedObject;
