@@ -1,3 +1,4 @@
+/* css/game.css */
 /* --- GAMEPLAY STATE --- */
 body:not(.game-active) #game-hud,
 body:not(.game-active) #crosshair-container,

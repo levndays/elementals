@@ -1,4 +1,3 @@
-// ~ src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';

@@ -1,4 +1,3 @@
-// [ ~ src/client/rendering/WaterfallSplashVFX.js ]
 import * as THREE from 'three';
 
 const vertexShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.vert').then(res => res.text());
@@ -91,8 +90,9 @@ export class WaterfallSplashVFX {
         velocities[i3 + 1] = scatter.y;
         velocities[i3 + 2] = scatter.z;
         
-        lifetimes[i4] = Math.random() * 2.0 + 0.5; // maxLifetime
-        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime
+        const maxLifetime = Math.random() * 2.0 + 0.5;
+        lifetimes[i4] = maxLifetime; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * maxLifetime; // spawnTime
     }
 
     update(deltaTime) {

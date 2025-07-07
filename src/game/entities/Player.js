@@ -1,5 +1,3 @@
-// ~ src/game/entities/Player.js
-
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -49,6 +47,7 @@ export class Player {
 
         // Water interaction state
         this.isSwimming = false;
+        this.isAtWaterSurface = false;
         this.isWaterSpecialist = false;
         this.currentWaterVolume = null;
 
@@ -82,13 +81,8 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
-        if (this.isSwimming) return; // Guard against jumping in water
-
-        if (this.statusEffects.has('stonePlating')) {
-            // Allow first jump from the ground, but not subsequent (double) jumps.
-            if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
-                return; // Block double jump
-            }
+        if (this.statusEffects.has('stonePlating') && this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
+            return; // Block double jump when buff is active
         }
         this.input.jumpRequested = true;
     }
@@ -194,6 +188,7 @@ export class Player {
         this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
         this.dashStateTimer = 0;
         this.isSwimming = false;
+        this.isAtWaterSurface = false;
         this.currentWaterVolume = null;
         this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
         this.abilities.lastAbilityTime = -Infinity;

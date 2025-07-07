@@ -1,5 +1,3 @@
-// + src/game/systems/WeaponSystem.js
-
 /**
  * Manages the update logic for weapons, such as cooldowns and animations.
  */

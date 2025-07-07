@@ -113,6 +113,7 @@ export class World {
         }
         
         if (entity.mesh) this.scene.add(entity.mesh);
+        if (entity.helperMesh) this.scene.add(entity.helperMesh);
         const body = entity.physics?.body || entity.body;
         if (body) this.physics.addBody(body);
 
@@ -132,6 +133,7 @@ export class World {
                 if (Array.isArray(entity.mesh.material)) entity.mesh.material.forEach(m => m.dispose());
                 else entity.mesh.material?.dispose();
             }
+             if (entity.helperMesh) this.scene.remove(entity.helperMesh);
             const body = entity.physics?.body || entity.body;
             if (body) this.physics.queueForRemoval(body);
         }

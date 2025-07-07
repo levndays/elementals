@@ -1,4 +1,3 @@
-// [ ~ src/game/world/LevelManager.js ]
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';

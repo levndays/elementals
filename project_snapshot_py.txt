@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T20:28:22.839250
+Snapshot created on: 2025-07-07T20:55:48.573656
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -1065,6 +1065,7 @@ canvas {
 
 === FILE: css/game.css ===
 --------------------------------------------------
+/* css/game.css */
 /* --- GAMEPLAY STATE --- */
 body:not(.game-active) #game-hud,
 body:not(.game-active) #crosshair-container,
@@ -5606,7 +5607,6 @@ export class CardObject {
 
 === FILE: src/client/rendering/CardParticleSystem.js ===
 --------------------------------------------------
-// [ ~ src/client/rendering/CardParticleSystem.js ]
 import * as THREE from 'three';
 
 // Asynchronously load shaders once at the module level
@@ -5702,8 +5702,9 @@ export class CardParticleSystem {
         velocities[i3 + 1] = Math.random() * 0.4 + 0.2;
         velocities[i3 + 2] = (Math.random() - 0.5) * 0.1;
 
-        lifetimes[i4] = Math.random() * 3.0 + 1.0; // maxLifetime
-        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime (staggered)
+        const maxLifetime = Math.random() * 3.0 + 1.0;
+        lifetimes[i4] = maxLifetime; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * maxLifetime; // spawnTime (staggered)
     }
 
     initStreamParticle(stream) {
@@ -5761,7 +5762,7 @@ export class CardParticleSystem {
                 const spawnTime = lifetimeAttr.getY(index);
 
                 if (currentTime - spawnTime > maxLifetime) {
-                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimes.array);
+                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array);
                     respawned++;
                 }
             }
@@ -6499,7 +6500,6 @@ export class VFXManager {
 
 === FILE: src/client/rendering/WaterfallSplashVFX.js ===
 --------------------------------------------------
-// [ ~ src/client/rendering/WaterfallSplashVFX.js ]
 import * as THREE from 'three';
 
 const vertexShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.vert').then(res => res.text());
@@ -6592,8 +6592,9 @@ export class WaterfallSplashVFX {
         velocities[i3 + 1] = scatter.y;
         velocities[i3 + 2] = scatter.z;
         
-        lifetimes[i4] = Math.random() * 2.0 + 0.5; // maxLifetime
-        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime
+        const maxLifetime = Math.random() * 2.0 + 0.5;
+        lifetimes[i4] = maxLifetime; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * maxLifetime; // spawnTime
     }
 
     update(deltaTime) {
@@ -6909,7 +6910,6 @@ void main() {
 
 === FILE: src/client/rendering/shaders/gpu_particle.vert ===
 --------------------------------------------------
-// [ ~ src/client/rendering/shaders/gpu_particle.vert ]
 uniform float uTime;
 uniform float uScale;
 uniform vec3 uGravity;
@@ -6921,7 +6921,7 @@ varying float vAlpha;
 
 void main() {
     float maxLifetime = aLifetime.x;
-    float spawnTime = a.y;
+    float spawnTime = aLifetime.y;
 
     float timeAlive = uTime - spawnTime;
 
@@ -8886,7 +8886,7 @@ export class TutorialManager {
 
 === FILE: src/client/ui/UIManager.js ===
 --------------------------------------------------
-// ~ src/client/ui/UIManager.js
+// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -9101,7 +9101,7 @@ export class UIManager {
         // Update oxygen bar visibility
         if (this.hud.elements.oxygenBarContainer) {
             const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
-            const isRegeneratingOxygen = !isConsumingOxygen && player.currentOxygen < player.maxOxygen;
+            const isRegeneratingOxygen = !player.isSwimming && player.currentOxygen < player.maxOxygen;
             const shouldShowOxygenBar = isConsumingOxygen || isRegeneratingOxygen;
             this.hud.elements.oxygenBarContainer.style.display = shouldShowOxygenBar ? 'block' : 'none';
         }
@@ -13116,8 +13116,6 @@ export class NPC {
 
 === FILE: src/game/entities/Player.js ===
 --------------------------------------------------
-// ~ src/game/entities/Player.js
-
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -13331,7 +13329,6 @@ export class Player {
 
 === FILE: src/game/prefabs/NPCPrefab.js ===
 --------------------------------------------------
-// ~ src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
@@ -13507,7 +13504,6 @@ export class AbilitySystem {
 
 === FILE: src/game/systems/AISystem.js ===
 --------------------------------------------------
-// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -14018,9 +14014,6 @@ export class DeathSystem {
 
 === FILE: src/game/systems/MovementSystem.js ===
 --------------------------------------------------
-// [ ~ src/game/systems/MovementSystem.js ]
-// ~ src/game/systems/MovementSystem.js
-
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
@@ -14031,7 +14024,6 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 */
 export class MovementSystem {
     constructor() {
-        // Add a reusable vector for swim force
         this.swimForce = new CANNON.Vec3();
     }
     
@@ -14054,41 +14046,78 @@ export class MovementSystem {
         } else {
             this._applyLandMovement(player, deltaTime);
         }
+
+        // Reset single-press inputs after they have been processed for the frame.
+        player.input.jumpRequested = false;
     }
 
     _applySwimMovement(player) {
         const { input, physics } = player;
     
-        // Dashing is disabled in water
         player.isDashing = false;
     
-        // Apply standard horizontal movement (which is already slowed by WaterSystem's damping)
-        this._applyStandardMovement(player, input.moveDirection);
+        // Use a force-based approach for horizontal movement in water to respect collisions.
+        this._applySwimHorizontalMovement(player);
     
-        // REVISED: Apply force for vertical movement instead of setting velocity directly.
-        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60; // Force needs to be larger to overcome inertia/damping
+        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60;
         let verticalForce = 0;
         
-        if (input.swimDirection > 0) { // Swim up
+        if (input.swimDirection > 0) {
             verticalForce = forceMagnitude;
-        } else if (input.swimDirection < 0) { // Swim down
+        } else if (input.swimDirection < 0) {
             verticalForce = -forceMagnitude;
         }
         
-        // Only apply force if there's input. Buoyancy from WaterSystem handles the rest.
         if (verticalForce !== 0) {
             this.swimForce.set(0, verticalForce, 0);
             physics.body.applyForce(this.swimForce, physics.body.position);
         }
         
-        // Clamp max vertical speed to prevent runaway force accumulation
         const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.2;
         if (Math.abs(physics.body.velocity.y) > maxVerticalSpeed) {
             physics.body.velocity.y = Math.sign(physics.body.velocity.y) * maxVerticalSpeed;
         }
     
-        // Reset slam state when in water
         player.isSlamming = false;
+
+        // Allow player to jump out of the water if near the surface.
+        if (player.input.jumpRequested && player.currentWaterVolume) {
+            const body = player.physics.body;
+            const volume = player.currentWaterVolume;
+            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+
+            if (body.position.y > surfaceY - body.shapes[0].radius * 2) {
+                body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT * 0.8; // Weaker jump out of water
+                player.world.emit('playerJumped');
+                player.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS - 1;
+                player.isSwimming = false;
+                player.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+                player.currentWaterVolume = null;
+            }
+        }
+    }
+
+    /**
+     * Applies horizontal movement in water using forces, which allows the physics
+     * solver to correctly handle collisions with static objects like logs.
+     * @param {import('../entities/Player.js').Player} player 
+     */
+    _applySwimHorizontalMovement(player) {
+        const speed = GAME_CONFIG.PLAYER.SPEED * 0.6; // Water speed modifier
+        const body = player.physics.body;
+        const moveDirection = player.input.moveDirection;
+        
+        const targetVelocity = new CANNON.Vec3(
+            moveDirection.x * speed,
+            body.velocity.y,
+            moveDirection.z * speed
+        );
+
+        const force = new CANNON.Vec3();
+        targetVelocity.vsub(body.velocity, force);
+        force.y = 0; // Only apply horizontal force
+        force.scale(body.mass * 20, force); // Proportional gain for responsiveness
+        body.applyForce(force, body.position);
     }
 
     _applyLandMovement(player, deltaTime) {
@@ -14106,9 +14135,6 @@ export class MovementSystem {
         
         this._handleJump(player);
         this._handleSlam(player);
-
-        // Reset the single-press jump request after processing
-        input.jumpRequested = false;
     }
         
     _initiateDash(player) {
@@ -14180,10 +14206,10 @@ export class MovementSystem {
     }
         
     _applyStandardMovement(player, moveDirection) {
-        let speed = player.isSwimming ? GAME_CONFIG.PLAYER.SPEED * 0.6 : GAME_CONFIG.PLAYER.SPEED;
+        let speed = GAME_CONFIG.PLAYER.SPEED;
 
         if (player.statusEffects.has('stonePlating')) {
-            speed *= 0.8; // Reduce speed by 20%
+            speed *= 0.8;
         }
         
         const velocity = player.physics.body.velocity;
@@ -14495,8 +14521,6 @@ export class TargetingSystem {
 
 === FILE: src/game/systems/TriggerSystem.js ===
 --------------------------------------------------
-// + src/game/systems/TriggerSystem.js
-
 /**
  * A centralized system for handling logic for all trigger volumes.
  * It is event-driven and listens for collision events on trigger entities.
@@ -14533,7 +14557,8 @@ export class TriggerSystem {
     /**
      * Handler for when a new entity is added to the world.
      * If it's a trigger, initialize it.
-     * @param {object} entity - The entity that was added.
+     * @param {object} data - The event data containing the added entity.
+     * @param {object} data.entity - The entity that was added.
      */
     onEntityAdded({ entity }) {
         if (entity.type === 'Trigger' || entity.type === 'DeathTrigger') {
@@ -14589,8 +14614,6 @@ export class TriggerSystem {
 
 === FILE: src/game/systems/WaterSystem.js ===
 --------------------------------------------------
-// [ ~ src/game/systems/WaterSystem.js ]
-// src/game/systems/WaterSystem.js
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -14653,6 +14676,10 @@ export class WaterSystem {
             entity.isInWater = isNowInWater;
             if (entity.type === 'player') {
                 entity.currentWaterVolume = isNowInWater ? currentVolume : null;
+                // Continuously apply specialist effects if they are in a water volume
+                if (isNowInWater && entity.isWaterSpecialist) {
+                    this.applyWaterEffects(entity, currentVolume);
+                }
             }
         }
 
@@ -14719,8 +14746,6 @@ export class WaterSystem {
 
 === FILE: src/game/systems/WeaponSystem.js ===
 --------------------------------------------------
-// + src/game/systems/WeaponSystem.js
-
 /**
  * Manages the update logic for weapons, such as cooldowns and animations.
  */
@@ -15291,7 +15316,6 @@ export class WeaponFactory {
 
 === FILE: src/game/world/LevelManager.js ===
 --------------------------------------------------
-// [ ~ src/game/world/LevelManager.js ]
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';
@@ -15749,6 +15773,7 @@ export class World {
         }
         
         if (entity.mesh) this.scene.add(entity.mesh);
+        if (entity.helperMesh) this.scene.add(entity.helperMesh);
         const body = entity.physics?.body || entity.body;
         if (body) this.physics.addBody(body);
 
@@ -15768,6 +15793,7 @@ export class World {
                 if (Array.isArray(entity.mesh.material)) entity.mesh.material.forEach(m => m.dispose());
                 else entity.mesh.material?.dispose();
             }
+             if (entity.helperMesh) this.scene.remove(entity.helperMesh);
             const body = entity.physics?.body || entity.body;
             if (body) this.physics.queueForRemoval(body);
         }
@@ -15845,7 +15871,6 @@ export class World {
 
 === FILE: src/shared/CollisionGroups.js ===
 --------------------------------------------------
-// ~ src/shared/CollisionGroups.js
 // Defines distinct bit Categ for physics objects.
 // This allows fine-grained control over which objects can collide with each other.
 // Each category should be a power of 2.
@@ -15872,8 +15897,6 @@ export const RENDERING_LAYERS = {
 
 === FILE: src/shared/config.js ===
 --------------------------------------------------
-// ~ src/shared/config.js
-
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 

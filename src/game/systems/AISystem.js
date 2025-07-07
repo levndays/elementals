@@ -1,4 +1,3 @@
-// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';

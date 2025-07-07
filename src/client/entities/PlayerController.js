@@ -144,10 +144,8 @@ export class PlayerController {
         if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
-            // Only allow jumping on land. Swimming up is handled by holding space in `_handleMovement`.
-            if (!this.player.isSwimming) {
-                this.player.jump();
-            }
+            // Let the MovementSystem decide what a jump means based on state (land vs water)
+            this.player.jump();
         }
         
         if (event.code === 'KeyR') {

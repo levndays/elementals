@@ -1,5 +1,3 @@
-// + src/game/systems/TriggerSystem.js
-
 /**
  * A centralized system for handling logic for all trigger volumes.
  * It is event-driven and listens for collision events on trigger entities.
@@ -36,7 +34,8 @@ export class TriggerSystem {
     /**
      * Handler for when a new entity is added to the world.
      * If it's a trigger, initialize it.
-     * @param {object} entity - The entity that was added.
+     * @param {object} data - The event data containing the added entity.
+     * @param {object} data.entity - The entity that was added.
      */
     onEntityAdded({ entity }) {
         if (entity.type === 'Trigger' || entity.type === 'DeathTrigger') {

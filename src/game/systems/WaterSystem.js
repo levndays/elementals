@@ -1,5 +1,3 @@
-// [ ~ src/game/systems/WaterSystem.js ]
-// src/game/systems/WaterSystem.js
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
 
@@ -20,8 +18,6 @@ export class WaterSystem {
             for (const entity of entitiesToCheck) {
                 if (entity?.isInWater) {
                     this.removeWaterEffects(entity);
-                    entity.isInWater = false;
-                    if (entity.type === 'player') entity.currentWaterVolume = null;
                 }
             }
             return;
@@ -29,39 +25,51 @@ export class WaterSystem {
 
         for (const entity of entitiesToCheck) {
             if (!entity || entity.isDead || !entity.physics?.body) continue;
-            
-            let isNowInWater = false;
-            let currentVolume = null;
 
+            const wasInWater = entity.isInWater || false;
+            let isConsideredInWater = false;
+            let currentVolumeForFrame = null;
+
+            // Broad phase check for potential water interaction
             for (const volume of waterVolumes) {
                 if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
-                    const volumeBody = volume.body;
-                    volumeBody.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
-                    const halfSize = volumeBody.shapes[0].halfExtents;
-                    
+                    // Precise check: is entity's center inside this volume's bounds?
+                    volume.body.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
+                    const halfSize = volume.body.shapes[0].halfExtents;
                     if (
                         Math.abs(this._localEntityPos.x) <= halfSize.x &&
                         Math.abs(this._localEntityPos.y) <= halfSize.y &&
                         Math.abs(this._localEntityPos.z) <= halfSize.z
                     ) {
-                        isNowInWater = true;
-                        currentVolume = volume;
-                        break;
+                        isConsideredInWater = true;
+                        currentVolumeForFrame = volume;
+                        break; // Found a volume, no need to check others for entry
                     }
                 }
             }
             
-            const wasInWater = entity.isInWater || false;
-
-            if (isNowInWater && !wasInWater) {
-                this.applyWaterEffects(entity, currentVolume);
-            } else if (!isNowInWater && wasInWater) {
+            if (wasInWater && !isConsideredInWater) {
+                // Entity center has left, but are they still partially submerged in their *previous* volume?
+                const lastVolume = entity.currentWaterVolume;
+                if (lastVolume) {
+                    const surfaceY = lastVolume.body.position.y + lastVolume.definition.size[1] / 2;
+                    const bodyBottomY = entity.physics.body.position.y - entity.physics.body.shapes[0].radius;
+                    if (bodyBottomY < surfaceY) {
+                        // Still submerged, force state to remain in water
+                        isConsideredInWater = true;
+                        currentVolumeForFrame = lastVolume;
+                    }
+                }
+            }
+            
+            if (isConsideredInWater && !wasInWater) {
+                this.applyWaterEffects(entity, currentVolumeForFrame);
+            } else if (!isConsideredInWater && wasInWater) {
                 this.removeWaterEffects(entity);
             }
             
-            entity.isInWater = isNowInWater;
             if (entity.type === 'player') {
-                entity.currentWaterVolume = isNowInWater ? currentVolume : null;
+                entity.currentWaterVolume = isConsideredInWater ? currentVolumeForFrame : null;
             }
         }
 
@@ -93,6 +101,8 @@ export class WaterSystem {
 
     applyWaterEffects(entity, volume) {
         const body = entity.physics.body;
+        entity.isInWater = true;
+        entity.currentWaterVolume = volume;
 
         if (entity.type === 'player') {
             const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
@@ -114,8 +124,12 @@ export class WaterSystem {
     }
 
     removeWaterEffects(entity) {
+        entity.isInWater = false;
+        entity.currentWaterVolume = null;
+
         if (entity.type === 'player') {
             entity.isSwimming = false;
+            entity.isAtWaterSurface = false;
             entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
         } else if (entity.type === 'npc') {
             entity.physics.body.linearDamping = 0.1;

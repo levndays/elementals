@@ -30,7 +30,10 @@ export class NPC {
         // Client-side visual state
         this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
         this.isDead = false;
-        this.isInWater = false; // For water interaction logic
+        
+        // Water interaction state
+        this.isInWater = false;
+        this.currentWaterVolume = null;
 
         // Melee animation state
         this.isAttacking = false;

@@ -1,4 +1,3 @@
-// ~ src/shared/CollisionGroups.js
 // Defines distinct bit Categ for physics objects.
 // This allows fine-grained control over which objects can collide with each other.
 // Each category should be a power of 2.

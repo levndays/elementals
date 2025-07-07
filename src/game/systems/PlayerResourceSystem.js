@@ -32,7 +32,8 @@ export class PlayerResourceSystem {
 
     _updateOxygen(player, deltaTime) {
         const config = GAME_CONFIG.PLAYER;
-        const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
+        // Consume oxygen only when submerged, not a water specialist, and NOT at the surface.
+        const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist && !player.isAtWaterSurface;
 
         if (isConsumingOxygen) {
             player.currentOxygen -= config.OXYGEN_CONSUMPTION_RATE * deltaTime;
@@ -41,6 +42,7 @@ export class PlayerResourceSystem {
                 player.takeDamage(config.OXYGEN_DAMAGE_PER_SECOND * deltaTime);
             }
         } else {
+            // Oxygen regenerates when out of water OR at the surface.
             if (player.currentOxygen < player.maxOxygen) {
                 player.currentOxygen = Math.min(
                     player.maxOxygen,

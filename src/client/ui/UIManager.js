@@ -1,4 +1,4 @@
-// ~ src/client/ui/UIManager.js
+// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -213,7 +213,7 @@ export class UIManager {
         // Update oxygen bar visibility
         if (this.hud.elements.oxygenBarContainer) {
             const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
-            const isRegeneratingOxygen = !isConsumingOxygen && player.currentOxygen < player.maxOxygen;
+            const isRegeneratingOxygen = !player.isSwimming && player.currentOxygen < player.maxOxygen;
             const shouldShowOxygenBar = isConsumingOxygen || isRegeneratingOxygen;
             this.hud.elements.oxygenBarContainer.style.display = shouldShowOxygenBar ? 'block' : 'none';
         }

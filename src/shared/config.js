@@ -1,5 +1,3 @@
-// ~ src/shared/config.js
-
 // This file centralizes all game balance and configuration constants.
 // Modifying these values will directly impact gameplay without needing to change core logic.
 
@@ -23,7 +21,8 @@ export const GAME_CONFIG = {
         
         FOV: 75, // Default field of view
         SPEED: 8.0, // meters per second
-        SWIM_SPEED: 4.0, // vertical speed in water
+        SWIM_SPEED: 6.0, // base vertical/horizontal speed in water
+        SWIM_FORCE_MULTIPLIER: 80, // Multiplier for vertical force application
         JUMP_HEIGHT: 8.0, // initial vertical velocity on jump
         MAX_JUMPS: 2,
         

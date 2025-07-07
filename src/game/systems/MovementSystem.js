@@ -1,6 +1,3 @@
-// [ ~ src/game/systems/MovementSystem.js ]
-// ~ src/game/systems/MovementSystem.js
-
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
@@ -11,7 +8,6 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 */
 export class MovementSystem {
     constructor() {
-        // Add a reusable vector for swim force
         this.swimForce = new CANNON.Vec3();
     }
     
@@ -34,41 +30,91 @@ export class MovementSystem {
         } else {
             this._applyLandMovement(player, deltaTime);
         }
+
+        // Reset single-press inputs after they have been processed for the frame.
+        player.input.jumpRequested = false;
     }
 
     _applySwimMovement(player) {
         const { input, physics } = player;
     
-        // Dashing is disabled in water
         player.isDashing = false;
+        player.isSlamming = false;
     
-        // Apply standard horizontal movement (which is already slowed by WaterSystem's damping)
-        this._applyStandardMovement(player, input.moveDirection);
+        // Determine if player is at the surface of the water
+        let atSurface = false;
+        if (player.currentWaterVolume) {
+            const body = player.physics.body;
+            const volume = player.currentWaterVolume;
+            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+            
+            if (body.position.y >= surfaceY - body.shapes[0].radius) {
+                atSurface = true;
+            }
+        }
+        player.isAtWaterSurface = atSurface;
+        
+        // Prioritize jumping out of the water if requested at the surface
+        if (player.input.jumpRequested && atSurface) {
+            const body = player.physics.body;
+            body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
+            player.world.emit('playerJumped');
+            
+            player.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+            
+            player.isSwimming = false;
+            player.isAtWaterSurface = false;
+            player.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+            player.currentWaterVolume = null;
+            return; // Exit early, we are no longer swimming
+        }
     
-        // REVISED: Apply force for vertical movement instead of setting velocity directly.
-        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60; // Force needs to be larger to overcome inertia/damping
+        // Apply horizontal movement force
+        this._applySwimHorizontalMovement(player);
+    
+        // Apply vertical movement force (swimming up/down)
+        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * GAME_CONFIG.PLAYER.SWIM_FORCE_MULTIPLIER;
         let verticalForce = 0;
         
-        if (input.swimDirection > 0) { // Swim up
+        if (input.swimDirection > 0) {
             verticalForce = forceMagnitude;
-        } else if (input.swimDirection < 0) { // Swim down
+        } else if (input.swimDirection < 0) {
             verticalForce = -forceMagnitude;
         }
         
-        // Only apply force if there's input. Buoyancy from WaterSystem handles the rest.
         if (verticalForce !== 0) {
             this.swimForce.set(0, verticalForce, 0);
             physics.body.applyForce(this.swimForce, physics.body.position);
         }
         
-        // Clamp max vertical speed to prevent runaway force accumulation
-        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.2;
+        // Clamp vertical speed
+        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.5;
         if (Math.abs(physics.body.velocity.y) > maxVerticalSpeed) {
             physics.body.velocity.y = Math.sign(physics.body.velocity.y) * maxVerticalSpeed;
         }
-    
-        // Reset slam state when in water
-        player.isSlamming = false;
+    }
+
+    /**
+     * Applies horizontal movement in water using forces, which allows the physics
+     * solver to correctly handle collisions with static objects like logs.
+     * @param {import('../entities/Player.js').Player} player 
+     */
+    _applySwimHorizontalMovement(player) {
+        const speed = GAME_CONFIG.PLAYER.SPEED * 0.6; // Water speed modifier
+        const body = player.physics.body;
+        const moveDirection = player.input.moveDirection;
+        
+        const targetVelocity = new CANNON.Vec3(
+            moveDirection.x * speed,
+            body.velocity.y,
+            moveDirection.z * speed
+        );
+
+        const force = new CANNON.Vec3();
+        targetVelocity.vsub(body.velocity, force);
+        force.y = 0; // Only apply horizontal force
+        force.scale(body.mass * 20, force); // Proportional gain for responsiveness
+        body.applyForce(force, body.position);
     }
 
     _applyLandMovement(player, deltaTime) {
@@ -86,9 +132,6 @@ export class MovementSystem {
         
         this._handleJump(player);
         this._handleSlam(player);
-
-        // Reset the single-press jump request after processing
-        input.jumpRequested = false;
     }
         
     _initiateDash(player) {
@@ -160,10 +203,10 @@ export class MovementSystem {
     }
         
     _applyStandardMovement(player, moveDirection) {
-        let speed = player.isSwimming ? GAME_CONFIG.PLAYER.SPEED * 0.6 : GAME_CONFIG.PLAYER.SPEED;
+        let speed = GAME_CONFIG.PLAYER.SPEED;
 
         if (player.statusEffects.has('stonePlating')) {
-            speed *= 0.8; // Reduce speed by 20%
+            speed *= 0.8;
         }
         
         const velocity = player.physics.body.velocity;

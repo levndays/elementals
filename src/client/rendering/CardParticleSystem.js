@@ -1,4 +1,3 @@
-// [ ~ src/client/rendering/CardParticleSystem.js ]
 import * as THREE from 'three';
 
 // Asynchronously load shaders once at the module level
@@ -94,8 +93,9 @@ export class CardParticleSystem {
         velocities[i3 + 1] = Math.random() * 0.4 + 0.2;
         velocities[i3 + 2] = (Math.random() - 0.5) * 0.1;
 
-        lifetimes[i4] = Math.random() * 3.0 + 1.0; // maxLifetime
-        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime (staggered)
+        const maxLifetime = Math.random() * 3.0 + 1.0;
+        lifetimes[i4] = maxLifetime; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * maxLifetime; // spawnTime (staggered)
     }
 
     initStreamParticle(stream) {
@@ -153,7 +153,7 @@ export class CardParticleSystem {
                 const spawnTime = lifetimeAttr.getY(index);
 
                 if (currentTime - spawnTime > maxLifetime) {
-                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimes.array);
+                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array);
                     respawned++;
                 }
             }

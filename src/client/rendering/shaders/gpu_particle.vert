@@ -1,4 +1,3 @@
-// [ ~ src/client/rendering/shaders/gpu_particle.vert ]
 uniform float uTime;
 uniform float uScale;
 uniform vec3 uGravity;
@@ -10,7 +9,7 @@ varying float vAlpha;
 
 void main() {
     float maxLifetime = aLifetime.x;
-    float spawnTime = a.y;
+    float spawnTime = aLifetime.y;
 
     float timeAlive = uTime - spawnTime;
 
