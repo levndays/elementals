@@ -1,3 +1,5 @@
+// src/game/world/LevelManager.js
+
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';
@@ -178,7 +180,12 @@
             const entity = { id: THREE.MathUtils.generateUUID(), type: 'Waterfall', mesh: waterfallMesh, definition: objData };
     
             entity.mesh.position.set(objData.position.x, objData.position.y, objData.position.z);
-            if (objData.rotation) entity.mesh.rotation.set(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0));
+            if (objData.quaternion) {
+                entity.mesh.quaternion.set(objData.quaternion.x, objData.quaternion.y, objData.quaternion.z, objData.quaternion.w);
+            } else if (objData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0), 'YXZ');
+                entity.mesh.quaternion.setFromEuler(euler);
+            }
     
             entity.mesh.castShadow = false;
             entity.mesh.receiveShadow = false;
@@ -194,13 +201,14 @@
         createWater(objData) {
             const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
             const position = new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z);
-            const rotation = objData.rotation ? new THREE.Euler(
-                THREE.MathUtils.degToRad(objData.rotation.x), 
-                THREE.MathUtils.degToRad(objData.rotation.y), 
-                THREE.MathUtils.degToRad(objData.rotation.z), 'YXZ') 
-            : new THREE.Euler();
             
-            const cannonQuat = new CANNON.Quaternion().setFromEuler(rotation.x, rotation.y, rotation.z);
+            const cannonQuat = new CANNON.Quaternion();
+            if (objData.quaternion) {
+                cannonQuat.set(objData.quaternion.x, objData.quaternion.y, objData.quaternion.z, objData.quaternion.w);
+            } else if (objData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(objData.rotation.x), THREE.MathUtils.degToRad(objData.rotation.y), THREE.MathUtils.degToRad(objData.rotation.z), 'YXZ');
+                cannonQuat.setFromEuler(euler.x, euler.y, euler.z, euler.order);
+            }
             
             const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
             const body = new CANNON.Body({
@@ -285,11 +293,31 @@
             
             body = new CANNON.Body({ mass: objData.physics?.mass ?? 0, shape, type: (objData.physics?.mass ?? 0) > 0 ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC, collisionFilterGroup: COLLISION_GROUPS.WORLD });
             
+            // --- ИСПРАВЛЕННАЯ ЛОГИКА ---
             mesh.position.set(objData.position.x, objData.position.y, objData.position.z);
-            if (objData.rotation) mesh.rotation.set(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0));
-            
+
+            if (objData.quaternion) {
+                mesh.quaternion.set(
+                    objData.quaternion.x,
+                    objData.quaternion.y,
+                    objData.quaternion.z,
+                    objData.quaternion.w
+                );
+            } else if (objData.rotation) { // Fallback for old levels
+                const euler = new THREE.Euler(
+                    THREE.MathUtils.degToRad(objData.rotation.x || 0),
+                    THREE.MathUtils.degToRad(objData.rotation.y || 0),
+                    THREE.MathUtils.degToRad(objData.rotation.z || 0),
+                    'YXZ'
+                );
+                mesh.quaternion.setFromEuler(euler);
+            }
+
+            // ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ: Копируем трансформацию из mesh в body
             body.position.copy(mesh.position);
             body.quaternion.copy(mesh.quaternion);
+            // --- КОНЕЦ ИСПРАВЛЕННОЙ ЛОГИКИ ---
+
             mesh.castShadow = true;
             mesh.receiveShadow = true;
     
@@ -319,10 +347,13 @@
             const shape = new CANNON.Box(new CANNON.Vec3(...size.map(s => s / 2)));
             const body = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true, shape, position: new CANNON.Vec3(triggerData.position.x, triggerData.position.y, triggerData.position.z), collisionFilterGroup: COLLISION_GROUPS.TRIGGER, collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY });
             
-            if (triggerData.rotation) {
-                mesh.rotation.set(THREE.MathUtils.degToRad(triggerData.rotation.x || 0), THREE.MathUtils.degToRad(triggerData.rotation.y || 0), THREE.MathUtils.degToRad(triggerData.rotation.z || 0));
-                body.quaternion.copy(mesh.quaternion);
+            if (triggerData.quaternion) {
+                body.quaternion.set(triggerData.quaternion.x, triggerData.quaternion.y, triggerData.quaternion.z, triggerData.quaternion.w);
+            } else if (triggerData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(triggerData.rotation.x || 0), THREE.MathUtils.degToRad(triggerData.rotation.y || 0), THREE.MathUtils.degToRad(triggerData.rotation.z || 0), 'YXZ');
+                body.quaternion.setFromEuler(euler.x, euler.y, euler.z, euler.order);
             }
+            mesh.quaternion.copy(body.quaternion);
             
             const entityType = isDeathTrigger ? 'DeathTrigger' : 'Trigger';
             const entity = { type: entityType, mesh, body, definition: triggerData, message: triggerData.message, duration: triggerData.duration, hasFired: false };

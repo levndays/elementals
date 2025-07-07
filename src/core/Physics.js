@@ -1,3 +1,5 @@
+// src/core/Physics.js
+
 import * as CANNON from 'cannon-es';
 
 export class Physics {
@@ -7,7 +9,8 @@ export class Physics {
             allowSleep: true,
         });
 
-        this.world.broadphase = new CANNON.SAPBroadphase(this.world);
+        // ЗАМЕНА АЛГОРИТМА НА БОЛЕЕ НАДЕЖНЫЙ ДЛЯ СТАТИЧЕСКИХ МИРОВ
+        this.world.broadphase = new CANNON.NaiveBroadphase();
 
         this.bodiesToRemove = new Set();
     }

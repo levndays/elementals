@@ -1,3 +1,5 @@
+// src/editor/EditorActions.js
+
  import * as THREE from 'three';
     import { StateChangeCommand } from './UndoManager.js';
     
@@ -30,7 +32,7 @@
             const boxData = {
                 type: "Box", name: `Box_${Date.now()}`, size: [2, 2, 2],
                 position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-                rotation: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }, // Keep for initial creation
                 material: { color: "0xcccccc" }, physics: { mass: 0 }
             };
             const newObj = this.app.levelManager.createObject(boxData);
@@ -168,7 +170,7 @@
         }
         
         _bakeScaleIntoDefinition(entity) {
-            const transformSource = entity.helperMesh || entity.mesh;
+            const transformSource = entity.helperMesh || entity.mesh || entity.picker || entity;
             if (entity && transformSource && entity.definition?.size) {
                 const scale = transformSource.scale;
                 if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
@@ -208,7 +210,15 @@
                     tempCentroid.add(mesh.position);
                     validObjects++;
                     
-                    if (entity.definition.rotation) {
+                    if (entity.definition.quaternion !== undefined) {
+                        entity.definition.quaternion = {
+                            x: mesh.quaternion.x,
+                            y: mesh.quaternion.y,
+                            z: mesh.quaternion.z,
+                            w: mesh.quaternion.w
+                        };
+                        delete entity.definition.rotation;
+                    } else if (entity.definition.rotation) { // Fallback for older format if needed
                         const rot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
                         entity.definition.rotation = {
                             x: THREE.MathUtils.radToDeg(rot.x),
@@ -346,9 +356,16 @@
                 if (!obj.definition || !transformSource) return;
     
                 obj.definition.position = { x: transformSource.position.x, y: transformSource.position.y, z: transformSource.position.z };
-                if (obj.definition.rotation) {
-                    const rot = new THREE.Euler().setFromQuaternion(transformSource.quaternion, 'YXZ');
-                    obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
+                
+                // NEW: Save quaternion instead of euler angles
+                if (obj.definition.rotation !== undefined) {
+                    obj.definition.quaternion = {
+                        x: transformSource.quaternion.x,
+                        y: transformSource.quaternion.y,
+                        z: transformSource.quaternion.z,
+                        w: transformSource.quaternion.w
+                    };
+                    delete obj.definition.rotation; // Remove the old property
                 }
             });
     
