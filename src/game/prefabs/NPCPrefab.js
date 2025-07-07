@@ -54,6 +54,22 @@ export class NPCPrefab {
         // 3. Entity creation
         const entity = new NPC(world, body, mesh, definition);
         
+        // 4. Add melee "hands" if applicable
+        if (entity.attackType === 'melee') {
+            const handGeo = new THREE.SphereGeometry(0.3, 8, 8);
+            const handMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 });
+            
+            entity.leftHand = new THREE.Mesh(handGeo, handMat);
+            entity.leftHand.position.set(-0.7, 0.2, 0.5); // Position relative to parent capsule
+            entity.leftHand.castShadow = true;
+            
+            entity.rightHand = new THREE.Mesh(handGeo, handMat);
+            entity.rightHand.position.set(0.7, 0.2, 0.5); // Position relative to parent capsule
+            entity.rightHand.castShadow = true;
+
+            mesh.add(entity.leftHand, entity.rightHand);
+        }
+        
         return entity;
     }
 }

@@ -1,3 +1,4 @@
+// src/editor/LevelEditor.js
   import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { EditorControls } from './EditorControls.js';
@@ -5,6 +6,7 @@
     import { EditorActions } from './EditorActions.js';
     import { EditorCamera } from './EditorCamera.js';
     import { UndoManager, StateChangeCommand } from './UndoManager.js';
+    import { COLLISION_GROUPS } from '../shared/CollisionGroups.js';
     
     export class LevelEditor {
         constructor(app) {
@@ -278,6 +280,22 @@
                 this.syncObjectTransforms(obj); 
                 return;
             }
+
+            if (type === 'NPC') {
+                const team = def.team || 'enemy';
+                const color = team === 'enemy' ? 0x990000 : 0x009933;
+                obj.mesh.material.color.set(color);
+        
+                if (obj.body) {
+                    if (team === 'enemy') {
+                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ENEMY;
+                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+                    } else { // ally
+                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ALLY;
+                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+                    }
+                }
+            }
             
             const mesh = obj.mesh;
             const body = obj.body;
@@ -291,7 +309,7 @@
                 );
             }
         
-            if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial) {
+            if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial && type !== 'NPC') {
                 mesh.material.color.set(parseInt(def.material.color, 16));
             }
         

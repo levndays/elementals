@@ -36,6 +36,7 @@ export class World {
         this._entitiesByType = new Map();
         this.initialEnemyCount = 0;
         this.enemiesKilled = 0;
+        this.lights = []; // To track lights for disposal
 
         this.levelManager = new LevelManager(this);
         this.systems = [
@@ -72,7 +73,16 @@ export class World {
         }
 
         await this.levelManager.init();
-        await this.levelManager.build(levelData);
+        const { ambientLight, directionalLights } = await this.levelManager.build(levelData);
+
+        // Add lights to scene and track them
+        this.lights.push({ light: ambientLight });
+        this.scene.add(ambientLight);
+        directionalLights.forEach(dLight => {
+            this.lights.push({ light: dLight, target: dLight.target });
+            this.scene.add(dLight);
+            this.scene.add(dLight.target);
+        });
 
         this.player = PlayerPrefab.create(
             this,
@@ -175,6 +185,15 @@ export class World {
     dispose() {
         this.removeAllListeners();
         this.triggerSystem.dispose();
+        
+        // Dispose lights first
+        this.lights.forEach(item => {
+            this.scene.remove(item.light);
+            if (item.target) this.scene.remove(item.target);
+            item.light.dispose();
+        });
+        this.lights = [];
+
         [...this.entities].forEach(entity => this.remove(entity));
         this.scene.children.slice().forEach(child => {
             if (child.type !== 'PerspectiveCamera') this.scene.remove(child);

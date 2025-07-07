@@ -67,14 +67,24 @@
             this._createAndExecuteCreationCommand(newWaterfall);
         }
     
-        addEnemy() {
+        _addNPC(team, attackType) {
             const lookDir = new THREE.Vector3();
             this.camera.getWorldDirection(lookDir);
             const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(10));
-            const enemyData = { type: "Dummy", team: "enemy", position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z } };
-            const newEnemy = this.app.levelManager.createNPC(enemyData);
-            this._createAndExecuteCreationCommand(newEnemy);
+            const npcData = {
+                type: "Dummy", // This is just a placeholder type for the level data, NPCPrefab handles the rest
+                team: team,
+                attackType: attackType,
+                position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z }
+            };
+            const newNPC = this.app.levelManager.createNPC(npcData);
+            this._createAndExecuteCreationCommand(newNPC);
         }
+    
+        addEnemyRanged() { this._addNPC('enemy', 'ranged'); }
+        addEnemyMelee() { this._addNPC('enemy', 'melee'); }
+        addAllyRanged() { this._addNPC('player', 'ranged'); }
+        addAllyMelee() { this._addNPC('player', 'melee'); }
     
         addMessageTrigger() {
             const lookDir = new THREE.Vector3();
@@ -188,7 +198,7 @@
         
             this.editor.selectedObjects.forEach(entity => {
                 const entityType = entity.userData?.gameEntity?.type;
-                const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water', 'Waterfall'];
+                const validTypes = ['Object', 'NPC', 'Trigger', 'DeathTrigger', 'Water', 'Waterfall'];
         
                 if (validTypes.includes(entityType)) {
                     this._bakeScaleIntoDefinition(entity);
@@ -362,7 +372,7 @@
                 deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
                 settings: finalSettings,
                 objects: geometricObjects.map(obj => obj.definition),
-                npcs: this.app.getEnemies().map(enemy => enemy.definition),
+                npcs: this.app.getNPCs().map(npc => npc.definition),
                 triggers: this.app.getTriggers().map(t => t.definition),
                 deathTriggers: this.app.getDeathTriggers().map(t => t.definition)
             };

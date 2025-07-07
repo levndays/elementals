@@ -32,6 +32,8 @@ export class AISystem {
         for (const npc of world.getNPCs()) {
             if (npc.isDead) continue;
 
+            this._updateAnimations(npc, deltaTime);
+
             if (npc.ai.isKnockedBack) {
                 npc.ai.knockbackTimer -= deltaTime;
                 if (npc.ai.knockbackTimer <= 0) npc.ai.isKnockedBack = false;
@@ -44,7 +46,6 @@ export class AISystem {
                 npc.ai.aiUpdateTimer = 0;
             }
             
-            this._updateTimers(npc.ai, deltaTime);
             this._applyMovement(world, npc);
         }
     }
@@ -199,6 +200,12 @@ export class AISystem {
         
         if (this._forward.dot(toTarget) > 0.7) { // Check if target is roughly in front (cone)
             target.takeDamage(config.DAMAGE);
+            // Trigger animation state
+            if (!npc.isAttacking) {
+                npc.isAttacking = true;
+                npc.attackAnimationTimer = 0;
+                npc.whichHand = (npc.whichHand === 'left') ? 'right' : 'left'; // Alternate hands
+            }
         }
     }
 
@@ -353,5 +360,27 @@ export class AISystem {
         );
 
         return !this._ledgeRayResult.hasHit;
+    }
+
+    _updateAnimations(npc, deltaTime) {
+        if (!npc.isAttacking || npc.attackType !== 'melee') return;
+
+        npc.attackAnimationTimer += deltaTime;
+        const progress = Math.min(npc.attackAnimationTimer / npc.attackAnimationDuration, 1.0);
+
+        // A simple "punch" animation: forward then back
+        // The sin curve creates a smooth 0 -> 1 -> 0 motion over the animation duration.
+        const punchProgress = Math.sin(progress * Math.PI);
+
+        const handToAnimate = (npc.whichHand === 'left') ? npc.leftHand : npc.rightHand;
+        if (handToAnimate) {
+            const initialZ = 0.5; // From prefab
+            const punchDistance = 0.8;
+            handToAnimate.position.z = initialZ + punchProgress * punchDistance;
+        }
+
+        if (progress >= 1.0) {
+            npc.isAttacking = false;
+        }
     }
 }

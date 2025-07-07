@@ -1,3 +1,4 @@
+// src/editor/EditorUI.js
  import * as THREE from 'three';
     import { StateChangeCommand } from './UndoManager.js';
     
@@ -230,7 +231,7 @@
                 parent.appendChild(item);
             };
         
-            const createCategory = (title, entities, prefix, nameField = 'name') => {
+            const createCategory = (title, entities, prefix) => {
                 if (!entities || entities.length === 0) return;
                 const details = document.createElement('details');
                 details.open = true;
@@ -238,11 +239,19 @@
                 summary.textContent = `${title} (${entities.length})`;
                 details.appendChild(summary);
                 entities.forEach(e => {
-                     const name = e.definition?.[nameField] || e.name || (e.userData?.gameEntity?.type) || 'Unnamed';
-                     const uuidProvider = e.mesh || e.picker || e.helperMesh || e.targetHelper || e;
-                     if(uuidProvider) {
+                    let name;
+                    if (e.userData?.gameEntity?.type === 'NPC') {
+                        const team = e.definition.team === 'player' ? 'Ally' : 'Enemy';
+                        const type = e.definition.attackType.charAt(0).toUpperCase() + e.definition.attackType.slice(1);
+                        name = `${type} ${team}`;
+                    } else {
+                        name = e.definition?.name || e.name || e.userData?.gameEntity?.type || 'Unnamed';
+                    }
+                     
+                    const uuidProvider = e.mesh || e.picker || e.helperMesh || e.targetHelper || e;
+                    if(uuidProvider) {
                         createItem(details, e, name, uuidProvider.uuid, prefix);
-                     }
+                    }
                 });
                 this.outlinerContent.appendChild(details);
             };
@@ -252,10 +261,10 @@
                 sp.name = sp.userData.gameEntity.type === 'SpawnPoint' ? 'Initial Spawn' : 'Death Respawn';
             });
         
-            createCategory('Scene Points', spawnPoints, '[P]', 'name');
+            createCategory('Scene Points', spawnPoints, '[P]');
             createCategory('Lights', this.app.getDirectionalLights(), '[L]');
             createCategory('Geometry', this.app.getLevelObjects(), '[G]');
-            createCategory('Enemies', this.app.getEnemies(), '[E]');
+            createCategory('NPCs', this.app.getNPCs(), '[N]');
             createCategory('Message Triggers', this.app.getTriggers(), '[T]');
             createCategory('Death Zones', this.app.getDeathTriggers(), '[D]');
             createCategory('Water Volumes', this.app.getWaterVolumes(), '[W]');
@@ -311,7 +320,7 @@
                 parent.appendChild(input);
                 return input;
             };
-        
+    
             const createColorInput = (parent, colorHex, callback) => {
                 const input = document.createElement('input');
                 input.type = 'color';
@@ -319,6 +328,20 @@
                 input.oninput = (e) => callback(e.target.value);
                 parent.appendChild(input);
                 return input;
+            };
+
+            const createSelectInput = (parent, value, options, callback) => {
+                const select = document.createElement('select');
+                for (const [val, text] of Object.entries(options)) {
+                    const option = document.createElement('option');
+                    option.value = val;
+                    option.textContent = text;
+                    select.appendChild(option);
+                }
+                select.value = value;
+                select.onchange = (e) => callback(e.target.value);
+                parent.appendChild(select);
+                return select;
             };
         
             const createVec3Inputs = (parent, vector, step, callback) => {
@@ -347,7 +370,7 @@
                     multiSelectInfo.innerHTML = `<b>${this.editor.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
                     fragment.appendChild(multiSelectInfo);
                 }
-                this.renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs);
+                this.renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs, createSelectInput);
             }
     
             this.inspectorContent.appendChild(fragment);
@@ -406,7 +429,7 @@
             ambientGroup.appendChild(ambientContainer);
         }
         
-        renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs) {
+        renderEntitySettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput, createVec3Inputs, createSelectInput) {
             const selectedEntity = this.editor.primarySelectedObject;
             if (!selectedEntity || !selectedEntity.userData?.gameEntity?.type) return;
     
@@ -465,6 +488,15 @@
                         }
                     });
                 }
+            }
+            
+            if (entityType === 'NPC') {
+                fragment.appendChild(document.createElement('hr'));
+                const teamGroup = createPropGroup('Team');
+                createSelectInput(teamGroup, def.team || 'enemy', { enemy: 'Enemy', player: 'Ally' }, (val) => this.editor.updateSelectedProp('team', null, val));
+                
+                const attackTypeGroup = createPropGroup('Attack Type');
+                createSelectInput(attackTypeGroup, def.attackType || 'ranged', { ranged: 'Ranged', melee: 'Melee' }, (val) => this.editor.updateSelectedProp('attackType', null, val));
             }
         
             if (def && def.material) {

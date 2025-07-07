@@ -32,6 +32,14 @@ export class NPC {
         this.isDead = false;
         this.isInWater = false; // For water interaction logic
 
+        // Melee animation state
+        this.isAttacking = false;
+        this.attackAnimationTimer = 0;
+        this.attackAnimationDuration = 0.4; // seconds
+        this.leftHand = null;
+        this.rightHand = null;
+        this.whichHand = 'left'; // For alternating punches
+
         // Link back to entity for easy access from physics/rendering
         const gameEntityLink = { type: 'NPC', entity: this };
         this.userData = { gameEntity: gameEntityLink };

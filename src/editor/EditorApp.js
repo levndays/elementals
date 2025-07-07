@@ -35,7 +35,7 @@
             return [...this.entities].filter(e => e.userData?.gameEntity?.type === type);
         }
         getLevelObjects() { return this.getEntities('Object'); }
-        getEnemies() { return this.getEntities('Enemy'); }
+        getNPCs() { return this.getEntities('NPC'); }
         getTriggers() { return this.getEntities('Trigger'); }
         getDeathTriggers() { return this.getEntities('DeathTrigger'); }
         getDirectionalLights() { return this.getEntities('DirectionalLight'); }
