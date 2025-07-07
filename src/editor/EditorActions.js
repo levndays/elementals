@@ -46,13 +46,27 @@ export class EditorActions {
             name: `WaterVolume_${Date.now()}`,
             size: [20, 5, 20],
             position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-            rotation: { x: 0, y: 0, z: 0 },
-            material: { color: "0x2288ee" }
+            rotation: { x: 0, y: 0, z: 0 }
         };
         const newWater = this.app.levelManager.createObject(waterData);
         this._createAndExecuteCreationCommand(newWater);
     }
     
+    addWaterfall() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const waterfallData = {
+            type: "Waterfall",
+            name: `Waterfall_${Date.now()}`,
+            size: [10, 20],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            rotation: { x: 0, y: 0, z: 0 }
+        };
+        const newWaterfall = this.app.levelManager.createObject(waterfallData);
+        this._createAndExecuteCreationCommand(newWaterfall);
+    }
+
     addEnemy() {
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
@@ -148,7 +162,7 @@ export class EditorActions {
         if (entity && transformSource && entity.definition?.size) {
             const scale = transformSource.scale;
             if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
-                if (entity.definition.type === 'Plane') {
+                if (entity.definition.type === 'Plane' || entity.definition.type === 'Waterfall') {
                     entity.definition.size[0] *= scale.x;
                     entity.definition.size[1] *= scale.y;
                 } else {
@@ -174,7 +188,7 @@ export class EditorActions {
     
         this.editor.selectedObjects.forEach(entity => {
             const entityType = entity.userData?.gameEntity?.type;
-            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water'];
+            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water', 'Waterfall'];
     
             if (validTypes.includes(entityType)) {
                 this._bakeScaleIntoDefinition(entity);
@@ -234,6 +248,7 @@ export class EditorActions {
                         case 'Trigger': newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger'); break;
                         case 'DeathTrigger': newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger'); break;
                         case 'Water':
+                        case 'Waterfall':
                         default: newEntity = this.app.levelManager.createObject(newDef); break;
                     }
     
@@ -254,7 +269,7 @@ export class EditorActions {
         this.editor.undoManager.execute(command);
     }
 
-    newLevel() {
+    async newLevel() {
         const newLevelData = {
             name: "New Level",
             spawnPoint: { x: 0, y: 3, z: 0 },
@@ -289,20 +304,25 @@ export class EditorActions {
                     "editorSelectable": false
                 }
             ],
-            enemies: [],
+            npcs: [],
             triggers: [],
             deathTriggers: []
         };
-        this.app.loadLevel(newLevelData);
+        await this.app.loadLevel(newLevelData);
     }
 
     loadFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            try { this.app.loadLevel(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid level file."); console.error("Error loading level:", err); }
+        reader.onload = async (e) => {
+            try { 
+                await this.app.loadLevel(JSON.parse(e.target.result)); 
+            } 
+            catch (err) { 
+                alert("Invalid level file."); 
+                console.error("Error loading level:", err); 
+            }
         };
         reader.readAsText(file);
     }
@@ -329,7 +349,8 @@ export class EditorActions {
 
         const geometricObjects = [
             ...this.app.getLevelObjects(),
-            ...this.app.getWaterVolumes()
+            ...this.app.getWaterVolumes(),
+            ...this.app.getWaterfalls()
         ];
 
         const levelData = {
@@ -338,7 +359,7 @@ export class EditorActions {
             deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
             objects: geometricObjects.map(obj => obj.definition),
-            enemies: this.app.getEnemies().map(enemy => enemy.definition),
+            npcs: this.app.getEnemies().map(enemy => enemy.definition),
             triggers: this.app.getTriggers().map(t => t.definition),
             deathTriggers: this.app.getDeathTriggers().map(t => t.definition)
         };

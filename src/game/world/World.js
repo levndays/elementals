@@ -71,7 +71,8 @@ export class World {
             throw new Error('Level configuration must provide a URL or data.');
         }
 
-        this.levelManager.build(levelData);
+        await this.levelManager.init();
+        await this.levelManager.build(levelData);
 
         this.player = PlayerPrefab.create(
             this,
@@ -139,6 +140,7 @@ export class World {
     getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
     getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
     getWaterVolumes() { return Array.from(this._entitiesByType.get('Water') || []); }
+    getWaterfalls() { return Array.from(this._entitiesByType.get('Waterfall') || []); }
 
     resetPlayer() {
         if (this.player) {
@@ -156,10 +158,16 @@ export class World {
         for (const system of this.systems) system.update(this, deltaTime);
         for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
 
-        // Update water shader time uniform
-        for (const water of this.getWaterVolumes()) {
-            if (water.mesh?.material?.uniforms?.time) {
-                water.mesh.material.uniforms.time.value = elapsedTime;
+        const entitiesWithShaders = [...this.getWaterVolumes(), ...this.getWaterfalls()];
+        for (const entity of entitiesWithShaders) {
+            const uniforms = entity.mesh?.material?.uniforms;
+            if (uniforms) {
+                if (uniforms.time) { // For THREE.Water pools
+                    uniforms.time.value = elapsedTime;
+                }
+                if (uniforms.uTime) { // For custom waterfall shader
+                    uniforms.uTime.value = elapsedTime;
+                }
             }
         }
     }

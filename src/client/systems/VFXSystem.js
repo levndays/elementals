@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 
 /**
  * Listens for abstract gameplay events from the World and translates them
@@ -10,7 +12,7 @@ export class VFXSystem {
         this.world = world;
         this.vfxManager = vfxManager;
         this.hitFlashTimers = new Map(); // entity -> timer
-        this.waterfallEffects = new Map(); // Map<entityId, splashVFX>
+        this.waterfallEffects = new Map(); // Map<entityId, splashVFX[]>
 
         // Bind handlers to ensure `this` is correct
         this._onEntityAdded = this._onEntityAdded.bind(this);
@@ -37,30 +39,79 @@ export class VFXSystem {
     _onEntityAdded({ entity }) {
         this.vfxManager.createVisualForEntity(entity);
 
-        // If the added entity is a waterfall, create its splash effect.
-        if (entity.isWaterfall) {
-            const size = entity.definition.size;
-            const position = entity.body.position.clone();
-            const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(entity.body.quaternion);
-            position.y -= size[1] / 2; // Move to the base of the waterfall volume
-
-            const splash = this.vfxManager.createWaterfallSplashVFX({
-                position: position,
-                size: { x: size[0], y: 1.0, z: size[2] }
-            });
-            this.waterfallEffects.set(entity.id, splash);
+        if (entity.type === 'Waterfall') {
+            this.createSplashesForWaterfall(entity);
         }
     }
 
     _onEntityRemoved({ entity }) {
         this.vfxManager.removeVisualForEntity(entity.id);
 
-        // If the removed entity was a waterfall, dispose its splash effect.
-        if (this.waterfallEffects.has(entity.id)) {
-            const splashVFX = this.waterfallEffects.get(entity.id);
-            splashVFX.dispose();
+        if (entity.type === 'Waterfall' && this.waterfallEffects.has(entity.id)) {
+            const splashes = this.waterfallEffects.get(entity.id);
+            splashes.forEach(splash => splash.dispose());
             this.waterfallEffects.delete(entity.id);
         }
+    }
+
+    createSplashesForWaterfall(waterfall) {
+        const world = this.world;
+        const physicsWorld = world.physics.world;
+        const waterfallMesh = waterfall.mesh;
+        const width = waterfall.definition.size[0];
+        const height = waterfall.definition.size[1];
+
+        const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(waterfallMesh.quaternion);
+        
+        const basePosition = waterfallMesh.position.clone().addScaledVector(downVector, height / 2);
+        const baseSplash = this.vfxManager.createWaterfallSplashVFX({
+            position: basePosition,
+            size: { x: width, y: 1.0, z: 2.0 },
+            normal: new THREE.Vector3(0, 1, 0)
+        });
+        
+        const allSplashes = [baseSplash];
+
+        const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(waterfallMesh.quaternion);
+        const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(waterfallMesh.quaternion);
+        const numRays = 15;
+
+        for (let i = 0; i < numRays; i++) {
+            const horizontalOffset = (i / (numRays - 1) - 0.5) * width;
+            const rayStartPoint = waterfallMesh.position.clone()
+                .addScaledVector(upVector, height / 2)
+                .addScaledVector(localX, horizontalOffset);
+            
+            const rayEndPoint = rayStartPoint.clone().addScaledVector(downVector, height);
+
+            const raycastResult = new CANNON.RaycastResult();
+            physicsWorld.raycastClosest(
+                new CANNON.Vec3().copy(rayStartPoint),
+                new CANNON.Vec3().copy(rayEndPoint),
+                {
+                    collisionFilterGroup: COLLISION_GROUPS.PLAYER_PROJECTILE,
+                    collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.WATER,
+                    skipBackfaces: true
+                },
+                raycastResult
+            );
+
+            if (raycastResult.hasHit) {
+                if (raycastResult.hitPointWorld.distanceTo(basePosition) > 1.5) {
+                    const hitPoint = new THREE.Vector3().copy(raycastResult.hitPointWorld);
+                    const hitNormal = new THREE.Vector3().copy(raycastResult.hitNormalWorld);
+
+                    const intersectionSplash = this.vfxManager.createWaterfallSplashVFX({
+                        position: hitPoint,
+                        size: { x: width / numRays * 1.5, y: 1.0, z: 1.5 },
+                        normal: hitNormal
+                    });
+                    allSplashes.push(intersectionSplash);
+                }
+            }
+        }
+        
+        this.waterfallEffects.set(waterfall.id, allSplashes);
     }
 
     onEntityTookDamage({ entity, amount }) {
@@ -158,8 +209,8 @@ export class VFXSystem {
         this.world.off('entityRemoved', this._onEntityRemoved);
         
         // Clean up any remaining managed effects
-        for (const splash of this.waterfallEffects.values()) {
-            splash.dispose();
+        for (const splashes of this.waterfallEffects.values()) {
+            splashes.forEach(splash => splash.dispose());
         }
         this.waterfallEffects.clear();
         this.hitFlashTimers.clear();

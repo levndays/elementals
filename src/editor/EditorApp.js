@@ -40,6 +40,7 @@ export class EditorApp {
     getDeathTriggers() { return this.getEntities('DeathTrigger'); }
     getDirectionalLights() { return this.getEntities('DirectionalLight'); }
     getWaterVolumes() { return this.getEntities('Water'); }
+    getWaterfalls() { return this.getEntities('Waterfall'); }
 
     async init() {
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
@@ -48,6 +49,7 @@ export class EditorApp {
         this.scene.add(this.gridHelper);
 
         this.levelManager = new LevelManager(this);
+        await this.levelManager.init();
         this.editor = new LevelEditor(this);
         await this.editor.actions.newLevel();
         window.editorApp = this;
@@ -194,9 +196,9 @@ export class EditorApp {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
         
-        // This handles time-based uniforms for all water types.
-        for (const water of this.getWaterVolumes()) {
-            const uniforms = water.mesh?.material?.uniforms;
+        const entitiesWithShaders = [...this.getWaterVolumes(), ...this.getWaterfalls()];
+        for (const entity of entitiesWithShaders) {
+            const uniforms = entity.mesh?.material?.uniforms;
             if (uniforms) {
                 if (uniforms.time) { // For THREE.Water pools
                     uniforms.time.value = elapsedTime;

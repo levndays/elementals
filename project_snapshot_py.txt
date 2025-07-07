@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-05T19:01:32.692255
+Snapshot created on: 2025-07-07T03:39:46.673356
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -157,6 +157,7 @@ Snapshot created on: 2025-07-05T19:01:32.692255
                     <button data-action="addMessageTrigger">Message Trigger</button>
                     <button data-action="addDeathTrigger">Death Zone</button>
                     <button data-action="addWaterVolume">Water Volume</button>
+                    <button data-action="addWaterfall">Waterfall</button>
                     <div class="context-menu-section">Scene Points</div>
                     <button data-action="setSpawnPointToCamera">Set Initial Spawn</button>
                     <button data-action="setDeathSpawnPointToCamera">Set Death Spawn</button>
@@ -533,6 +534,18 @@ jobs:
 
 --------------------------------------------------
 === END OF FILE: .github/workflows/static.yml ===
+
+
+=== FILE: assets/skyboxes/manifest.json ===
+--------------------------------------------------
+[
+  {
+    "name": "Moody Sky",
+    "path": "./assets/skyboxes/moody-skybox/"
+  }
+]
+--------------------------------------------------
+=== END OF FILE: assets/skyboxes/manifest.json ===
 
 
 === FILE: css/card-inspector.css ===
@@ -2053,19 +2066,19 @@ body:not(.game-active) #tutorial-text-container {
     "z": 0
   },
   "settings": {
-    "backgroundColor": "0x1d2938",
-    "skybox": "./assets/skyboxes/dark-storm/",
-    "fogColor": "0x1d2938",
+    "backgroundColor": "0x302010",
+    "skybox": "./assets/skyboxes/moody-skybox/",
+    "fogColor": "0x403020",
     "fogNear": 50,
     "fogFar": 250,
     "ambientLight": {
-      "color": "0x607080",
-      "intensity": 0.8
+      "color": "0xA08070",
+      "intensity": 0.9
     },
     "directionalLights": [
       {
-        "color": "0xffffff",
-        "intensity": 1.5,
+        "color": "0xFFC080",
+        "intensity": 1.8,
         "position": {
           "x": 0,
           "y": 100,
@@ -2732,18 +2745,18 @@ body:not(.game-active) #tutorial-text-container {
     "spawnPoint": { "x": 0, "y": 2, "z": 0 },
     "deathSpawnPoint": { "x": 0, "y": 2, "z": 0 },
     "settings": {
-        "backgroundColor": "0x19142B",
-        "skybox": "./assets/skyboxes/sunset/",
-        "fogColor": "0x19142B",
+        "backgroundColor": "0x302010",
+        "skybox": "./assets/skyboxes/moody-skybox/",
+        "fogColor": "0x403020",
         "fogNear": 30,
         "fogFar": 200,
         "ambientLight": {
-            "color": "0x6A4C8A",
-            "intensity": 0.8
+            "color": "0xA08070",
+            "intensity": 0.9
         },
         "directionalLights": [
             {
-                "color": "0xFF8C4C",
+                "color": "0xFFC080",
                 "intensity": 6.0,
                 "position": { "x": -150, "y": 80, "z": -50 },
                 "targetPosition": { "x": 0, "y": 0, "z": 0 }
@@ -2789,18 +2802,18 @@ body:not(.game-active) #tutorial-text-container {
   "spawnPoint": { "x": 0, "y": 42, "z": 0 },
   "deathSpawnPoint": { "x": 0, "y": 42, "z": 0 },
   "settings": {
-    "backgroundColor": "0x082030",
-    "skybox": "./assets/skyboxes/daylight/",
-    "fogColor": "0x082030",
+    "backgroundColor": "0x302010",
+    "skybox": "./assets/skyboxes/moody-skybox/",
+    "fogColor": "0x403020",
     "fogNear": 20,
     "fogFar": 180,
     "ambientLight": {
-      "color": "0x408090",
-      "intensity": 1.2
+      "color": "0xA08070",
+      "intensity": 0.9
     },
     "directionalLights": [
       {
-        "color": "0xffffff",
+        "color": "0xFFC080",
         "intensity": 2.5,
         "position": { "x": 50, "y": 100, "z": 30 },
         "targetPosition": { "x": 0, "y": 0, "z": 0 }
@@ -2815,25 +2828,25 @@ body:not(.game-active) #tutorial-text-container {
       "position": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Main_Waterfall",
-      "size": [20, 30, 2],
+      "size": [20, 30],
       "position": { "x": 0, "y": 25, "z": -20 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Side_Waterfall_1",
-      "size": [10, 20, 2],
+      "size": [10, 20],
       "position": { "x": -25, "y": 18, "z": -15 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Side_Waterfall_2",
-      "size": [10, 20, 2],
+      "size": [10, 20],
       "position": { "x": 25, "y": 18, "z": -15 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
       "type": "Box", "name": "Ground_Bedrock", "size": [100, 2, 100],
@@ -4818,45 +4831,67 @@ uniform sampler2D uNoiseTexture;
 
 varying vec2 vUv;
 varying vec3 vNormal;
+varying vec3 vViewDirection;
 
 void main() {
-    // --- Scrolling UVs ---
-    // The main flow scrolls quickly down the Y axis.
-    vec2 flowUv = vUv * vec2(1.0, 4.0) + vec2(0.0, -uTime * 0.4);
-    // The noise scrolls slower and slightly sideways for distortion.
-    vec2 noiseUv = vUv * vec2(1.5, 2.0) + vec2(uTime * 0.05, -uTime * 0.15);
+    // --- 1. UV & Time Setup ---
+    // REVISED: Using addition (+) makes the texture sample "higher" over time,
+    // which results in a downward scrolling effect on a standard plane.
+    vec2 flowUv1 = vUv * vec2(1.0, 4.0) + vec2(0.0, uTime * 0.8);
+    vec2 flowUv2 = vUv * vec2(1.4, 6.0) + vec2(0.0, uTime * 1.3);
+    vec2 distortionUv = vUv * 0.5 + vec2(0.0, uTime * 0.05);
 
-    // --- Texture Sampling ---
-    // Sample the flow texture and use its red channel.
-    float flow = texture2D(uFlowTexture, flowUv).r;
-    // Sample the noise texture.
-    float noise = texture2D(uNoiseTexture, noiseUv).r;
+    // --- 2. Texture Sampling for Water Flow ---
+    float distortion = texture2D(uNoiseTexture, distortionUv).r * 0.05;
+    float flow1 = texture2D(uFlowTexture, flowUv1 + distortion).r;
+    float flow2 = texture2D(uFlowTexture, flowUv2 + distortion).r;
+    
+    // The mainFlow determines the density/opacity of the water streaks.
+    float mainFlow = smoothstep(0.1, 0.7, flow1 * flow2);
 
-    // --- Combine Textures ---
-    // Add noise to the flow UVs to create distorted, non-uniform movement.
-    vec2 distortedUv = flowUv + vec2(noise - 0.5, 0.0) * 0.1;
-    float distortedFlow = texture2D(uFlowTexture, distortedUv).r;
+    // --- 3. Foam Calculation ---
+    // Foam is concentrated at the top and bottom of the fall.
+    float foamTop = smoothstep(0.0, 0.15, vUv.y);
+    float foamBottom = smoothstep(1.0, 0.85, vUv.y);
+    float foamY = foamTop + foamBottom;
 
-    // --- Alpha Masking ---
-    // Fade out the sides of the waterfall plane.
-    float edgeFade = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x);
-    // Create foam at the top by fading in, and fade out at the bottom.
-    float verticalFade = smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.95, vUv.y);
+    // Use noise to give the foam a dynamic, cloudy texture.
+    vec2 foamUv = vUv * vec2(3.0, 1.0) + vec2(0.0, uTime * 0.4);
+    float foamNoise = texture2D(uNoiseTexture, foamUv).r;
+    float foam = foamY * foamNoise;
+    // Sharpen the foam to make it look more distinct.
+    foam = smoothstep(0.6, 1.0, foam);
 
-    float finalAlpha = distortedFlow * edgeFade * verticalFade;
+    // --- 4. Color and Alpha Composition ---
+    vec3 waterColor = vec3(0.7, 0.85, 1.0);
+    vec3 foamColor = vec3(1.0, 1.0, 1.0);
 
-    // --- Final Color ---
-    // Base color is a translucent white.
-    vec3 waterColor = vec3(0.8, 0.9, 1.0);
-    // Add a subtle fresnel effect to make edges glow slightly.
-    float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-    vec3 finalColor = waterColor + fresnel * 0.2;
+    // The final color is a blend between water and foam.
+    // The amount of foam determines the blend factor.
+    vec3 finalColor = mix(waterColor, foamColor, foam);
 
-    if (finalAlpha < 0.1) {
+    // The alpha channel is crucial. It's based on the water flow, with foam being more opaque.
+    // This creates the semi-transparent, streaky look.
+    float finalAlpha = mainFlow * 0.4 + foam * 0.6;
+    
+    // Fade the sides to prevent a hard edge.
+    float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
+    finalAlpha *= edgeFade;
+
+    // --- 5. Fresnel Sheen ---
+    // Instead of adding brightness, the fresnel effect will make the edges slightly more opaque,
+    // simulating a water surface sheen.
+    float fresnel = pow(1.0 - dot(normalize(vNormal), vViewDirection), 3.0);
+    finalAlpha = clamp(finalAlpha + fresnel * 0.3, 0.0, 1.0);
+
+    // --- 6. Final Output ---
+    // Discard fully transparent pixels to improve performance.
+    if (finalAlpha < 0.01) {
         discard;
     }
 
-    gl_FragColor = vec4(finalColor, finalAlpha * 0.7);
+    // By not having excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
+    gl_FragColor = vec4(finalColor, finalAlpha);
 }
 --------------------------------------------------
 === END OF FILE: src/client/rendering/shaders/waterfall.frag ===
@@ -4867,10 +4902,15 @@ void main() {
 // src/client/rendering/shaders/waterfall.vert
 varying vec2 vUv;
 varying vec3 vNormal;
+varying vec3 vViewDirection;
 
 void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
+
+    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+    
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 --------------------------------------------------
@@ -4994,15 +5034,14 @@ export class VFXSystem {
         this.vfxManager.createVisualForEntity(entity);
 
         // If the added entity is a waterfall, create its splash effect.
-        if (entity.isWaterfall) {
+        if (entity.type === 'Waterfall') {
             const size = entity.definition.size;
-            const position = entity.body.position.clone();
-            const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(entity.body.quaternion);
-            position.y -= size[1] / 2; // Move to the base of the waterfall volume
+            const position = entity.mesh.position.clone();
+            position.y -= size[1] / 2; // Move to the base of the waterfall plane
 
             const splash = this.vfxManager.createWaterfallSplashVFX({
                 position: position,
-                size: { x: size[0], y: 1.0, z: size[2] }
+                size: { x: size[0], y: 1.0, z: 2.0 } // Splash in a thin line at the base
             });
             this.waterfallEffects.set(entity.id, splash);
         }
@@ -5012,7 +5051,7 @@ export class VFXSystem {
         this.vfxManager.removeVisualForEntity(entity.id);
 
         // If the removed entity was a waterfall, dispose its splash effect.
-        if (this.waterfallEffects.has(entity.id)) {
+        if (entity.type === 'Waterfall' && this.waterfallEffects.has(entity.id)) {
             const splashVFX = this.waterfallEffects.get(entity.id);
             splashVFX.dispose();
             this.waterfallEffects.delete(entity.id);
@@ -5545,7 +5584,9 @@ export class DamageNumber {
 
 === FILE: src/client/ui/HealthBar.js ===
 --------------------------------------------------
+// ~ src/client/ui/HealthBar.js
 import * as THREE from 'three';
+import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 
 /**
  * A client-side visual component representing an entity's health.
@@ -5579,6 +5620,7 @@ export class HealthBar {
         healthBarGroup.add(this.fgSprite);
 
         this.group = healthBarGroup;
+        this.group.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
         this.group.visible = false;
         this.scene.add(this.group);
     }
@@ -7195,13 +7237,27 @@ export class EditorActions {
             name: `WaterVolume_${Date.now()}`,
             size: [20, 5, 20],
             position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-            rotation: { x: 0, y: 0, z: 0 },
-            material: { color: "0x2288ee" }
+            rotation: { x: 0, y: 0, z: 0 }
         };
         const newWater = this.app.levelManager.createObject(waterData);
         this._createAndExecuteCreationCommand(newWater);
     }
     
+    addWaterfall() {
+        const lookDir = new THREE.Vector3();
+        this.camera.getWorldDirection(lookDir);
+        const spawnPos = new THREE.Vector3().copy(this.camera.position).add(lookDir.multiplyScalar(15));
+        const waterfallData = {
+            type: "Waterfall",
+            name: `Waterfall_${Date.now()}`,
+            size: [10, 20],
+            position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
+            rotation: { x: 0, y: 0, z: 0 }
+        };
+        const newWaterfall = this.app.levelManager.createObject(waterfallData);
+        this._createAndExecuteCreationCommand(newWaterfall);
+    }
+
     addEnemy() {
         const lookDir = new THREE.Vector3();
         this.camera.getWorldDirection(lookDir);
@@ -7297,7 +7353,7 @@ export class EditorActions {
         if (entity && transformSource && entity.definition?.size) {
             const scale = transformSource.scale;
             if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
-                if (entity.definition.type === 'Plane') {
+                if (entity.definition.type === 'Plane' || entity.definition.type === 'Waterfall') {
                     entity.definition.size[0] *= scale.x;
                     entity.definition.size[1] *= scale.y;
                 } else {
@@ -7323,7 +7379,7 @@ export class EditorActions {
     
         this.editor.selectedObjects.forEach(entity => {
             const entityType = entity.userData?.gameEntity?.type;
-            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water'];
+            const validTypes = ['Object', 'Enemy', 'Trigger', 'DeathTrigger', 'Water', 'Waterfall'];
     
             if (validTypes.includes(entityType)) {
                 this._bakeScaleIntoDefinition(entity);
@@ -7383,6 +7439,7 @@ export class EditorActions {
                         case 'Trigger': newEntity = this.app.levelManager.createTrigger(newDef, 'Trigger'); break;
                         case 'DeathTrigger': newEntity = this.app.levelManager.createTrigger(newDef, 'DeathTrigger'); break;
                         case 'Water':
+                        case 'Waterfall':
                         default: newEntity = this.app.levelManager.createObject(newDef); break;
                     }
     
@@ -7403,7 +7460,7 @@ export class EditorActions {
         this.editor.undoManager.execute(command);
     }
 
-    newLevel() {
+    async newLevel() {
         const newLevelData = {
             name: "New Level",
             spawnPoint: { x: 0, y: 3, z: 0 },
@@ -7438,20 +7495,25 @@ export class EditorActions {
                     "editorSelectable": false
                 }
             ],
-            enemies: [],
+            npcs: [],
             triggers: [],
             deathTriggers: []
         };
-        this.app.loadLevel(newLevelData);
+        await this.app.loadLevel(newLevelData);
     }
 
     loadFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            try { this.app.loadLevel(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid level file."); console.error("Error loading level:", err); }
+        reader.onload = async (e) => {
+            try { 
+                await this.app.loadLevel(JSON.parse(e.target.result)); 
+            } 
+            catch (err) { 
+                alert("Invalid level file."); 
+                console.error("Error loading level:", err); 
+            }
         };
         reader.readAsText(file);
     }
@@ -7478,7 +7540,8 @@ export class EditorActions {
 
         const geometricObjects = [
             ...this.app.getLevelObjects(),
-            ...this.app.getWaterVolumes()
+            ...this.app.getWaterVolumes(),
+            ...this.app.getWaterfalls()
         ];
 
         const levelData = {
@@ -7487,7 +7550,7 @@ export class EditorActions {
             deathSpawnPoint: { x: this.app.deathSpawnPointHelper.position.x, y: this.app.deathSpawnPointHelper.position.y, z: this.app.deathSpawnPointHelper.position.z },
             settings: this.app.settings,
             objects: geometricObjects.map(obj => obj.definition),
-            enemies: this.app.getEnemies().map(enemy => enemy.definition),
+            npcs: this.app.getEnemies().map(enemy => enemy.definition),
             triggers: this.app.getTriggers().map(t => t.definition),
             deathTriggers: this.app.getDeathTriggers().map(t => t.definition)
         };
@@ -7566,6 +7629,7 @@ export class EditorApp {
     getDeathTriggers() { return this.getEntities('DeathTrigger'); }
     getDirectionalLights() { return this.getEntities('DirectionalLight'); }
     getWaterVolumes() { return this.getEntities('Water'); }
+    getWaterfalls() { return this.getEntities('Waterfall'); }
 
     async init() {
         this.gridHelper = new THREE.GridHelper(200, 200, 0xcccccc, 0x888888);
@@ -7574,6 +7638,7 @@ export class EditorApp {
         this.scene.add(this.gridHelper);
 
         this.levelManager = new LevelManager(this);
+        await this.levelManager.init();
         this.editor = new LevelEditor(this);
         await this.editor.actions.newLevel();
         window.editorApp = this;
@@ -7720,9 +7785,9 @@ export class EditorApp {
         const deltaTime = this.clock.getDelta();
         const elapsedTime = this.clock.elapsedTime;
         
-        // This handles time-based uniforms for all water types.
-        for (const water of this.getWaterVolumes()) {
-            const uniforms = water.mesh?.material?.uniforms;
+        const entitiesWithShaders = [...this.getWaterVolumes(), ...this.getWaterfalls()];
+        for (const entity of entitiesWithShaders) {
+            const uniforms = entity.mesh?.material?.uniforms;
             if (uniforms) {
                 if (uniforms.time) { // For THREE.Water pools
                     uniforms.time.value = elapsedTime;
@@ -8100,10 +8165,17 @@ export class EditorUI {
     constructor(editor) {
         this.editor = editor;
         this.app = editor.app;
+        this.skyboxOptions = [];
         this.init();
     }
 
     init() {
+        // Fetch skybox manifest
+        fetch('./assets/skyboxes/manifest.json')
+            .then(res => res.ok ? res.json() : Promise.resolve([]))
+            .then(data => { this.skyboxOptions = data; })
+            .catch(err => console.error("Could not load skybox manifest.", err));
+            
         // --- File Menu ---
         document.getElementById('menu-file-new').onclick = async () => await this.editor.actions.newLevel();
         document.getElementById('menu-file-open').onclick = () => document.getElementById('editor-file-input').click();
@@ -8424,7 +8496,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         };
 
         if (this.editor.selectedObjects.size === 0) {
-            this.renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput);
+            this.renderSceneSettings(fragment, createPropGroup, createColorInput, createNumberInput);
         } else {
             if (this.editor.selectedObjects.size > 1) {
                 const multiSelectInfo = document.createElement('div');
@@ -8438,16 +8510,30 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         this.inspectorContent.appendChild(fragment);
     }
     
-    renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput) {
+    renderSceneSettings(fragment, createPropGroup, createColorInput, createNumberInput) {
         const settings = this.app.settings;
         const groupTitle = document.createElement('div');
         groupTitle.className = 'placeholder-text';
         groupTitle.innerHTML = '<b>Scene Settings</b>';
         fragment.appendChild(groupTitle);
         
-        const skyboxGroup = createPropGroup('Skybox Path');
-        const skyboxInput = createTextInput(skyboxGroup, settings.skybox || '', (val) => this.editor.updateSceneSetting('skybox', val));
-        skyboxInput.placeholder = './assets/skyboxes/folder/';
+        const skyboxGroup = createPropGroup('Skybox');
+        const select = document.createElement('select');
+        select.onchange = (e) => this.editor.updateSceneSetting('skybox', e.target.value);
+
+        const noneOption = document.createElement('option');
+        noneOption.value = '';
+        noneOption.textContent = 'None (Use Background Color)';
+        select.appendChild(noneOption);
+
+        this.skyboxOptions.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.path;
+            option.textContent = opt.name;
+            select.appendChild(option);
+        });
+        select.value = settings.skybox || '';
+        skyboxGroup.appendChild(select);
         
         fragment.appendChild(document.createElement('hr'));
         
@@ -8503,10 +8589,10 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         }
     
         if (def && def.size) {
-            if (def.type === 'Plane') {
+            if (def.type === 'Plane' || def.type === 'Waterfall') {
                 const widthGroup = createPropGroup('Width');
                 createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 0, val); });
-                const depthGroup = createPropGroup('Depth');
+                const depthGroup = createPropGroup('Height');
                 createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 1, val); });
             } else {
                 const sizeGroup = createPropGroup('Size');
@@ -8872,6 +8958,19 @@ export class LevelEditor {
             return;
         }
 
+        if (type === 'Waterfall') {
+            const mesh = obj.mesh;
+            mesh.position.set(def.position.x, def.position.y, def.position.z);
+            if (def.rotation) {
+                mesh.rotation.set(THREE.MathUtils.degToRad(def.rotation.x || 0), THREE.MathUtils.degToRad(def.rotation.y || 0), THREE.MathUtils.degToRad(def.rotation.z || 0));
+            }
+            if (def.size) {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
+            }
+            return;
+        }
+
         if (type === 'Water') {
             const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
             const position = def.position;
@@ -8887,34 +8986,8 @@ export class LevelEditor {
             obj.helperMesh.geometry.dispose();
             obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
 
-            const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
-            const isNowVertical = Math.abs(upVector.y) < 0.5;
-
-            if (isNowVertical !== obj.isWaterfall) {
-                this.app.scene.remove(obj.mesh);
-                obj.mesh.geometry.dispose();
-                if(obj.mesh.material.uniforms?.uFlowTexture?.value) obj.mesh.material.uniforms.uFlowTexture.value.dispose();
-                if(obj.mesh.material.uniforms?.uNoiseTexture?.value) obj.mesh.material.uniforms.uNoiseTexture.value.dispose();
-                if(obj.mesh.material.uniforms?.waterNormals?.value) obj.mesh.material.uniforms.waterNormals.value.dispose();
-                obj.mesh.material.dispose();
-
-                const newVisualPart = isNowVertical
-                    ? this.app.levelManager.createWaterfall(def, size, obj.body)
-                    : this.app.levelManager.createWaterPool(def, size);
-
-                obj.mesh = newVisualPart.mesh;
-                obj.isWaterfall = isNowVertical;
-                this.app.scene.add(obj.mesh);
-                obj.mesh.userData.gameEntity = obj.userData.gameEntity;
-            } else {
-                if (obj.isWaterfall) {
-                    obj.mesh.geometry.dispose();
-                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[1]);
-                } else {
-                    obj.mesh.geometry.dispose();
-                    obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
-                }
-            }
+            obj.mesh.geometry.dispose();
+            obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
 
             if(obj.body && obj.body.shapes[0]){
                  const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
@@ -10865,11 +10938,13 @@ export class Player {
 
 === FILE: src/game/prefabs/NPCPrefab.js ===
 --------------------------------------------------
+// ~ src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
+import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 
 /**
  * A factory for creating NPC entities with all their required components.
@@ -10892,6 +10967,7 @@ export class NPCPrefab {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.position.copy(definition.position);
+        mesh.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
 
         // 2. Physics (Body)
         const shape = new CANNON.Sphere(config.RADIUS);
@@ -12690,11 +12766,11 @@ export class WeaponFactory {
 
 === FILE: src/game/world/LevelManager.js ===
 --------------------------------------------------
-// ~ src/game/world/LevelManager.js
+// src/game/world/LevelManager.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPCPrefab } from '../prefabs/NPCPrefab.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { COLLISION_GROUPS, RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 import { Water } from 'three/addons/objects/Water.js';
 
 export class LevelManager {
@@ -12703,6 +12779,16 @@ export class LevelManager {
         this.scene = world.scene;
         this.waterfallTextures = null; // Cache for waterfall textures
         this.cubeTextureLoader = new THREE.CubeTextureLoader();
+        this.waterfallShaders = null;
+    }
+
+    async init() {
+        if (this.waterfallShaders) return;
+        const [vertexShader, fragmentShader] = await Promise.all([
+            fetch('./src/client/rendering/shaders/waterfall.vert').then(res => res.text()),
+            fetch('./src/client/rendering/shaders/waterfall.frag').then(res => res.text())
+        ]);
+        this.waterfallShaders = { vertexShader, fragmentShader };
     }
 
     async build(levelData) {
@@ -12718,7 +12804,7 @@ export class LevelManager {
         (levelData.deathTriggers || []).map(d => this.createTrigger(d, 'DeathTrigger')).forEach(e => this.world.add(e));
 
         if (this.world.initialEnemyCount !== undefined) {
-            this.world.initialEnemyCount = this.world.getEnemies().length;
+            this.world.initialEnemyCount = this.world.getNPCs().filter(n => n.team === 'enemy').length;
             this.world.enemiesKilled = 0;
         }
 
@@ -12732,8 +12818,15 @@ export class LevelManager {
         }
 
         if (settings.skybox) {
-            const urls = ['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg'].map(file => settings.skybox + file);
-            this.scene.background = await this.cubeTextureLoader.loadAsync(urls);
+            try {
+                // Defensively ensure the path has a trailing slash.
+                const path = settings.skybox.endsWith('/') ? settings.skybox : `${settings.skybox}/`;
+                const urls = ['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'].map(file => path + file);
+                this.scene.background = await this.cubeTextureLoader.loadAsync(urls);
+            } catch (error) {
+                console.warn(`Could not load skybox from ${settings.skybox}. Defaulting to background color.`, error);
+                this.scene.background = new THREE.Color(parseInt(settings.backgroundColor, 16));
+            }
         } else {
             this.scene.background = new THREE.Color(parseInt(settings.backgroundColor, 16));
         }
@@ -12762,6 +12855,7 @@ export class LevelManager {
         light.position.set(lightData.position.x, lightData.position.y, lightData.position.z);
         if (lightData.targetPosition) light.target.position.set(lightData.targetPosition.x, lightData.targetPosition.y, lightData.targetPosition.z);
         light.castShadow = true;
+        light.shadow.camera.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
         light.userData.definition = lightData;
         return light;
     }
@@ -12769,6 +12863,7 @@ export class LevelManager {
     recreateEntity(definition) {
         switch(definition.type) {
             case 'Water':
+            case 'Waterfall':
             case 'Box':
             case 'Plane':
                 return this.createObject(definition);
@@ -12805,7 +12900,6 @@ export class LevelManager {
                     const y = Math.random() * size;
                     const w = Math.random() * 2 + 1;
                     const h = Math.random() * 30 + 10;
-                    ctx.globalAlpha = Math.random() * 0.5 + 0.2;
                     ctx.fillRect(x, y, w, h);
                 }
             });
@@ -12825,7 +12919,14 @@ export class LevelManager {
         return this.waterfallTextures;
     }
 
-    createWaterfall(objData, size, body) {
+    createWaterfall(objData) {
+        if (!this.waterfallShaders) {
+            console.error("Waterfall shaders have not been pre-loaded. LevelManager.init() must be called.");
+            const fallbackMaterial = new THREE.MeshBasicMaterial({ color: 0x00A3FF, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+            const fallbackMesh = new THREE.Mesh(new THREE.PlaneGeometry(objData.size[0], objData.size[1]), fallbackMaterial);
+            return { type: 'Waterfall', mesh: fallbackMesh, definition: objData };
+        }
+
         const { flowTexture, noiseTexture } = this.getWaterfallTextures();
         const waterfallMaterial = new THREE.ShaderMaterial({
             uniforms: {
@@ -12833,66 +12934,28 @@ export class LevelManager {
                 uFlowTexture: { value: flowTexture },
                 uNoiseTexture: { value: noiseTexture },
             },
-            vertexShader: `varying vec2 vUv; varying vec3 vNormal; void main() { vUv = uv; vNormal = normal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `
-                precision mediump float;
-                uniform float uTime;
-                uniform sampler2D uFlowTexture;
-                uniform sampler2D uNoiseTexture;
-                varying vec2 vUv;
-                varying vec3 vNormal;
-
-                void main() {
-                    vec2 flowUv = vUv * vec2(1.0, 4.0) + vec2(0.0, -uTime * 0.4);
-                    vec2 noiseUv = vUv * vec2(1.5, 2.0) + vec2(uTime * 0.05, -uTime * 0.15);
-                    float noise = texture2D(uNoiseTexture, noiseUv).r;
-                    vec2 distortedUv = flowUv + vec2(noise - 0.5, 0.0) * 0.1;
-                    float distortedFlow = texture2D(uFlowTexture, distortedUv).r;
-                    float edgeFade = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x);
-                    float verticalFade = smoothstep(0.0, 0.1, vUv.y) * smoothstep(1.0, 0.95, vUv.y);
-                    float finalAlpha = distortedFlow * edgeFade * verticalFade;
-                    vec3 waterColor = vec3(0.8, 0.9, 1.0);
-                    float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-                    vec3 finalColor = waterColor + fresnel * 0.2;
-                    if (finalAlpha < 0.1) discard;
-                    gl_FragColor = vec4(finalColor, finalAlpha * 0.7);
-                }
-            `,
+            vertexShader: this.waterfallShaders.vertexShader,
+            fragmentShader: this.waterfallShaders.fragmentShader,
             transparent: true,
             side: THREE.DoubleSide,
             depthWrite: false
         });
 
-        const waterfallMesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), waterfallMaterial);
+        const waterfallMesh = new THREE.Mesh(new THREE.PlaneGeometry(objData.size[0], objData.size[1]), waterfallMaterial);
         
-        const entity = { type: 'Water', mesh: waterfallMesh, body, definition: objData, isWaterfall: true };
-        this.world.on('update', ({deltaTime, elapsedTime}) => {
-            if (waterfallMesh.material.uniforms) {
-                 waterfallMesh.material.uniforms.uTime.value = elapsedTime;
-            }
-        });
-        return entity;
-    }
+        const entity = { id: THREE.MathUtils.generateUUID(), type: 'Waterfall', mesh: waterfallMesh, definition: objData };
 
-    createWaterPool(objData, size) {
-        let sunLight = this.world.scene.children.find(c => c.isDirectionalLight);
-        if (!sunLight) {
-            sunLight = new THREE.DirectionalLight(0xffffff, 1);
-            sunLight.position.set(0, 100, 0);
-        }
+        entity.mesh.position.set(objData.position.x, objData.position.y, objData.position.z);
+        if (objData.rotation) entity.mesh.rotation.set(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0));
 
-        const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
-
-        const water = new Water(new THREE.PlaneGeometry(size[0], size[2]), {
-            textureWidth: 512, textureHeight: 512,
-            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }),
-            sunDirection: sunLight.position.clone().normalize(),
-            sunColor: waterSunColor, waterColor: 0x005577,
-            distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
-        });
+        entity.mesh.castShadow = false;
+        entity.mesh.receiveShadow = false;
+        entity.mesh.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
         
-        water.rotation.x = -Math.PI / 2;
-        const entity = { type: 'Water', mesh: water, isWaterfall: false, definition: objData };
+        const link = { type: 'Waterfall', entity };
+        entity.userData = { gameEntity: link };
+        entity.mesh.userData.gameEntity = link;
+        
         return entity;
     }
 
@@ -12914,30 +12977,34 @@ export class LevelManager {
             collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY,
         });
 
-        const threeQuat = new THREE.Quaternion(cannonQuat.x, cannonQuat.y, cannonQuat.z, cannonQuat.w);
-        const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(threeQuat);
-        const isVertical = Math.abs(upVector.y) < 0.5;
-
-        let entity;
-        if (isVertical) {
-            entity = this.createWaterfall(objData, size, body);
-        } else {
-            const poolEntity = this.createWaterPool(objData, size);
-            poolEntity.body = body;
-            entity = poolEntity;
+        let sunLight = this.world.scene.children.find(c => c.isDirectionalLight);
+        if (!sunLight) {
+            sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(0, 100, 0);
         }
+        const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
+
+        const waterMesh = new Water(new THREE.PlaneGeometry(size[0], size[2]), {
+            textureWidth: 512, textureHeight: 512,
+            waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }),
+            sunDirection: sunLight.position.clone().normalize(),
+            sunColor: waterSunColor, waterColor: 0x005577,
+            distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
+        });
+        
+        waterMesh.rotation.x = -Math.PI / 2;
+        waterMesh.layers.disable(RENDERING_LAYERS.NO_REFLECTION);
+
+        const entity = { id: THREE.MathUtils.generateUUID(), type: 'Water', mesh: waterMesh, body, definition: objData };
         
         entity.mesh.position.copy(position);
-        entity.mesh.quaternion.copy(threeQuat);
-        
-        if (!entity.isWaterfall) {
-            entity.mesh.rotateX(-Math.PI / 2);
-        }
+        entity.mesh.quaternion.copy(cannonQuat);
+        entity.mesh.rotateX(-Math.PI / 2);
 
         const helperMaterial = new THREE.MeshBasicMaterial({ color: 0x2288ee, transparent: true, opacity: 0.35, wireframe: true });
         const helperMesh = new THREE.Mesh(new THREE.BoxGeometry(...size), helperMaterial);
         helperMesh.position.copy(position);
-        helperMesh.quaternion.copy(threeQuat);
+        helperMesh.quaternion.copy(cannonQuat);
         entity.helperMesh = helperMesh;
         
         const link = { type: 'Water', entity };
@@ -12953,6 +13020,9 @@ export class LevelManager {
     createObject(objData) {
         if (objData.type === 'Water') {
             return this.createWater(objData);
+        }
+        if (objData.type === 'Waterfall') {
+            return this.createWaterfall(objData);
         }
 
         let mesh, body, shape;
@@ -13097,7 +13167,8 @@ export class World {
             throw new Error('Level configuration must provide a URL or data.');
         }
 
-        this.levelManager.build(levelData);
+        await this.levelManager.init();
+        await this.levelManager.build(levelData);
 
         this.player = PlayerPrefab.create(
             this,
@@ -13165,6 +13236,7 @@ export class World {
     getTriggers() { return Array.from(this._entitiesByType.get('Trigger') || []); }
     getDeathTriggers() { return Array.from(this._entitiesByType.get('DeathTrigger') || []); }
     getWaterVolumes() { return Array.from(this._entitiesByType.get('Water') || []); }
+    getWaterfalls() { return Array.from(this._entitiesByType.get('Waterfall') || []); }
 
     resetPlayer() {
         if (this.player) {
@@ -13182,10 +13254,16 @@ export class World {
         for (const system of this.systems) system.update(this, deltaTime);
         for (const entity of this.entities) if (entity.update) entity.update(deltaTime);
 
-        // Update water shader time uniform
-        for (const water of this.getWaterVolumes()) {
-            if (water.mesh?.material?.uniforms?.time) {
-                water.mesh.material.uniforms.time.value = elapsedTime;
+        const entitiesWithShaders = [...this.getWaterVolumes(), ...this.getWaterfalls()];
+        for (const entity of entitiesWithShaders) {
+            const uniforms = entity.mesh?.material?.uniforms;
+            if (uniforms) {
+                if (uniforms.time) { // For THREE.Water pools
+                    uniforms.time.value = elapsedTime;
+                }
+                if (uniforms.uTime) { // For custom waterfall shader
+                    uniforms.uTime.value = elapsedTime;
+                }
             }
         }
     }
@@ -13223,6 +13301,11 @@ export const COLLISION_GROUPS = {
     TRIGGER:           64,
     VISION_BLOCKER:    128, // Blocks AI line of sight
     WATER:             256,
+};
+
+export const RENDERING_LAYERS = {
+    DEFAULT: 0,
+    NO_REFLECTION: 1,
 };
 --------------------------------------------------
 === END OF FILE: src/shared/CollisionGroups.js ===

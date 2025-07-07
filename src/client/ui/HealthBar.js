@@ -1,4 +1,6 @@
+// ~ src/client/ui/HealthBar.js
 import * as THREE from 'three';
+import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 
 /**
  * A client-side visual component representing an entity's health.
@@ -32,6 +34,7 @@ export class HealthBar {
         healthBarGroup.add(this.fgSprite);
 
         this.group = healthBarGroup;
+        this.group.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
         this.group.visible = false;
         this.scene.add(this.group);
     }

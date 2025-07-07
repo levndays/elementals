@@ -1,8 +1,10 @@
+// ~ src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
+import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 
 /**
  * A factory for creating NPC entities with all their required components.
@@ -25,6 +27,7 @@ export class NPCPrefab {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.position.copy(definition.position);
+        mesh.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
 
         // 2. Physics (Body)
         const shape = new CANNON.Sphere(config.RADIUS);

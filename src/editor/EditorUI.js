@@ -5,10 +5,17 @@ export class EditorUI {
     constructor(editor) {
         this.editor = editor;
         this.app = editor.app;
+        this.skyboxOptions = [];
         this.init();
     }
 
     init() {
+        // Fetch skybox manifest
+        fetch('./assets/skyboxes/manifest.json')
+            .then(res => res.ok ? res.json() : Promise.resolve([]))
+            .then(data => { this.skyboxOptions = data; })
+            .catch(err => console.error("Could not load skybox manifest.", err));
+            
         // --- File Menu ---
         document.getElementById('menu-file-new').onclick = async () => await this.editor.actions.newLevel();
         document.getElementById('menu-file-open').onclick = () => document.getElementById('editor-file-input').click();
@@ -329,7 +336,7 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         };
 
         if (this.editor.selectedObjects.size === 0) {
-            this.renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput);
+            this.renderSceneSettings(fragment, createPropGroup, createColorInput, createNumberInput);
         } else {
             if (this.editor.selectedObjects.size > 1) {
                 const multiSelectInfo = document.createElement('div');
@@ -343,16 +350,30 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         this.inspectorContent.appendChild(fragment);
     }
     
-    renderSceneSettings(fragment, createPropGroup, createTextInput, createColorInput, createNumberInput) {
+    renderSceneSettings(fragment, createPropGroup, createColorInput, createNumberInput) {
         const settings = this.app.settings;
         const groupTitle = document.createElement('div');
         groupTitle.className = 'placeholder-text';
         groupTitle.innerHTML = '<b>Scene Settings</b>';
         fragment.appendChild(groupTitle);
         
-        const skyboxGroup = createPropGroup('Skybox Path');
-        const skyboxInput = createTextInput(skyboxGroup, settings.skybox || '', (val) => this.editor.updateSceneSetting('skybox', val));
-        skyboxInput.placeholder = './assets/skyboxes/folder/';
+        const skyboxGroup = createPropGroup('Skybox');
+        const select = document.createElement('select');
+        select.onchange = (e) => this.editor.updateSceneSetting('skybox', e.target.value);
+
+        const noneOption = document.createElement('option');
+        noneOption.value = '';
+        noneOption.textContent = 'None (Use Background Color)';
+        select.appendChild(noneOption);
+
+        this.skyboxOptions.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.path;
+            option.textContent = opt.name;
+            select.appendChild(option);
+        });
+        select.value = settings.skybox || '';
+        skyboxGroup.appendChild(select);
         
         fragment.appendChild(document.createElement('hr'));
         
@@ -408,10 +429,10 @@ NOTE: Distances are ideal, assuming flat ground. "Gap clearance" is max height +
         }
     
         if (def && def.size) {
-            if (def.type === 'Plane') {
+            if (def.type === 'Plane' || def.type === 'Waterfall') {
                 const widthGroup = createPropGroup('Width');
                 createNumberInput(widthGroup, def.size[0] * mesh.scale.x, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 0, val); });
-                const depthGroup = createPropGroup('Depth');
+                const depthGroup = createPropGroup('Height');
                 createNumberInput(depthGroup, def.size[1] * mesh.scale.y, { step: 0.25 }, (val) => { this.editor.updateSelectedProp('size', 1, val); });
             } else {
                 const sizeGroup = createPropGroup('Size');

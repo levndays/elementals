@@ -72,8 +72,8 @@ export class VFXManager {
         this.updatableEffects.push(explosion);
     }
 
-    createWaterfallSplashVFX({ position, size }) {
-        const splashVFX = new WaterfallSplashVFX(this.scene, position, size);
+    createWaterfallSplashVFX(data) {
+        const splashVFX = new WaterfallSplashVFX(this.scene, data);
         this.updatableEffects.push(splashVFX);
         return splashVFX;
     }

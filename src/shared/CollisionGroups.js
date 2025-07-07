@@ -14,3 +14,8 @@ export const COLLISION_GROUPS = {
     VISION_BLOCKER:    128, // Blocks AI line of sight
     WATER:             256,
 };
+
+export const RENDERING_LAYERS = {
+    DEFAULT: 0,
+    NO_REFLECTION: 1,
+};

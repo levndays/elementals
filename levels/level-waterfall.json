@@ -29,25 +29,25 @@
       "position": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Main_Waterfall",
-      "size": [20, 30, 2],
+      "size": [20, 30],
       "position": { "x": 0, "y": 25, "z": -20 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Side_Waterfall_1",
-      "size": [10, 20, 2],
+      "size": [10, 20],
       "position": { "x": -25, "y": 18, "z": -15 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
-      "type": "Water",
+      "type": "Waterfall",
       "name": "Side_Waterfall_2",
-      "size": [10, 20, 2],
+      "size": [10, 20],
       "position": { "x": 25, "y": 18, "z": -15 },
-      "rotation": { "x": -90, "y": 0, "z": 0 }
+      "rotation": { "x": 0, "y": 0, "z": 0 }
     },
     {
       "type": "Box", "name": "Ground_Bedrock", "size": [100, 2, 100],
