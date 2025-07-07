@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T19:58:08.971569
+Snapshot created on: 2025-07-07T20:28:22.839250
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -5606,6 +5606,7 @@ export class CardObject {
 
 === FILE: src/client/rendering/CardParticleSystem.js ===
 --------------------------------------------------
+// [ ~ src/client/rendering/CardParticleSystem.js ]
 import * as THREE from 'three';
 
 // Asynchronously load shaders once at the module level
@@ -5675,7 +5676,8 @@ export class CardParticleSystem {
                 uTime: { value: 0 },
                 uTexture: { value: this.createPointTexture() },
                 uColor: { value: this.color },
-                uScale: { value: 2.0 }
+                uScale: { value: 2.0 },
+                uGravity: { value: new THREE.Vector3(0, 0, 0) } // No gravity for card VFX
             },
             vertexShader,
             fragmentShader,
@@ -5759,7 +5761,7 @@ export class CardParticleSystem {
                 const spawnTime = lifetimeAttr.getY(index);
 
                 if (currentTime - spawnTime > maxLifetime) {
-                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array);
+                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimes.array);
                     respawned++;
                 }
             }
@@ -6497,105 +6499,143 @@ export class VFXManager {
 
 === FILE: src/client/rendering/WaterfallSplashVFX.js ===
 --------------------------------------------------
+// [ ~ src/client/rendering/WaterfallSplashVFX.js ]
 import * as THREE from 'three';
+
+const vertexShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.vert').then(res => res.text());
+const fragmentShaderPromise = fetch('./src/client/rendering/shaders/gpu_particle.frag').then(res => res.text());
 
 export class WaterfallSplashVFX {
     constructor(scene, { position, size, normal = new THREE.Vector3(0, 1, 0) }) {
         this.scene = scene;
-        this.lifetime = Infinity; // Lives as long as the waterfall exists
         this.size = size;
-        
-        const particleDensity = 200; // particles per square meter
-        this.particleCount = Math.max(50, Math.floor(particleDensity * this.size.x * this.size.z));
+        this.particleCount = 0;
+        this.points = null;
+        this.isReady = false;
+        this.respawnCursor = 0;
+
+        this.init(position, normal);
+    }
+
+    async init(position, normal) {
+        const particleDensity = 100; // particles per square meter, reduced for performance
+        this.particleCount = Math.max(30, Math.floor(particleDensity * this.size.x * this.size.z));
 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(this.particleCount * 3);
         const velocities = new Float32Array(this.particleCount * 3);
-        const lifetimes = new Float32Array(this.particleCount);
+        const lifetimes = new Float32Array(this.particleCount * 4); // maxLifetime, spawnTime, 0, 0
 
         for (let i = 0; i < this.particleCount; i++) {
-            this.initParticle(i, positions, velocities, lifetimes, this.size);
+            this.initParticle(i, 0, positions, velocities, lifetimes, this.size);
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-        geometry.setAttribute('lifetime', new THREE.BufferAttribute(lifetimes, 1));
+        geometry.setAttribute('aLifetime', new THREE.BufferAttribute(lifetimes, 4));
 
-        const material = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 0.15,
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.4, 'rgba(200,220,255,0.7)');
+        gradient.addColorStop(1, 'rgba(150,200,255,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+        const texture = new THREE.CanvasTexture(canvas);
+
+        const worldGravity = new THREE.Vector3(0, -9.82 * 0.5, 0);
+        const localGravity = worldGravity.clone().applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal).invert());
+        
+        const [vertexShader, fragmentShader] = await Promise.all([vertexShaderPromise, fragmentShaderPromise]);
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uTexture: { value: texture },
+                uColor: { value: new THREE.Color(0xeeeeff) },
+                uScale: { value: 2.5 },
+                uGravity: { value: localGravity }
+            },
+            vertexShader,
+            fragmentShader,
             blending: THREE.AdditiveBlending,
             transparent: true,
             depthWrite: false,
-            opacity: 0.6,
-            sizeAttenuation: true
         });
 
         this.points = new THREE.Points(geometry, material);
         this.points.position.copy(position);
+        this.points.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal.normalize());
         
-        const up = new THREE.Vector3(0, 1, 0);
-        this.points.quaternion.setFromUnitVectors(up, normal.normalize());
-        
-        const worldGravity = new THREE.Vector3(0, -9.82 * 0.5, 0);
-        this.localGravity = worldGravity.applyQuaternion(this.points.quaternion.clone().invert());
-
         this.scene.add(this.points);
+        this.isReady = true;
     }
 
-    initParticle(i, positions, velocities, lifetimes, size) {
+    initParticle(i, currentTime, positions, velocities, lifetimes, size) {
         const i3 = i * 3;
+        const i4 = i * 4;
         
         positions[i3] = (Math.random() - 0.5) * size.x;
         positions[i3 + 1] = 0;
         positions[i3 + 2] = (Math.random() - 0.5) * size.z;
 
-        const upwardVelocity = Math.random() * 3.0 + 1.0;
+        const upwardVelocity = Math.random() * 2.5 + 0.5;
         const scatter = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.5,
+            (Math.random() - 0.5) * 0.8,
             upwardVelocity,
-            (Math.random() - 0.5) * 0.5
+            (Math.random() - 0.5) * 0.8
         );
 
         velocities[i3] = scatter.x;
         velocities[i3 + 1] = scatter.y;
         velocities[i3 + 2] = scatter.z;
         
-        lifetimes[i] = Math.random() * 2.5 + 0.5;
+        lifetimes[i4] = Math.random() * 2.0 + 0.5; // maxLifetime
+        lifetimes[i4 + 1] = currentTime + Math.random() * lifetimes[i4]; // spawnTime
     }
 
     update(deltaTime) {
-        const positions = this.points.geometry.attributes.position.array;
-        const velocities = this.points.geometry.attributes.velocity.array;
-        const lifetimes = this.points.geometry.attributes.lifetime.array;
-        
-        for (let i = 0; i < this.particleCount; i++) {
-            const i3 = i * 3;
-            
-            velocities[i3 + 0] += this.localGravity.x * deltaTime;
-            velocities[i3 + 1] += this.localGravity.y * deltaTime;
-            velocities[i3 + 2] += this.localGravity.z * deltaTime;
+        if (!this.isReady || !this.points) return true;
 
-            positions[i3] += velocities[i3] * deltaTime;
-            positions[i3 + 1] += velocities[i3 + 1] * deltaTime;
-            positions[i3 + 2] += velocities[i3 + 2] * deltaTime;
-            
-            lifetimes[i] -= deltaTime;
-            if (lifetimes[i] <= 0) {
-                this.initParticle(i, positions, velocities, lifetimes, this.size);
+        const material = this.points.material;
+        const currentTime = material.uniforms.uTime.value += deltaTime;
+
+        const lifetimeAttr = this.points.geometry.attributes.aLifetime;
+        const positionAttr = this.points.geometry.attributes.position;
+        const velocityAttr = this.points.geometry.attributes.velocity;
+
+        let respawned = 0;
+        const particlesToRespawn = Math.ceil(this.particleCount * 0.05); // Respawn 5% of particles per frame
+
+        for (let i = 0; i < particlesToRespawn; i++) {
+            const index = (this.respawnCursor + i) % this.particleCount;
+            const maxLifetime = lifetimeAttr.getX(index);
+            const spawnTime = lifetimeAttr.getY(index);
+
+            if (currentTime - spawnTime > maxLifetime) {
+                this.initParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array, this.size);
+                respawned++;
             }
         }
 
-        this.points.geometry.attributes.position.needsUpdate = true;
-        this.points.geometry.attributes.velocity.needsUpdate = true;
-        this.points.geometry.attributes.lifetime.needsUpdate = true;
+        if (respawned > 0) {
+            lifetimeAttr.needsUpdate = true;
+            positionAttr.needsUpdate = true;
+            velocityAttr.needsUpdate = true;
+        }
+
+        this.respawnCursor = (this.respawnCursor + particlesToRespawn) % this.particleCount;
         
         return true; // Never self-destructs
     }
 
     dispose() {
+        if (!this.points) return;
         this.scene.remove(this.points);
         this.points.geometry.dispose();
+        this.points.material.uniforms.uTexture.value.dispose();
         this.points.material.dispose();
     }
 }
@@ -6869,8 +6909,10 @@ void main() {
 
 === FILE: src/client/rendering/shaders/gpu_particle.vert ===
 --------------------------------------------------
+// [ ~ src/client/rendering/shaders/gpu_particle.vert ]
 uniform float uTime;
 uniform float uScale;
+uniform vec3 uGravity;
 
 attribute vec3 velocity;
 attribute vec4 aLifetime; // x: maxLifetime, y: spawnTime
@@ -6879,32 +6921,28 @@ varying float vAlpha;
 
 void main() {
     float maxLifetime = aLifetime.x;
-    float spawnTime = aLifetime.y;
+    float spawnTime = a.y;
 
-    float lifeProgress = (uTime - spawnTime) / maxLifetime;
+    float timeAlive = uTime - spawnTime;
 
     // If particle is "dead" or not yet born, hide it.
-    if (lifeProgress > 1.0 || lifeProgress < 0.0) {
+    if (timeAlive > maxLifetime || timeAlive < 0.0) {
         vAlpha = 0.0;
-        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);
+        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0); // Move off-screen
         return;
     }
     
-    // Simple physics: pos = initial_pos + velocity * time_since_spawn
-    vec3 newPosition = position + velocity * (uTime - spawnTime);
-
-    // Add some turbulence/noise for more organic movement
-    newPosition.x += sin(newPosition.y * 2.0 + uTime) * 0.1;
-    newPosition.z += cos(newPosition.y * 2.0 + uTime) * 0.1;
+    // Standard kinematic equation for position under constant acceleration (gravity)
+    vec3 newPosition = position + velocity * timeAlive + 0.5 * uGravity * timeAlive * timeAlive;
     
     vec4 mvPosition = modelViewMatrix * vec4(newPosition, 1.0);
     
     // Set point size based on distance to camera
-    gl_PointSize = uScale * (1.0 - lifeProgress) * (300.0 / -mvPosition.z);
+    gl_PointSize = uScale * (1.0 - (timeAlive / maxLifetime)) * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
 
     // Fade out over lifetime
-    vAlpha = 1.0 - lifeProgress;
+    vAlpha = 1.0 - (timeAlive / maxLifetime);
 }
 --------------------------------------------------
 === END OF FILE: src/client/rendering/shaders/gpu_particle.vert ===
@@ -7034,7 +7072,7 @@ void main() {
 
 === FILE: src/client/rendering/shaders/waterfall.frag ===
 --------------------------------------------------
-// src/client/rendering/shaders/waterfall.frag
+// [ ~ src/client/rendering/shaders/waterfall.frag ]
 precision mediump float;
 
 uniform float uTime;
@@ -7047,8 +7085,6 @@ varying vec3 vViewDirection;
 
 void main() {
     // --- 1. UV & Time Setup ---
-    // REVISED: Using addition (+) makes the texture sample "higher" over time,
-    // which results in a downward scrolling effect on a standard plane.
     vec2 flowUv1 = vUv * vec2(1.0, 4.0) + vec2(0.0, uTime * 0.8);
     vec2 flowUv2 = vUv * vec2(1.4, 6.0) + vec2(0.0, uTime * 1.3);
     vec2 distortionUv = vUv * 0.5 + vec2(0.0, uTime * 0.05);
@@ -7056,55 +7092,33 @@ void main() {
     // --- 2. Texture Sampling for Water Flow ---
     float distortion = texture2D(uNoiseTexture, distortionUv).r * 0.05;
     float flow1 = texture2D(uFlowTexture, flowUv1 + distortion).r;
-    float flow2 = texture2D(uFlowTexture, flowUv2 + distortion).r;
+    float flow2 = texture2D(uFlowTexture, flowUv2 - distortion).r;
     
-    // The mainFlow determines the density/opacity of the water streaks.
     float mainFlow = smoothstep(0.1, 0.7, flow1 * flow2);
 
     // --- 3. Foam Calculation ---
-    // Foam is concentrated at the top and bottom of the fall.
-    float foamTop = smoothstep(0.0, 0.15, vUv.y);
-    float foamBottom = smoothstep(1.0, 0.85, vUv.y);
-    float foamY = foamTop + foamBottom;
-
-    // Use noise to give the foam a dynamic, cloudy texture.
+    float foamY = smoothstep(0.0, 0.15, vUv.y) + smoothstep(1.0, 0.85, vUv.y);
     vec2 foamUv = vUv * vec2(3.0, 1.0) + vec2(0.0, uTime * 0.4);
     float foamNoise = texture2D(uNoiseTexture, foamUv).r;
-    float foam = foamY * foamNoise;
-    // Sharpen the foam to make it look more distinct.
-    foam = smoothstep(0.6, 1.0, foam);
+    float foam = smoothstep(0.6, 1.0, foamY * foamNoise);
 
     // --- 4. Color and Alpha Composition ---
-    // REVISED: Toned down colors for a less shiny look.
     vec3 waterColor = vec3(0.6, 0.75, 0.9);
-    vec3 foamColor = vec3(0.9, 0.9, 0.9);
-
-    // The final color is a blend between water and foam.
-    // The amount of foam determines the blend factor.
+    vec3 foamColor = vec3(1.0, 1.0, 1.0);
     vec3 finalColor = mix(waterColor, foamColor, foam);
 
-    // The alpha channel is crucial. It's based on the water flow, with foam being more opaque.
-    // REVISED: Reduced alpha multipliers for a more transparent effect.
-    float finalAlpha = mainFlow * 0.3 + foam * 0.5;
-    
-    // Fade the sides to prevent a hard edge.
+    float alpha = mainFlow * 0.3 + foam * 0.6;
     float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
-    finalAlpha *= edgeFade;
-
+    
     // --- 5. Fresnel Sheen ---
-    // Instead of adding brightness, the fresnel effect will make the edges slightly more opaque,
-    // simulating a water surface sheen.
-    float fresnel = pow(1.0 - dot(normalize(vNormal), vViewDirection), 3.0);
-    // REVISED: Reduced fresnel effect contribution.
-    finalAlpha = clamp(finalAlpha + fresnel * 0.15, 0.0, 1.0);
+    // The vNormal is already normalized in the vertex shader.
+    float fresnel = pow(1.0 - dot(vNormal, vViewDirection), 2.0);
+    float finalAlpha = clamp(alpha * edgeFade + fresnel * 0.2, 0.0, 1.0);
 
     // --- 6. Final Output ---
-    // Discard fully transparent pixels to improve performance.
     if (finalAlpha < 0.01) {
         discard;
     }
-
-    // By not have excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
     gl_FragColor = vec4(finalColor, finalAlpha);
 }
 --------------------------------------------------
@@ -13424,6 +13438,11 @@ export class PlayerPrefab {
             collisionFilterGroup: COLLISION_GROUPS.PLAYER,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER,
             linearDamping: config.DEFAULT_DAMPING,
+            // --- CONTINUOUS COLLISION DETECTION (CCD) ---
+            // Activate CCD if speed exceeds 15 m/s to prevent tunneling.
+            ccdSpeedThreshold: 15, 
+            // Set the radius for the swept sphere check, slightly smaller than the actual radius.
+            ccdSweptSphereRadius: 0.75, 
         });
         const playerWorldContactMaterial = new CANNON.ContactMaterial(
             physics.world.defaultMaterial, material,
@@ -13999,6 +14018,7 @@ export class DeathSystem {
 
 === FILE: src/game/systems/MovementSystem.js ===
 --------------------------------------------------
+// [ ~ src/game/systems/MovementSystem.js ]
 // ~ src/game/systems/MovementSystem.js
 
 import * as THREE from 'three';
@@ -14011,7 +14031,8 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 */
 export class MovementSystem {
     constructor() {
-        // No properties needed for ground check
+        // Add a reusable vector for swim force
+        this.swimForce = new CANNON.Vec3();
     }
     
     /**
@@ -14037,26 +14058,35 @@ export class MovementSystem {
 
     _applySwimMovement(player) {
         const { input, physics } = player;
-
+    
         // Dashing is disabled in water
         player.isDashing = false;
-
+    
         // Apply standard horizontal movement (which is already slowed by WaterSystem's damping)
         this._applyStandardMovement(player, input.moveDirection);
-
-        // Apply vertical movement from player input
-        let verticalVelocity = 0;
-        if (input.swimDirection > 0) { // Swim up
-            verticalVelocity = GAME_CONFIG.PLAYER.SWIM_SPEED;
-        } else if (input.swimDirection < 0) { // Swim down
-            verticalVelocity = -GAME_CONFIG.PLAYER.SWIM_SPEED;
-        } else {
-            // Neutral buoyancy with damping
-            verticalVelocity = physics.body.velocity.y * 0.9; 
-            if (Math.abs(verticalVelocity) < 0.1) verticalVelocity = 0;
-        }
-        physics.body.velocity.y = verticalVelocity;
+    
+        // REVISED: Apply force for vertical movement instead of setting velocity directly.
+        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60; // Force needs to be larger to overcome inertia/damping
+        let verticalForce = 0;
         
+        if (input.swimDirection > 0) { // Swim up
+            verticalForce = forceMagnitude;
+        } else if (input.swimDirection < 0) { // Swim down
+            verticalForce = -forceMagnitude;
+        }
+        
+        // Only apply force if there's input. Buoyancy from WaterSystem handles the rest.
+        if (verticalForce !== 0) {
+            this.swimForce.set(0, verticalForce, 0);
+            physics.body.applyForce(this.swimForce, physics.body.position);
+        }
+        
+        // Clamp max vertical speed to prevent runaway force accumulation
+        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.2;
+        if (Math.abs(physics.body.velocity.y) > maxVerticalSpeed) {
+            physics.body.velocity.y = Math.sign(physics.body.velocity.y) * maxVerticalSpeed;
+        }
+    
         // Reset slam state when in water
         player.isSlamming = false;
     }
@@ -14559,18 +14589,34 @@ export class TriggerSystem {
 
 === FILE: src/game/systems/WaterSystem.js ===
 --------------------------------------------------
+// [ ~ src/game/systems/WaterSystem.js ]
 // src/game/systems/WaterSystem.js
 import * as CANNON from 'cannon-es';
 import { GAME_CONFIG } from '../../shared/config.js';
 
 export class WaterSystem {
     constructor() {
-        // No properties needed.
+        // Reusable vectors to avoid allocations in the update loop
+        this._localEntityPos = new CANNON.Vec3();
+        this.buoyantForce = new CANNON.Vec3();
     }
 
     update(world, deltaTime) {
         const waterVolumes = world.getWaterVolumes();
         const entitiesToCheck = [world.player, ...world.getNPCs()];
+
+        // Part 1: Detect which entities are in water and handle entry/exit effects
+        if (waterVolumes.length === 0) {
+            // Optimization: if no water, quickly reset any entities that might have been in water
+            for (const entity of entitiesToCheck) {
+                if (entity?.isInWater) {
+                    this.removeWaterEffects(entity);
+                    entity.isInWater = false;
+                    if (entity.type === 'player') entity.currentWaterVolume = null;
+                }
+            }
+            return;
+        }
 
         for (const entity of entitiesToCheck) {
             if (!entity || entity.isDead || !entity.physics?.body) continue;
@@ -14578,22 +14624,20 @@ export class WaterSystem {
             let isNowInWater = false;
             let currentVolume = null;
 
-            if (waterVolumes.length > 0) {
-                for (const volume of waterVolumes) {
-                    if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
-                        const entityPos = entity.physics.body.position;
-                        const volumePos = volume.body.position;
-                        const halfSize = volume.body.shapes[0].halfExtents;
-
-                        if (
-                            entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
-                            entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
-                            entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
-                        ) {
-                            isNowInWater = true;
-                            currentVolume = volume;
-                            break;
-                        }
+            for (const volume of waterVolumes) {
+                if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
+                    const volumeBody = volume.body;
+                    volumeBody.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
+                    const halfSize = volumeBody.shapes[0].halfExtents;
+                    
+                    if (
+                        Math.abs(this._localEntityPos.x) <= halfSize.x &&
+                        Math.abs(this._localEntityPos.y) <= halfSize.y &&
+                        Math.abs(this._localEntityPos.z) <= halfSize.z
+                    ) {
+                        isNowInWater = true;
+                        currentVolume = volume;
+                        break;
                     }
                 }
             }
@@ -14611,6 +14655,31 @@ export class WaterSystem {
                 entity.currentWaterVolume = isNowInWater ? currentVolume : null;
             }
         }
+
+        // Part 2: Apply persistent water physics (buoyancy) to all submerged entities
+        for (const entity of entitiesToCheck) {
+            if (entity?.isInWater && entity.physics?.body) {
+                this.applyBuoyancy(entity, world.physics.world.gravity);
+            }
+        }
+    }
+    
+    applyBuoyancy(entity, gravity) {
+        const body = entity.physics.body;
+        // Don't apply buoyancy to water specialists walking on water, as they aren't "submerged".
+        if (entity.type === 'player' && entity.isWaterSpecialist) {
+            return;
+        }
+        
+        // Force to counteract gravity for neutral buoyancy
+        const buoyancyMagnitude = Math.abs(gravity.y) * body.mass;
+        
+        // Apply some damping to vertical velocity to simulate water resistance
+        const verticalDamping = 0.95;
+        body.velocity.y *= verticalDamping;
+        
+        this.buoyantForce.set(0, buoyancyMagnitude, 0);
+        body.applyForce(this.buoyantForce, body.position);
     }
 
     applyWaterEffects(entity, volume) {
@@ -15222,6 +15291,7 @@ export class WeaponFactory {
 
 === FILE: src/game/world/LevelManager.js ===
 --------------------------------------------------
+// [ ~ src/game/world/LevelManager.js ]
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';
@@ -15441,11 +15511,17 @@ export class WeaponFactory {
             const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
     
             const waterMesh = new Water(new THREE.PlaneGeometry(size[0], size[2]), {
-                textureWidth: 512, textureHeight: 512,
+                // OPTIMIZATION: Lowered texture resolution for reflections/refractions
+                textureWidth: 256, 
+                textureHeight: 256,
                 waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }),
                 sunDirection: sunLight.position.clone().normalize(),
-                sunColor: waterSunColor, waterColor: 0x005577,
-                distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
+                sunColor: waterSunColor, 
+                waterColor: 0x005577,
+                // OPTIMIZATION: Reduced distortion scale to look better with lower res textures
+                distortionScale: 2.0, 
+                fog: !!this.world.scene.fog, 
+                alpha: 0.9,
             });
             
             waterMesh.layers.disable(RENDERING_LAYERS.NO_REFLECTION);

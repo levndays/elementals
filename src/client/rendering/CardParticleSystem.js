@@ -1,3 +1,4 @@
+// [ ~ src/client/rendering/CardParticleSystem.js ]
 import * as THREE from 'three';
 
 // Asynchronously load shaders once at the module level
@@ -67,7 +68,8 @@ export class CardParticleSystem {
                 uTime: { value: 0 },
                 uTexture: { value: this.createPointTexture() },
                 uColor: { value: this.color },
-                uScale: { value: 2.0 }
+                uScale: { value: 2.0 },
+                uGravity: { value: new THREE.Vector3(0, 0, 0) } // No gravity for card VFX
             },
             vertexShader,
             fragmentShader,
@@ -151,7 +153,7 @@ export class CardParticleSystem {
                 const spawnTime = lifetimeAttr.getY(index);
 
                 if (currentTime - spawnTime > maxLifetime) {
-                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimeAttr.array);
+                    this.initPointParticle(index, currentTime, positionAttr.array, velocityAttr.array, lifetimes.array);
                     respawned++;
                 }
             }

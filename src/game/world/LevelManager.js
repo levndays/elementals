@@ -1,3 +1,4 @@
+// [ ~ src/game/world/LevelManager.js ]
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';
@@ -217,11 +218,17 @@
             const waterSunColor = new THREE.Color(sunLight.color).multiplyScalar(0.3);
     
             const waterMesh = new Water(new THREE.PlaneGeometry(size[0], size[2]), {
-                textureWidth: 512, textureHeight: 512,
+                // OPTIMIZATION: Lowered texture resolution for reflections/refractions
+                textureWidth: 256, 
+                textureHeight: 256,
                 waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }),
                 sunDirection: sunLight.position.clone().normalize(),
-                sunColor: waterSunColor, waterColor: 0x005577,
-                distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
+                sunColor: waterSunColor, 
+                waterColor: 0x005577,
+                // OPTIMIZATION: Reduced distortion scale to look better with lower res textures
+                distortionScale: 2.0, 
+                fog: !!this.world.scene.fog, 
+                alpha: 0.9,
             });
             
             waterMesh.layers.disable(RENDERING_LAYERS.NO_REFLECTION);

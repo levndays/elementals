@@ -1,3 +1,4 @@
+// [ ~ src/game/systems/MovementSystem.js ]
 // ~ src/game/systems/MovementSystem.js
 
 import * as THREE from 'three';
@@ -10,7 +11,8 @@ import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 */
 export class MovementSystem {
     constructor() {
-        // No properties needed for ground check
+        // Add a reusable vector for swim force
+        this.swimForce = new CANNON.Vec3();
     }
     
     /**
@@ -36,26 +38,35 @@ export class MovementSystem {
 
     _applySwimMovement(player) {
         const { input, physics } = player;
-
+    
         // Dashing is disabled in water
         player.isDashing = false;
-
+    
         // Apply standard horizontal movement (which is already slowed by WaterSystem's damping)
         this._applyStandardMovement(player, input.moveDirection);
-
-        // Apply vertical movement from player input
-        let verticalVelocity = 0;
-        if (input.swimDirection > 0) { // Swim up
-            verticalVelocity = GAME_CONFIG.PLAYER.SWIM_SPEED;
-        } else if (input.swimDirection < 0) { // Swim down
-            verticalVelocity = -GAME_CONFIG.PLAYER.SWIM_SPEED;
-        } else {
-            // Neutral buoyancy with damping
-            verticalVelocity = physics.body.velocity.y * 0.9; 
-            if (Math.abs(verticalVelocity) < 0.1) verticalVelocity = 0;
-        }
-        physics.body.velocity.y = verticalVelocity;
+    
+        // REVISED: Apply force for vertical movement instead of setting velocity directly.
+        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60; // Force needs to be larger to overcome inertia/damping
+        let verticalForce = 0;
         
+        if (input.swimDirection > 0) { // Swim up
+            verticalForce = forceMagnitude;
+        } else if (input.swimDirection < 0) { // Swim down
+            verticalForce = -forceMagnitude;
+        }
+        
+        // Only apply force if there's input. Buoyancy from WaterSystem handles the rest.
+        if (verticalForce !== 0) {
+            this.swimForce.set(0, verticalForce, 0);
+            physics.body.applyForce(this.swimForce, physics.body.position);
+        }
+        
+        // Clamp max vertical speed to prevent runaway force accumulation
+        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.2;
+        if (Math.abs(physics.body.velocity.y) > maxVerticalSpeed) {
+            physics.body.velocity.y = Math.sign(physics.body.velocity.y) * maxVerticalSpeed;
+        }
+    
         // Reset slam state when in water
         player.isSlamming = false;
     }
