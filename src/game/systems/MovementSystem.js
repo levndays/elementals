@@ -204,14 +204,19 @@ export class MovementSystem {
         
     _applyStandardMovement(player, moveDirection) {
         let speed = GAME_CONFIG.PLAYER.SPEED;
-
         if (player.statusEffects.has('stonePlating')) {
             speed *= 0.8;
         }
+    
+        const body = player.physics.body;
+        const yVelocity = body.velocity.y; // Preserve vertical velocity from gravity, jumps, etc.
+    
+        // Directly set the horizontal velocity for responsive control
+        body.velocity.x = moveDirection.x * speed;
+        body.velocity.z = moveDirection.z * speed;
         
-        const velocity = player.physics.body.velocity;
-        velocity.x = moveDirection.x * speed;
-        velocity.z = moveDirection.z * speed;
+        // Restore the vertical velocity
+        body.velocity.y = yVelocity;
     }
         
     _applyDashMovement(player) {

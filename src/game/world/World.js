@@ -113,7 +113,8 @@ export class World {
         }
         
         if (entity.mesh) this.scene.add(entity.mesh);
-        if (entity.helperMesh) this.scene.add(entity.helperMesh);
+        // Do NOT add helperMesh in the game world, only in the editor.
+        // if (entity.helperMesh) this.scene.add(entity.helperMesh);
         const body = entity.physics?.body || entity.body;
         if (body) this.physics.addBody(body);
 

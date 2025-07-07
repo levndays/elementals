@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T20:55:48.573656
+Snapshot created on: 2025-07-07T21:41:50.585111
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -5387,10 +5387,8 @@ export class PlayerController {
         if (!this.player || this.player.isDead || !document.pointerLockElement) return;
         
         if (event.code === 'Space') {
-            // Only allow jumping on land. Swimming up is handled by holding space in `_handleMovement`.
-            if (!this.player.isSwimming) {
-                this.player.jump();
-            }
+            // Let the MovementSystem decide what a jump means based on state (land vs water)
+            this.player.jump();
         }
         
         if (event.code === 'KeyR') {
@@ -13057,7 +13055,10 @@ export class NPC {
         // Client-side visual state
         this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
         this.isDead = false;
-        this.isInWater = false; // For water interaction logic
+        
+        // Water interaction state
+        this.isInWater = false;
+        this.currentWaterVolume = null;
 
         // Melee animation state
         this.isAttacking = false;
@@ -13165,6 +13166,7 @@ export class Player {
 
         // Water interaction state
         this.isSwimming = false;
+        this.isAtWaterSurface = false;
         this.isWaterSpecialist = false;
         this.currentWaterVolume = null;
 
@@ -13198,13 +13200,8 @@ export class Player {
     setLookDirection(euler) { this.input.lookDirection.setFromEuler(euler); }
     
     jump() {
-        if (this.isSwimming) return; // Guard against jumping in water
-
-        if (this.statusEffects.has('stonePlating')) {
-            // Allow first jump from the ground, but not subsequent (double) jumps.
-            if (this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
-                return; // Block double jump
-            }
+        if (this.statusEffects.has('stonePlating') && this.jumpsRemaining < GAME_CONFIG.PLAYER.MAX_JUMPS) {
+            return; // Block double jump when buff is active
         }
         this.input.jumpRequested = true;
     }
@@ -13310,6 +13307,7 @@ export class Player {
         this.dashOnCooldown = false; this.dashCooldownTimer = GAME_CONFIG.PLAYER.DASH_COOLDOWN;
         this.dashStateTimer = 0;
         this.isSwimming = false;
+        this.isAtWaterSurface = false;
         this.currentWaterVolume = null;
         this.abilities.abilities.forEach(a => { if(a) a.cooldownTimer = a.cooldown; });
         this.abilities.lastAbilityTime = -Infinity;
@@ -14055,11 +14053,41 @@ export class MovementSystem {
         const { input, physics } = player;
     
         player.isDashing = false;
+        player.isSlamming = false;
     
-        // Use a force-based approach for horizontal movement in water to respect collisions.
+        // Determine if player is at the surface of the water
+        let atSurface = false;
+        if (player.currentWaterVolume) {
+            const body = player.physics.body;
+            const volume = player.currentWaterVolume;
+            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
+            
+            if (body.position.y >= surfaceY - body.shapes[0].radius) {
+                atSurface = true;
+            }
+        }
+        player.isAtWaterSurface = atSurface;
+        
+        // Prioritize jumping out of the water if requested at the surface
+        if (player.input.jumpRequested && atSurface) {
+            const body = player.physics.body;
+            body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT;
+            player.world.emit('playerJumped');
+            
+            player.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS;
+            
+            player.isSwimming = false;
+            player.isAtWaterSurface = false;
+            player.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
+            player.currentWaterVolume = null;
+            return; // Exit early, we are no longer swimming
+        }
+    
+        // Apply horizontal movement force
         this._applySwimHorizontalMovement(player);
     
-        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * 60;
+        // Apply vertical movement force (swimming up/down)
+        const forceMagnitude = GAME_CONFIG.PLAYER.SWIM_SPEED * GAME_CONFIG.PLAYER.SWIM_FORCE_MULTIPLIER;
         let verticalForce = 0;
         
         if (input.swimDirection > 0) {
@@ -14073,27 +14101,10 @@ export class MovementSystem {
             physics.body.applyForce(this.swimForce, physics.body.position);
         }
         
-        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.2;
+        // Clamp vertical speed
+        const maxVerticalSpeed = GAME_CONFIG.PLAYER.SWIM_SPEED * 1.5;
         if (Math.abs(physics.body.velocity.y) > maxVerticalSpeed) {
             physics.body.velocity.y = Math.sign(physics.body.velocity.y) * maxVerticalSpeed;
-        }
-    
-        player.isSlamming = false;
-
-        // Allow player to jump out of the water if near the surface.
-        if (player.input.jumpRequested && player.currentWaterVolume) {
-            const body = player.physics.body;
-            const volume = player.currentWaterVolume;
-            const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
-
-            if (body.position.y > surfaceY - body.shapes[0].radius * 2) {
-                body.velocity.y = GAME_CONFIG.PLAYER.JUMP_HEIGHT * 0.8; // Weaker jump out of water
-                player.world.emit('playerJumped');
-                player.jumpsRemaining = GAME_CONFIG.PLAYER.MAX_JUMPS - 1;
-                player.isSwimming = false;
-                player.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
-                player.currentWaterVolume = null;
-            }
         }
     }
 
@@ -14207,14 +14218,19 @@ export class MovementSystem {
         
     _applyStandardMovement(player, moveDirection) {
         let speed = GAME_CONFIG.PLAYER.SPEED;
-
         if (player.statusEffects.has('stonePlating')) {
             speed *= 0.8;
         }
+    
+        const body = player.physics.body;
+        const yVelocity = body.velocity.y; // Preserve vertical velocity from gravity, jumps, etc.
+    
+        // Directly set the horizontal velocity for responsive control
+        body.velocity.x = moveDirection.x * speed;
+        body.velocity.z = moveDirection.z * speed;
         
-        const velocity = player.physics.body.velocity;
-        velocity.x = moveDirection.x * speed;
-        velocity.z = moveDirection.z * speed;
+        // Restore the vertical velocity
+        body.velocity.y = yVelocity;
     }
         
     _applyDashMovement(player) {
@@ -14362,7 +14378,8 @@ export class PlayerResourceSystem {
 
     _updateOxygen(player, deltaTime) {
         const config = GAME_CONFIG.PLAYER;
-        const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist;
+        // Consume oxygen only when submerged, not a water specialist, and NOT at the surface.
+        const isConsumingOxygen = player.isSwimming && !player.isWaterSpecialist && !player.isAtWaterSurface;
 
         if (isConsumingOxygen) {
             player.currentOxygen -= config.OXYGEN_CONSUMPTION_RATE * deltaTime;
@@ -14371,6 +14388,7 @@ export class PlayerResourceSystem {
                 player.takeDamage(config.OXYGEN_DAMAGE_PER_SECOND * deltaTime);
             }
         } else {
+            // Oxygen regenerates when out of water OR at the surface.
             if (player.currentOxygen < player.maxOxygen) {
                 player.currentOxygen = Math.min(
                     player.maxOxygen,
@@ -14634,8 +14652,6 @@ export class WaterSystem {
             for (const entity of entitiesToCheck) {
                 if (entity?.isInWater) {
                     this.removeWaterEffects(entity);
-                    entity.isInWater = false;
-                    if (entity.type === 'player') entity.currentWaterVolume = null;
                 }
             }
             return;
@@ -14643,43 +14659,51 @@ export class WaterSystem {
 
         for (const entity of entitiesToCheck) {
             if (!entity || entity.isDead || !entity.physics?.body) continue;
-            
-            let isNowInWater = false;
-            let currentVolume = null;
 
+            const wasInWater = entity.isInWater || false;
+            let isConsideredInWater = false;
+            let currentVolumeForFrame = null;
+
+            // Broad phase check for potential water interaction
             for (const volume of waterVolumes) {
                 if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
-                    const volumeBody = volume.body;
-                    volumeBody.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
-                    const halfSize = volumeBody.shapes[0].halfExtents;
-                    
+                    // Precise check: is entity's center inside this volume's bounds?
+                    volume.body.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
+                    const halfSize = volume.body.shapes[0].halfExtents;
                     if (
                         Math.abs(this._localEntityPos.x) <= halfSize.x &&
                         Math.abs(this._localEntityPos.y) <= halfSize.y &&
                         Math.abs(this._localEntityPos.z) <= halfSize.z
                     ) {
-                        isNowInWater = true;
-                        currentVolume = volume;
-                        break;
+                        isConsideredInWater = true;
+                        currentVolumeForFrame = volume;
+                        break; // Found a volume, no need to check others for entry
                     }
                 }
             }
             
-            const wasInWater = entity.isInWater || false;
-
-            if (isNowInWater && !wasInWater) {
-                this.applyWaterEffects(entity, currentVolume);
-            } else if (!isNowInWater && wasInWater) {
+            if (wasInWater && !isConsideredInWater) {
+                // Entity center has left, but are they still partially submerged in their *previous* volume?
+                const lastVolume = entity.currentWaterVolume;
+                if (lastVolume) {
+                    const surfaceY = lastVolume.body.position.y + lastVolume.definition.size[1] / 2;
+                    const bodyBottomY = entity.physics.body.position.y - entity.physics.body.shapes[0].radius;
+                    if (bodyBottomY < surfaceY) {
+                        // Still submerged, force state to remain in water
+                        isConsideredInWater = true;
+                        currentVolumeForFrame = lastVolume;
+                    }
+                }
+            }
+            
+            if (isConsideredInWater && !wasInWater) {
+                this.applyWaterEffects(entity, currentVolumeForFrame);
+            } else if (!isConsideredInWater && wasInWater) {
                 this.removeWaterEffects(entity);
             }
             
-            entity.isInWater = isNowInWater;
             if (entity.type === 'player') {
-                entity.currentWaterVolume = isNowInWater ? currentVolume : null;
-                // Continuously apply specialist effects if they are in a water volume
-                if (isNowInWater && entity.isWaterSpecialist) {
-                    this.applyWaterEffects(entity, currentVolume);
-                }
+                entity.currentWaterVolume = isConsideredInWater ? currentVolumeForFrame : null;
             }
         }
 
@@ -14711,6 +14735,8 @@ export class WaterSystem {
 
     applyWaterEffects(entity, volume) {
         const body = entity.physics.body;
+        entity.isInWater = true;
+        entity.currentWaterVolume = volume;
 
         if (entity.type === 'player') {
             const surfaceY = volume.body.position.y + volume.definition.size[1] / 2;
@@ -14732,8 +14758,12 @@ export class WaterSystem {
     }
 
     removeWaterEffects(entity) {
+        entity.isInWater = false;
+        entity.currentWaterVolume = null;
+
         if (entity.type === 'player') {
             entity.isSwimming = false;
+            entity.isAtWaterSurface = false;
             entity.physics.body.linearDamping = GAME_CONFIG.PLAYER.DEFAULT_DAMPING;
         } else if (entity.type === 'npc') {
             entity.physics.body.linearDamping = 0.1;
@@ -15773,7 +15803,8 @@ export class World {
         }
         
         if (entity.mesh) this.scene.add(entity.mesh);
-        if (entity.helperMesh) this.scene.add(entity.helperMesh);
+        // Do NOT add helperMesh in the game world, only in the editor.
+        // if (entity.helperMesh) this.scene.add(entity.helperMesh);
         const body = entity.physics?.body || entity.body;
         if (body) this.physics.addBody(body);
 
@@ -15920,7 +15951,8 @@ export const GAME_CONFIG = {
         
         FOV: 75, // Default field of view
         SPEED: 8.0, // meters per second
-        SWIM_SPEED: 4.0, // vertical speed in water
+        SWIM_SPEED: 6.0, // base vertical/horizontal speed in water
+        SWIM_FORCE_MULTIPLIER: 80, // Multiplier for vertical force application
         JUMP_HEIGHT: 8.0, // initial vertical velocity on jump
         MAX_JUMPS: 2,
         
