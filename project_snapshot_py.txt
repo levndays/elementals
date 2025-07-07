@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T03:39:46.673356
+Snapshot created on: 2025-07-07T05:02:47.524243
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -4181,8 +4181,8 @@ export class VFXManager {
         this.updatableEffects.push(explosion);
     }
 
-    createWaterfallSplashVFX({ position, size }) {
-        const splashVFX = new WaterfallSplashVFX(this.scene, position, size);
+    createWaterfallSplashVFX(data) {
+        const splashVFX = new WaterfallSplashVFX(this.scene, data);
         this.updatableEffects.push(splashVFX);
         return splashVFX;
     }
@@ -4302,14 +4302,16 @@ export class VFXManager {
 
 === FILE: src/client/rendering/WaterfallSplashVFX.js ===
 --------------------------------------------------
-// src/client/rendering/WaterfallSplashVFX.js
 import * as THREE from 'three';
 
 export class WaterfallSplashVFX {
-    constructor(scene, position, size) {
+    constructor(scene, { position, size, normal = new THREE.Vector3(0, 1, 0) }) {
         this.scene = scene;
         this.lifetime = Infinity; // Lives as long as the waterfall exists
-        this.particleCount = 400;
+        this.size = size;
+        
+        const particleDensity = 200; // particles per square meter
+        this.particleCount = Math.max(50, Math.floor(particleDensity * this.size.x * this.size.z));
 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(this.particleCount * 3);
@@ -4317,7 +4319,7 @@ export class WaterfallSplashVFX {
         const lifetimes = new Float32Array(this.particleCount);
 
         for (let i = 0; i < this.particleCount; i++) {
-            this.initParticle(i, positions, velocities, lifetimes, size);
+            this.initParticle(i, positions, velocities, lifetimes, this.size);
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -4326,30 +4328,43 @@ export class WaterfallSplashVFX {
 
         const material = new THREE.PointsMaterial({
             color: 0xffffff,
-            size: 0.2,
+            size: 0.15,
             blending: THREE.AdditiveBlending,
             transparent: true,
             depthWrite: false,
-            opacity: 0.7,
+            opacity: 0.6,
             sizeAttenuation: true
         });
 
         this.points = new THREE.Points(geometry, material);
         this.points.position.copy(position);
-        this.size = size;
+        
+        const up = new THREE.Vector3(0, 1, 0);
+        this.points.quaternion.setFromUnitVectors(up, normal.normalize());
+        
+        const worldGravity = new THREE.Vector3(0, -9.82 * 0.5, 0);
+        this.localGravity = worldGravity.applyQuaternion(this.points.quaternion.clone().invert());
 
         this.scene.add(this.points);
     }
 
     initParticle(i, positions, velocities, lifetimes, size) {
         const i3 = i * 3;
+        
         positions[i3] = (Math.random() - 0.5) * size.x;
-        positions[i3 + 1] = Math.random() * 2.0;
+        positions[i3 + 1] = 0;
         positions[i3 + 2] = (Math.random() - 0.5) * size.z;
 
-        velocities[i3] = (Math.random() - 0.5) * 0.5;
-        velocities[i3 + 1] = Math.random() * 3.0 + 1.0;
-        velocities[i3 + 2] = (Math.random() - 0.5) * 0.5;
+        const upwardVelocity = Math.random() * 3.0 + 1.0;
+        const scatter = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.5,
+            upwardVelocity,
+            (Math.random() - 0.5) * 0.5
+        );
+
+        velocities[i3] = scatter.x;
+        velocities[i3 + 1] = scatter.y;
+        velocities[i3 + 2] = scatter.z;
         
         lifetimes[i] = Math.random() * 2.5 + 0.5;
     }
@@ -4362,7 +4377,9 @@ export class WaterfallSplashVFX {
         for (let i = 0; i < this.particleCount; i++) {
             const i3 = i * 3;
             
-            velocities[i3 + 1] -= 9.82 * deltaTime * 0.5; // Gravity
+            velocities[i3 + 0] += this.localGravity.x * deltaTime;
+            velocities[i3 + 1] += this.localGravity.y * deltaTime;
+            velocities[i3 + 2] += this.localGravity.z * deltaTime;
 
             positions[i3] += velocities[i3] * deltaTime;
             positions[i3 + 1] += velocities[i3 + 1] * deltaTime;
@@ -4863,16 +4880,17 @@ void main() {
     foam = smoothstep(0.6, 1.0, foam);
 
     // --- 4. Color and Alpha Composition ---
-    vec3 waterColor = vec3(0.7, 0.85, 1.0);
-    vec3 foamColor = vec3(1.0, 1.0, 1.0);
+    // REVISED: Toned down colors for a less shiny look.
+    vec3 waterColor = vec3(0.6, 0.75, 0.9);
+    vec3 foamColor = vec3(0.9, 0.9, 0.9);
 
     // The final color is a blend between water and foam.
     // The amount of foam determines the blend factor.
     vec3 finalColor = mix(waterColor, foamColor, foam);
 
     // The alpha channel is crucial. It's based on the water flow, with foam being more opaque.
-    // This creates the semi-transparent, streaky look.
-    float finalAlpha = mainFlow * 0.4 + foam * 0.6;
+    // REVISED: Reduced alpha multipliers for a more transparent effect.
+    float finalAlpha = mainFlow * 0.3 + foam * 0.5;
     
     // Fade the sides to prevent a hard edge.
     float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
@@ -4882,7 +4900,8 @@ void main() {
     // Instead of adding brightness, the fresnel effect will make the edges slightly more opaque,
     // simulating a water surface sheen.
     float fresnel = pow(1.0 - dot(normalize(vNormal), vViewDirection), 3.0);
-    finalAlpha = clamp(finalAlpha + fresnel * 0.3, 0.0, 1.0);
+    // REVISED: Reduced fresnel effect contribution.
+    finalAlpha = clamp(finalAlpha + fresnel * 0.15, 0.0, 1.0);
 
     // --- 6. Final Output ---
     // Discard fully transparent pixels to improve performance.
@@ -4890,7 +4909,7 @@ void main() {
         discard;
     }
 
-    // By not having excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
+    // By not have excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
     gl_FragColor = vec4(finalColor, finalAlpha);
 }
 --------------------------------------------------
@@ -4995,6 +5014,8 @@ void main() {
 === FILE: src/client/systems/VFXSystem.js ===
 --------------------------------------------------
 import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 
 /**
  * Listens for abstract gameplay events from the World and translates them
@@ -5006,7 +5027,7 @@ export class VFXSystem {
         this.world = world;
         this.vfxManager = vfxManager;
         this.hitFlashTimers = new Map(); // entity -> timer
-        this.waterfallEffects = new Map(); // Map<entityId, splashVFX>
+        this.waterfallEffects = new Map(); // Map<entityId, splashVFX[]>
 
         // Bind handlers to ensure `this` is correct
         this._onEntityAdded = this._onEntityAdded.bind(this);
@@ -5033,29 +5054,79 @@ export class VFXSystem {
     _onEntityAdded({ entity }) {
         this.vfxManager.createVisualForEntity(entity);
 
-        // If the added entity is a waterfall, create its splash effect.
         if (entity.type === 'Waterfall') {
-            const size = entity.definition.size;
-            const position = entity.mesh.position.clone();
-            position.y -= size[1] / 2; // Move to the base of the waterfall plane
-
-            const splash = this.vfxManager.createWaterfallSplashVFX({
-                position: position,
-                size: { x: size[0], y: 1.0, z: 2.0 } // Splash in a thin line at the base
-            });
-            this.waterfallEffects.set(entity.id, splash);
+            this.createSplashesForWaterfall(entity);
         }
     }
 
     _onEntityRemoved({ entity }) {
         this.vfxManager.removeVisualForEntity(entity.id);
 
-        // If the removed entity was a waterfall, dispose its splash effect.
         if (entity.type === 'Waterfall' && this.waterfallEffects.has(entity.id)) {
-            const splashVFX = this.waterfallEffects.get(entity.id);
-            splashVFX.dispose();
+            const splashes = this.waterfallEffects.get(entity.id);
+            splashes.forEach(splash => splash.dispose());
             this.waterfallEffects.delete(entity.id);
         }
+    }
+
+    createSplashesForWaterfall(waterfall) {
+        const world = this.world;
+        const physicsWorld = world.physics.world;
+        const waterfallMesh = waterfall.mesh;
+        const width = waterfall.definition.size[0];
+        const height = waterfall.definition.size[1];
+
+        const downVector = new THREE.Vector3(0, -1, 0).applyQuaternion(waterfallMesh.quaternion);
+        
+        const basePosition = waterfallMesh.position.clone().addScaledVector(downVector, height / 2);
+        const baseSplash = this.vfxManager.createWaterfallSplashVFX({
+            position: basePosition,
+            size: { x: width, y: 1.0, z: 2.0 },
+            normal: new THREE.Vector3(0, 1, 0)
+        });
+        
+        const allSplashes = [baseSplash];
+
+        const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(waterfallMesh.quaternion);
+        const upVector = new THREE.Vector3(0, 1, 0).applyQuaternion(waterfallMesh.quaternion);
+        const numRays = 15;
+
+        for (let i = 0; i < numRays; i++) {
+            const horizontalOffset = (i / (numRays - 1) - 0.5) * width;
+            const rayStartPoint = waterfallMesh.position.clone()
+                .addScaledVector(upVector, height / 2)
+                .addScaledVector(localX, horizontalOffset);
+            
+            const rayEndPoint = rayStartPoint.clone().addScaledVector(downVector, height);
+
+            const raycastResult = new CANNON.RaycastResult();
+            physicsWorld.raycastClosest(
+                new CANNON.Vec3().copy(rayStartPoint),
+                new CANNON.Vec3().copy(rayEndPoint),
+                {
+                    collisionFilterGroup: COLLISION_GROUPS.PLAYER_PROJECTILE,
+                    collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.WATER,
+                    skipBackfaces: true
+                },
+                raycastResult
+            );
+
+            if (raycastResult.hasHit) {
+                if (raycastResult.hitPointWorld.distanceTo(basePosition) > 1.5) {
+                    const hitPoint = new THREE.Vector3().copy(raycastResult.hitPointWorld);
+                    const hitNormal = new THREE.Vector3().copy(raycastResult.hitNormalWorld);
+
+                    const intersectionSplash = this.vfxManager.createWaterfallSplashVFX({
+                        position: hitPoint,
+                        size: { x: width / numRays * 1.5, y: 1.0, z: 1.5 },
+                        normal: hitNormal
+                    });
+                    allSplashes.push(intersectionSplash);
+                }
+            }
+        }
+        
+        this.waterfallEffects.set(waterfall.id, allSplashes);
     }
 
     onEntityTookDamage({ entity, amount }) {
@@ -5153,8 +5224,8 @@ export class VFXSystem {
         this.world.off('entityRemoved', this._onEntityRemoved);
         
         // Clean up any remaining managed effects
-        for (const splash of this.waterfallEffects.values()) {
-            splash.dispose();
+        for (const splashes of this.waterfallEffects.values()) {
+            splashes.forEach(splash => splash.dispose());
         }
         this.waterfallEffects.clear();
         this.hitFlashTimers.clear();
@@ -9060,12 +9131,15 @@ export class LevelEditor {
             entity.body.position.copy(sourceTransform.position);
             entity.body.quaternion.copy(sourceTransform.quaternion);
             
-            entity.mesh.position.copy(sourceTransform.position);
+            const size = entity.definition.size;
+            const upVector = new THREE.Vector3(0, 1, 0);
+            upVector.applyQuaternion(sourceTransform.quaternion);
+    
+            const waterSurfacePosition = sourceTransform.position.clone().add(upVector.multiplyScalar(size[1] / 2));
+            entity.mesh.position.copy(waterSurfacePosition);
+            
             entity.mesh.quaternion.copy(sourceTransform.quaternion);
-
-            if (!entity.isWaterfall) {
-                entity.mesh.rotateX(-Math.PI / 2);
-            }
+            entity.mesh.rotateX(-Math.PI / 2); // Re-apply the local rotation to make it flat
 
         } else if (entity.body) {
             const sourceTransform = entity.mesh || entity.picker || entity;
@@ -12992,12 +13066,20 @@ export class LevelManager {
             distortionScale: 3.7, fog: !!this.world.scene.fog, alpha: 0.95,
         });
         
-        waterMesh.rotation.x = -Math.PI / 2;
         waterMesh.layers.disable(RENDERING_LAYERS.NO_REFLECTION);
 
         const entity = { id: THREE.MathUtils.generateUUID(), type: 'Water', mesh: waterMesh, body, definition: objData };
         
-        entity.mesh.position.copy(position);
+        // --- POSITIONING FIX ---
+        // Calculate the world-space "up" vector of the rotated volume
+        const upVector = new THREE.Vector3(0, 1, 0);
+        upVector.applyQuaternion(new THREE.Quaternion().copy(cannonQuat));
+
+        // The water surface should be at the center of the volume, offset by half the height along the volume's up direction.
+        const waterSurfacePosition = new THREE.Vector3().copy(position).add(upVector.multiplyScalar(size[1] / 2));
+        entity.mesh.position.copy(waterSurfacePosition);
+        
+        // Apply the volume's rotation, then rotate the plane to be horizontal relative to the volume
         entity.mesh.quaternion.copy(cannonQuat);
         entity.mesh.rotateX(-Math.PI / 2);
 

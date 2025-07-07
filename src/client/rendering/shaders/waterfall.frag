@@ -39,16 +39,17 @@ void main() {
     foam = smoothstep(0.6, 1.0, foam);
 
     // --- 4. Color and Alpha Composition ---
-    vec3 waterColor = vec3(0.7, 0.85, 1.0);
-    vec3 foamColor = vec3(1.0, 1.0, 1.0);
+    // REVISED: Toned down colors for a less shiny look.
+    vec3 waterColor = vec3(0.6, 0.75, 0.9);
+    vec3 foamColor = vec3(0.9, 0.9, 0.9);
 
     // The final color is a blend between water and foam.
     // The amount of foam determines the blend factor.
     vec3 finalColor = mix(waterColor, foamColor, foam);
 
     // The alpha channel is crucial. It's based on the water flow, with foam being more opaque.
-    // This creates the semi-transparent, streaky look.
-    float finalAlpha = mainFlow * 0.4 + foam * 0.6;
+    // REVISED: Reduced alpha multipliers for a more transparent effect.
+    float finalAlpha = mainFlow * 0.3 + foam * 0.5;
     
     // Fade the sides to prevent a hard edge.
     float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
@@ -58,7 +59,8 @@ void main() {
     // Instead of adding brightness, the fresnel effect will make the edges slightly more opaque,
     // simulating a water surface sheen.
     float fresnel = pow(1.0 - dot(normalize(vNormal), vViewDirection), 3.0);
-    finalAlpha = clamp(finalAlpha + fresnel * 0.3, 0.0, 1.0);
+    // REVISED: Reduced fresnel effect contribution.
+    finalAlpha = clamp(finalAlpha + fresnel * 0.15, 0.0, 1.0);
 
     // --- 6. Final Output ---
     // Discard fully transparent pixels to improve performance.
@@ -66,6 +68,6 @@ void main() {
         discard;
     }
 
-    // By not having excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
+    // By not have excessively bright colors (most values are <= 1.0), we avoid the "glowing wall" effect.
     gl_FragColor = vec4(finalColor, finalAlpha);
 }
