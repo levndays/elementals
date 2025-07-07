@@ -4,12 +4,25 @@ import { GAME_CONFIG } from '../../shared/config.js';
 
 export class WaterSystem {
     constructor() {
-        // No properties needed.
+        // Reusable vector to avoid allocations in the update loop
+        this._localEntityPos = new CANNON.Vec3();
     }
 
     update(world, deltaTime) {
         const waterVolumes = world.getWaterVolumes();
         const entitiesToCheck = [world.player, ...world.getNPCs()];
+
+        if (waterVolumes.length === 0) {
+            // Optimization: if no water, quickly reset any entities that might have been in water
+            for (const entity of entitiesToCheck) {
+                if (entity?.isInWater) {
+                    this.removeWaterEffects(entity);
+                    entity.isInWater = false;
+                    if (entity.type === 'player') entity.currentWaterVolume = null;
+                }
+            }
+            return;
+        }
 
         for (const entity of entitiesToCheck) {
             if (!entity || entity.isDead || !entity.physics?.body) continue;
@@ -17,22 +30,26 @@ export class WaterSystem {
             let isNowInWater = false;
             let currentVolume = null;
 
-            if (waterVolumes.length > 0) {
-                for (const volume of waterVolumes) {
-                    if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
-                        const entityPos = entity.physics.body.position;
-                        const volumePos = volume.body.position;
-                        const halfSize = volume.body.shapes[0].halfExtents;
+            for (const volume of waterVolumes) {
+                // Broadphase check first for performance
+                if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
+                    
+                    const volumeBody = volume.body;
 
-                        if (
-                            entityPos.x >= volumePos.x - halfSize.x && entityPos.x <= volumePos.x + halfSize.x &&
-                            entityPos.y >= volumePos.y - halfSize.y && entityPos.y <= volumePos.y + halfSize.y &&
-                            entityPos.z >= volumePos.z - halfSize.z && entityPos.z <= volumePos.z + halfSize.z
-                        ) {
-                            isNowInWater = true;
-                            currentVolume = volume;
-                            break;
-                        }
+                    // CORRECTED: Use the non-deprecated method name from cannon-es
+                    volumeBody.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
+
+                    const halfSize = volumeBody.shapes[0].halfExtents;
+                    
+                    // Narrowphase check: is the local point inside the box?
+                    if (
+                        Math.abs(this._localEntityPos.x) <= halfSize.x &&
+                        Math.abs(this._localEntityPos.y) <= halfSize.y &&
+                        Math.abs(this._localEntityPos.z) <= halfSize.z
+                    ) {
+                        isNowInWater = true;
+                        currentVolume = volume;
+                        break; // Entity is in a volume, no need to check others
                     }
                 }
             }

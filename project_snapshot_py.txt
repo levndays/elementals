@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T19:33:33.865038
+Snapshot created on: 2025-07-07T19:58:08.971569
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -13506,7 +13506,6 @@ export class AISystem {
         this._losRayResult = new CANNON.RaycastResult();
         this._obstacleRayResult = new CANNON.RaycastResult();
         this._groundRayResult = new CANNON.RaycastResult();
-        this._ledgeProbePoint = new CANNON.Vec3();
         this._ledgeRayResult = new CANNON.RaycastResult();
         this._lookAtTarget = new THREE.Vector3();
         this._tempQuaternion = new CANNON.Quaternion();
@@ -13523,6 +13522,7 @@ export class AISystem {
             if (npc.isDead) continue;
 
             this._updateAnimations(npc, deltaTime);
+            this._updateTimers(npc.ai, deltaTime);
 
             if (npc.ai.isKnockedBack) {
                 npc.ai.knockbackTimer -= deltaTime;
@@ -13709,21 +13709,28 @@ export class AISystem {
             physics.body.velocity.z = ai.dashDirection.z * dashSpeed;
             return;
         }
-        
+
         physics.body.wakeUp();
 
-        let moveDirection = new CANNON.Vec3();
-        switch(ai.state) {
-            case 'IDLE':
-                physics.body.velocity.x *= 0.9;
-                physics.body.velocity.z *= 0.9;
-                return;
-            case 'SEARCHING':
-                ai.lastKnownPlayerPosition.vsub(physics.body.position, moveDirection);
-                break;
-            case 'COMBAT':
-                moveDirection = this._getCombatRepositionVector(npc);
-                break;
+        let moveDirection;
+        const avoidanceVector = this._getLedgeAvoidanceVector(world, npc);
+
+        if (avoidanceVector) {
+            moveDirection = avoidanceVector;
+        } else {
+            moveDirection = new CANNON.Vec3();
+            switch(ai.state) {
+                case 'IDLE':
+                    physics.body.velocity.x *= 0.9;
+                    physics.body.velocity.z *= 0.9;
+                    return;
+                case 'SEARCHING':
+                    ai.lastKnownPlayerPosition.vsub(physics.body.position, moveDirection);
+                    break;
+                case 'COMBAT':
+                    moveDirection = this._getCombatRepositionVector(npc);
+                    break;
+            }
         }
 
         if (moveDirection.lengthSquared() < 0.01) {
@@ -13736,14 +13743,9 @@ export class AISystem {
         const normalizedMoveDir = moveDirection.clone();
         normalizedMoveDir.normalize();
 
-        if (this._isLedgeAhead(world, npc, normalizedMoveDir)) {
-            physics.body.velocity.x = 0;
-            physics.body.velocity.z = 0;
-        } else {
-            const speed = GAME_CONFIG.NPC.BASE.SPEED;
-            physics.body.velocity.x = normalizedMoveDir.x * speed;
-            physics.body.velocity.z = normalizedMoveDir.z * speed;
-        }
+        const speed = GAME_CONFIG.NPC.BASE.SPEED;
+        physics.body.velocity.x = normalizedMoveDir.x * speed;
+        physics.body.velocity.z = normalizedMoveDir.z * speed;
     }
     
     _getCombatRepositionVector(npc) {
@@ -13829,27 +13831,57 @@ export class AISystem {
         npc.physics.body.quaternion.slerp(this._tempQuaternion, 0.1, npc.physics.body.quaternion);
     }
 
-    _isLedgeAhead(world, npc, moveDirection) {
+    _getLedgeAvoidanceVector(world, npc) {
         const body = npc.physics.body;
         const config = GAME_CONFIG.NPC.BASE;
-        const probeDistance = config.RADIUS + 0.2;
+        const probeDistance = config.RADIUS * 1.5;
+        const rayLength = 5.0; // How far down to check for ground
+        const worldPhysics = world.physics.world;
 
-        this._ledgeProbePoint.copy(body.position);
-        const offset = moveDirection.scale(probeDistance);
-        this._ledgeProbePoint.vadd(offset, this._ledgeProbePoint);
+        const directions = [
+            new CANNON.Vec3(1, 0, 0),    // E
+            new CANNON.Vec3(0.707, 0, 0.707), // SE
+            new CANNON.Vec3(0, 0, 1),    // S
+            new CANNON.Vec3(-0.707, 0, 0.707),// SW
+            new CANNON.Vec3(-1, 0, 0),   // W
+            new CANNON.Vec3(-0.707, 0, -0.707),// NW
+            new CANNON.Vec3(0, 0, -1),   // N
+            new CANNON.Vec3(0.707, 0, -0.707) // NE
+        ];
 
-        const rayFrom = this._ledgeProbePoint;
-        const rayTo = rayFrom.clone();
-        rayTo.y -= 3.0; // Check for ground 3m below
+        let avoidanceVector = new CANNON.Vec3();
+        let dangerCount = 0;
 
-        this._ledgeRayResult.reset();
-        world.physics.world.raycastClosest(
-            rayFrom, rayTo,
-            { collisionFilterMask: COLLISION_GROUPS.WORLD },
-            this._ledgeRayResult
-        );
+        for (const dir of directions) {
+            const rayFrom = body.position.clone().vadd(dir.scale(probeDistance));
+            rayFrom.y += 0.5; // Start ray slightly above NPC's feet level
+            const rayTo = rayFrom.clone();
+            rayTo.y -= rayLength;
 
-        return !this._ledgeRayResult.hasHit;
+            this._ledgeRayResult.reset();
+            worldPhysics.raycastClosest(
+                rayFrom,
+                rayTo,
+                { collisionFilterMask: COLLISION_GROUPS.WORLD },
+                this._ledgeRayResult
+            );
+
+            if (!this._ledgeRayResult.hasHit) {
+                dangerCount++;
+                // Add the vector pointing AWAY from the danger.
+                avoidanceVector.vsub(dir, avoidanceVector);
+            }
+        }
+
+        // If we are partially on a ledge, move away from it.
+        // If we are totally surrounded by a ledge (dangerCount=8), don't move.
+        // If we are totally safe (dangerCount=0), do nothing.
+        if (dangerCount > 0 && dangerCount < 8) { 
+            avoidanceVector.normalize();
+            return avoidanceVector;
+        }
+
+        return null; // No avoidance needed
     }
 
     _updateAnimations(npc, deltaTime) {

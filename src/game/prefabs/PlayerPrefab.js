@@ -24,6 +24,11 @@ export class PlayerPrefab {
             collisionFilterGroup: COLLISION_GROUPS.PLAYER,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER,
             linearDamping: config.DEFAULT_DAMPING,
+            // --- CONTINUOUS COLLISION DETECTION (CCD) ---
+            // Activate CCD if speed exceeds 15 m/s to prevent tunneling.
+            ccdSpeedThreshold: 15, 
+            // Set the radius for the swept sphere check, slightly smaller than the actual radius.
+            ccdSweptSphereRadius: 0.75, 
         });
         const playerWorldContactMaterial = new CANNON.ContactMaterial(
             physics.world.defaultMaterial, material,
