@@ -29,6 +29,8 @@ export class NPC {
 
         // Client-side visual state
         this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
+        // Store original base color as well for status effects that tint the model
+        this.originalColor = new THREE.Color(mesh.material.color.getHex()); 
         this.isDead = false;
         
         // Water interaction state
@@ -76,6 +78,12 @@ export class NPC {
             this.physics.body = null;
         }
         if (this.mesh) {
+            // Restore original colors before disposing
+            if (this.originalColor && this.mesh.material) {
+                this.mesh.material.color.copy(this.originalColor);
+                this.mesh.material.emissive.copy(this.originalEmissive);
+                this.mesh.material.emissiveIntensity = 1.0;
+            }
             this.mesh.userData.entity = null;
             this.mesh.geometry?.dispose();
             if (this.mesh.material.dispose) {

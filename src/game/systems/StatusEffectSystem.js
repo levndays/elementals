@@ -1,5 +1,4 @@
-// src/game/systems/StatusEffectSystem.js
-
+// ~ src/game/systems/StatusEffectSystem.js
 /**
  * Manages the lifecycle of all active status effects in the world.
  * It ticks effects, checks for expiration, and handles their removal.

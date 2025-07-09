@@ -8,6 +8,7 @@ import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { AbilityFactory } from '../abilities/AbilityFactory.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { CustomWeapon } from '../weapons/CustomWeapon.js';
 
 /**
  * Encapsulates the player entity's state, components, and core logic.
@@ -148,6 +149,17 @@ export class Player {
             cardId ? AbilityFactory.create(cardId, this) : null
         );
         this.updateWaterSpecialistStatus();
+    }
+    
+    useCustomWeapon(assetData) {
+        if (this.weapon?.mesh) {
+            this.camera.remove(this.weapon.mesh);
+        }
+        this.weapon = new CustomWeapon(assetData);
+        this.weapon.wielder = this;
+        if (this.weapon.mesh) {
+            this.camera.add(this.weapon.mesh);
+        }
     }
 
     updateWaterSpecialistStatus() {

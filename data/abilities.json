@@ -17,6 +17,15 @@
         "description": "A powerful handgun with 6 rounds. Press [R] to reload.",
         "flavor": "Six shots. More than enough to kill anything that moves."
     },
+    "WEAPON_SAI": {
+        "id": "WEAPON_SAI",
+        "name": "Twin Sai",
+        "type": "Weapon",
+        "element": "Utility",
+        "tier": 2,
+        "description": "Dual-wielded melee weapons. Deals 150 damage and causes bleeding on enemies below 50% HP.",
+        "flavor": "Lethal in pairs, silent in the shadows."
+    },
     "FIRE_001": {
         "id": "FIRE_001",
         "name": "Fireball",

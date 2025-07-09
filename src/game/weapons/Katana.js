@@ -43,7 +43,9 @@ export class Katana extends Weapon {
         this.qWindUp = new THREE.Quaternion().setFromEuler(windUpRotation);
         this.qFollowThrough = new THREE.Quaternion().setFromEuler(followThroughRotation);
 
-        // --- NEW: Inspect Animation ---
+        // --- Inspect Animation ---
+        // Player must be out of water to inspect weapon.
+        this.inspectDuration = 2.5;
         this.p_inspect_up = new THREE.Vector3(0.1, -0.1, -0.6);
         this.q_inspect_up = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.5, -0.2, 0.2, 'YXZ'));
         this.p_inspect_flat = this.p_inspect_up.clone();
@@ -81,9 +83,9 @@ export class Katana extends Weapon {
     }
 
     inspect() {
-        if (this.state !== 'idle') return;
+        if (this.state !== 'idle' || this.wielder.isInWater) return;
         this.state = 'inspecting';
-        this.animationDuration = 2.5;
+        this.animationDuration = this.inspectDuration;
         this.animationProgress = 0;
     }
 
@@ -183,7 +185,7 @@ export class Katana extends Weapon {
             currentQuaternion.slerpQuaternions(this.qIdle, this.q_inspect_up, easedProgress);
         } else if (p < p2_end) {
             phaseProgress = (p - p1_end) / (p2_end - p1_end);
-            easedProgress = phaseProgress < 0.5 ? 4 * phaseProgress**3 : 1 - Math.pow(-2 * phaseProgress + 2, 3) / 2;
+            easedProgress = phaseProgress < 0.5 ? 2 * 4 * phaseProgress**3 : 1 - Math.pow(-2 * phaseProgress + 2, 3) / 2; // Smoother in and out
             currentPosition.lerpVectors(this.p_inspect_up, this.p_inspect_flat, easedProgress);
             currentQuaternion.slerpQuaternions(this.q_inspect_up, this.q_inspect_flat, easedProgress);
         } else {

@@ -47,6 +47,18 @@ export const GAME_CONFIG = {
         RANGE: 4.0, // meters
         SLAM_DAMAGE_MULTIPLIER: 2.0,
     },
+    REVOLVER: { // Added for completeness, but not used by class directly yet
+        DAMAGE: 100,
+        COOLDOWN: 0.5,
+        MAGAZINE_SIZE: 6,
+        RESERVE_AMMO: 24,
+    },
+    SAI: {
+        DAMAGE: 150,
+        COOLDOWN: 0.7, // Slightly longer cooldown than Katana due to dual hit/bleed potential
+        RANGE: 2.5, // Shorter range than Katana as it's more of a thrust
+        SLAM_DAMAGE_MULTIPLIER: 1.5, // Less powerful slam than Katana
+    },
     
     // Ability-specific parameters
     WAVE_POWER: {
@@ -56,6 +68,15 @@ export const GAME_CONFIG = {
         IMPULSE_UPWARD: 1000, // in kg*m/s
         DAMAGE: 200,
         KNOCKBACK_DURATION: 1.0, // seconds
+    },
+
+    // Status Effect parameters
+    BLEEDING: {
+        DURATION: 10.0, // seconds
+        DAMAGE_PER_SECOND: 5, // Total damage over duration
+        TICK_INTERVAL: 1.0, // seconds between each damage tick
+        DAMAGE_PER_TICK: 5, // Calculated: DAMAGE_PER_SECOND * TICK_INTERVAL
+        HP_THRESHOLD_PERCENT: 0.5, // Apply bleeding if enemy HP is below this percentage
     },
 
     // NPC base parameters

@@ -8,14 +8,14 @@ export class Revolver extends Weapon {
     constructor() {
         super(null, {
             name: 'Revolver',
-            damage: 100,
-            cooldown: 0.5,
+            damage: GAME_CONFIG.REVOLVER.DAMAGE,
+            cooldown: GAME_CONFIG.REVOLVER.COOLDOWN,
         });
 
         this.range = 200;
-        this.magazineSize = 6;
-        this.magazineAmmo = 6;
-        this.reserveAmmo = 24;
+        this.magazineSize = GAME_CONFIG.REVOLVER.MAGAZINE_SIZE;
+        this.magazineAmmo = this.magazineSize;
+        this.reserveAmmo = GAME_CONFIG.REVOLVER.RESERVE_AMMO;
 
         this.state = 'idle'; // idle, firing, reloading, inspecting
         this.animationProgress = 0;
@@ -30,19 +30,21 @@ export class Revolver extends Weapon {
 
     _defineKeyframes() {
         // --- Base Positions & Rotations ---
-        // REWORK: Weapon is offset to the right but rotated (yaw) to point towards the center crosshair.
+        // Weapon is offset to the right but rotated (yaw) to point towards the center crosshair.
         this.p_idle = new THREE.Vector3(0.3, -0.4, -0.7);
         this.q_idle = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.3, 0));
         
         // --- ADS (Aim Down Sights) - Future Use ---
-        this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
-        this.q_ads = new THREE.Quaternion();
+        // this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
+        // this.q_ads = new THREE.Quaternion();
 
         // --- Reloading Keyframes ---
         this.p_reload_start = new THREE.Vector3(0.3, -0.5, -0.7);
         this.q_reload_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, -0.4, 0.2));
         
         // --- Inspecting Keyframes ---
+        // Player must be out of water to inspect weapon.
+        this.inspectDuration = 3.5;
         this.p_inspect_center = new THREE.Vector3(0.1, -0.35, -0.6);
         this.q_inspect_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.2, 0.5));
         this.q_inspect_roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, -0.2, -1.5));
@@ -155,9 +157,9 @@ export class Revolver extends Weapon {
     }
 
     inspect() {
-        if (this.state !== 'idle') return;
+        if (this.state !== 'idle' || this.wielder.isInWater) return;
         this.state = 'inspecting';
-        this.animationDuration = 3.5;
+        this.animationDuration = this.inspectDuration;
         this.animationProgress = 0;
     }
 

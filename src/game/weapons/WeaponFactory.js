@@ -1,9 +1,11 @@
 import { Katana } from './Katana.js';
 import { Revolver } from './Revolver.js';
+import { Sai } from './Sai.js'; // Import the new Sai weapon
 
 const WeaponMap = {
     'WEAPON_001': Katana,
     'WEAPON_REVOLVER': Revolver,
+    'WEAPON_SAI': Sai, // Add Sai to the map
 };
 
 /**

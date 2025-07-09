@@ -121,6 +121,7 @@
             this.inspector.controls.enablePan = false;
             this.inspector.controls.minDistance = 2;
             this.inspector.controls.maxDistance = 6;
+            this.inspector.controls.target.set(0,0,0); // Ensure target is reset for each new item
             
             this._animateInspector();
         }
@@ -185,6 +186,10 @@
             this.inspector.renderer.setSize(clientWidth, clientHeight);
             this.inspector.camera.aspect = clientWidth / clientHeight;
             this.inspector.camera.updateProjectionMatrix();
+
+            // Reset controls target to center of new object
+            this.inspector.controls.target.set(0,0,0);
+            this.inspector.controls.update();
     
             if (!this.inspector.resizeObserver) {
                 const onResize = () => {

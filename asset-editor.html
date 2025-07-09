@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elementals - Asset Editor</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/asset-editor.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <div id="asset-editor-container">
+        <!-- TOP MENU BAR -->
+        <div id="editor-menu-bar">
+            <details class="menu-dropdown">
+                <summary>File</summary>
+                <div class="menu-content">
+                    <button id="menu-file-new-weapon">New Weapon</button>
+                    <button id="menu-file-new-npc">New NPC</button>
+                    <hr>
+                    <button id="menu-file-open">Open Asset...</button>
+                    <input type="file" id="asset-file-input" accept=".json" style="display: none;">
+                    <button id="menu-file-save">Save Asset</button>
+                    <hr>
+                    <button id="menu-file-test">Test Asset in Game</button>
+                    <hr>
+                    <button id="menu-file-exit">Exit to Main Menu</button>
+                </div>
+            </details>
+            <details class="menu-dropdown">
+                <summary>Edit</summary>
+                <div class="menu-content">
+                    <button id="menu-edit-undo" disabled>Undo (Ctrl+Z)</button>
+                    <button id="menu-edit-redo" disabled>Redo (Ctrl+Y)</button>
+                    <hr>
+                    <button id="menu-edit-delete" disabled>Delete</button>
+                </div>
+            </details>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div id="editor-toolbar">
+             <div class="toolbar-group">
+                <button id="tool-translate" class="active" title="Translate (T)">T</button>
+                <button id="tool-rotate" title="Rotate (R)">R</button>
+                <button id="tool-scale" title="Scale (S)">S</button>
+            </div>
+            <div class="separator"></div>
+            <div class="toolbar-group snap-group">
+                 <input type="checkbox" id="snap-toggle" title="Enable Snapping">
+                 <label for="snap-toggle">Enable Snapping</label>
+                 <input type="number" id="snap-translation-input" step="0.1" value="0.5" title="Grid Snap (m)">
+                 <input type="number" id="snap-rotation-input" step="5" value="15" title="Angle Snap (°)">
+            </div>
+        </div>
+
+        <!-- OUTLINER PANEL (Left) -->
+        <div id="editor-outliner" class="side-panel">
+            <div class="panel-header">HIERARCHY</div>
+            <div class="panel-content" id="outliner-content">
+                <div class="placeholder-text">Create a part to begin.</div>
+            </div>
+        </div>
+
+        <!-- VIEWPORT (Center) -->
+        <div id="editor-viewport">
+            <canvas id="editor-canvas"></canvas>
+            <div id="create-button-container">
+                <button id="create-button" title="Create Part">+</button>
+                <div id="create-context-menu" class="context-menu" style="display: none;">
+                    <button data-action="addBox">Box</button>
+                    <button data-action="addCylinder">Cylinder</button>
+                    <button data-action="addSphere">Sphere</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSPECTOR PANEL (Right) -->
+        <div id="editor-inspector" class="side-panel">
+            <div class="panel-header">INSPECTOR</div>
+            <div class="panel-content" id="inspector-content">
+                <div class="placeholder-text">Select a part to view its properties.</div>
+            </div>
+        </div>
+        
+        <!-- TIMELINE PANEL (Bottom) -->
+        <div id="editor-timeline">
+            <div class="timeline-controls">
+                <select id="animation-clip-select">
+                    <option>default_take</option>
+                </select>
+                <button id="anim-new-clip-btn">New</button>
+                <button id="anim-play-btn">▶</button>
+                <button id="anim-stop-btn">■</button>
+                <span id="anim-time-display">0.00s</span>
+                <button id="anim-add-keyframe-btn" title="Add Keyframe" disabled>+ Key</button>
+            </div>
+            <div class="timeline-track-area">
+                <div class="timeline-scrubber"></div>
+                <!-- Tracks will be dynamically added here -->
+            </div>
+        </div>
+
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/",
+            "three/addons/controls/TransformControls.js": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/controls/TransformControls.js"
+        }
+    }
+    </script>
+    
+    <script type="module" src="src/asset-editor/asset_editor_main.js"></script>
+</body>
+</html>
