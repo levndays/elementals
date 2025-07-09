@@ -29,35 +29,33 @@ export class WaterSystem {
             const wasInWater = entity.isInWater || false;
             let isConsideredInWater = false;
             let currentVolumeForFrame = null;
-
-            // Broad phase check for potential water interaction
-            for (const volume of waterVolumes) {
-                if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
-                    // Precise check: is entity's center inside this volume's bounds?
-                    volume.body.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
-                    const halfSize = volume.body.shapes[0].halfExtents;
-                    if (
-                        Math.abs(this._localEntityPos.x) <= halfSize.x &&
-                        Math.abs(this._localEntityPos.y) <= halfSize.y &&
-                        Math.abs(this._localEntityPos.z) <= halfSize.z
-                    ) {
-                        isConsideredInWater = true;
-                        currentVolumeForFrame = volume;
-                        break; // Found a volume, no need to check others for entry
-                    }
-                }
-            }
             
-            if (wasInWater && !isConsideredInWater) {
-                // Entity center has left, but are they still partially submerged in their *previous* volume?
-                const lastVolume = entity.currentWaterVolume;
-                if (lastVolume) {
-                    const surfaceY = lastVolume.body.position.y + lastVolume.definition.size[1] / 2;
-                    const bodyBottomY = entity.physics.body.position.y - entity.physics.body.shapes[0].radius;
-                    if (bodyBottomY < surfaceY) {
-                        // Still submerged, force state to remain in water
-                        isConsideredInWater = true;
-                        currentVolumeForFrame = lastVolume;
+            // This logic is only for spherical entities like Player and NPC
+            if (entity.physics.body.shapes[0] instanceof CANNON.Sphere) {
+                // Broad phase check for potential water interaction
+                for (const volume of waterVolumes) {
+                    if (entity.physics.body.aabb.overlaps(volume.body.aabb)) {
+                        // Precise check: sphere-box intersection test.
+                        // 1. Transform sphere center to the box's local frame
+                        volume.body.pointToLocalFrame(entity.physics.body.position, this._localEntityPos);
+        
+                        // 2. Find the closest point on the box AABB (in local coords) to the sphere's center
+                        const halfSize = volume.body.shapes[0].halfExtents;
+                        const closestPointInBox = new CANNON.Vec3(
+                            Math.max(-halfSize.x, Math.min(this._localEntityPos.x, halfSize.x)),
+                            Math.max(-halfSize.y, Math.min(this._localEntityPos.y, halfSize.y)),
+                            Math.max(-halfSize.z, Math.min(this._localEntityPos.z, halfSize.z))
+                        );
+        
+                        // 3. Check distance squared between sphere center and this closest point
+                        const distanceSq = closestPointInBox.distanceSquared(this._localEntityPos);
+                        const entityRadius = entity.physics.body.shapes[0].radius;
+        
+                        if (distanceSq < entityRadius * entityRadius) {
+                            isConsideredInWater = true;
+                            currentVolumeForFrame = volume;
+                            break; // Found a volume, no need to check others
+                        }
                     }
                 }
             }

@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-07T23:29:14.254909
+Snapshot created on: 2025-07-09T18:40:47.880674
 ================================================================================
 
 === FILE: card-inspector.html ===
@@ -2802,7 +2802,7 @@ body:not(.game-active) #tutorial-text-container {
 === FILE: levels/level-waterfall.json ===
 --------------------------------------------------
 {
-  "name": "Maria's Tears",
+  "name": "New Level",
   "spawnPoint": {
     "x": 78.31545656791558,
     "y": 25.301396566818845,
@@ -2853,11 +2853,6 @@ body:not(.game-active) #tutorial-text-container {
         "y": 0,
         "z": 0
       },
-      "rotation": {
-        "x": -90,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x525634",
         "roughness": 0.9
@@ -2865,7 +2860,13 @@ body:not(.game-active) #tutorial-text-container {
       "physics": {
         "mass": 0
       },
-      "editorSelectable": false
+      "editorSelectable": false,
+      "quaternion": {
+        "x": -0.7071067811865475,
+        "y": 0,
+        "z": 0,
+        "w": 0.7071067811865476
+      }
     },
     {
       "type": "Box",
@@ -2880,16 +2881,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": -3,
         "z": -53
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -2905,16 +2907,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 16,
         "z": -40
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -2930,16 +2933,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 65.40990879210926,
         "z": -82.12680881887539
       },
-      "rotation": {
-        "x": 81.7096472954625,
-        "y": 179.99517161008376,
-        "z": 179.9958241766089
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.7563694814674462,
+        "y": -1.7867651802561113e-16,
+        "z": -0.00267944152074601,
+        "w": 0.6541391504089964
       }
     },
     {
@@ -2955,16 +2959,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 6.364755597355968,
         "z": -27.5090715007741
       },
-      "rotation": {
-        "x": 2.2577998326279305e-9,
-        "y": -81.18835663485793,
-        "z": -5.437558437311171
-      },
       "material": {
         "color": "0xd3ca92"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.030865062830827877,
+        "y": -0.6499646297228505,
+        "z": -0.036018292704592864,
+        "w": 0.7584827028985783
       }
     },
     {
@@ -2980,16 +2985,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 46.47065808709171,
         "z": 6.4295198370767395
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3005,16 +3011,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 41.802648346446425,
         "z": -9.971379471542834
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3030,16 +3037,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 42.62758341177992,
         "z": -26.09061460714136
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3055,16 +3063,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 5.416984045159602,
         "z": -49.77345803072737
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3080,16 +3089,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 13.608302881122736,
         "z": -63.107435586722865
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3105,16 +3115,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 74.02217132583868,
         "z": -100.5835550587672
       },
-      "rotation": {
-        "x": 61.15761049158964,
-        "y": 0.0039278516785533095,
-        "z": 0.006646996269733827
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.5087229773061518,
+        "y": 1.10550916332516e-9,
+        "z": 0.00028953449475195277,
+        "w": 0.8609302228000483
       }
     },
     {
@@ -3130,16 +3141,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 59.25036637399147,
         "z": -45.19373652017691
       },
-      "rotation": {
-        "x": 0,
-        "y": 34.26658544765074,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0.2945956559600281,
+        "z": 0,
+        "w": 0.9556219961310438
       }
     },
     {
@@ -3155,16 +3167,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 21.630627836185596,
         "z": -43.2709459389058
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3180,16 +3193,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 38.82984827285034,
         "z": -70.35366856400114
       },
-      "rotation": {
-        "x": 0,
-        "y": 34.752355040078044,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0.29864401169683863,
+        "z": 0,
+        "w": 0.9543645814245301
       }
     },
     {
@@ -3205,16 +3219,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 9.226012961522109,
         "z": -65.03334638276034
       },
-      "rotation": {
-        "x": 0,
-        "y": 34.26658544765074,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0.2945956559600281,
+        "z": 0,
+        "w": 0.9556219961310438
       }
     },
     {
@@ -3230,16 +3245,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 40.409060449840645,
         "z": -69.4462809315035
       },
-      "rotation": {
-        "x": 0,
-        "y": -6.272889054789371,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.054713948208991565,
+        "z": 0,
+        "w": 0.9985020700386072
       }
     },
     {
@@ -3255,16 +3271,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 65.33896895622624,
         "z": -79.80271236808633
       },
-      "rotation": {
-        "x": 61.12060737655701,
-        "y": 2.7731947630358422,
-        "z": 4.694927889755733
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.5087229773061513,
+        "y": 1.1055092674627787e-9,
+        "z": 0.19910674637658543,
+        "w": 0.8375902553803353
       }
     },
     {
@@ -3280,16 +3297,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 57.92897065059704,
         "z": -75.17162722298576
       },
-      "rotation": {
-        "x": 60.48733481572796,
-        "y": 11.687891906161893,
-        "z": 19.913549388384283
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.5087229773061513,
+        "y": 1.1055091286849006e-9,
+        "z": 0.6152081473207809,
+        "w": 0.6022622915565088
       }
     },
     {
@@ -3305,16 +3323,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 62.001883728191714,
         "z": -90.80653237615158
       },
-      "rotation": {
-        "x": 21.965893249242647,
-        "y": 58.65687045598531,
-        "z": 141.88716086783194
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.5087229773061518,
+        "y": 1.105509100929325e-9,
+        "z": 0.8597229505490573,
+        "w": 0.045578291543102445
       }
     },
     {
@@ -3330,16 +3349,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 50.924132435614524,
         "z": -96.53175547099094
       },
-      "rotation": {
-        "x": 0,
-        "y": 70.44656334008597,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0.5767643086991326,
+        "z": 0,
+        "w": 0.8169106023371294
       }
     },
     {
@@ -3355,16 +3375,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 74.91647575166616,
         "z": -108.75007775800142
       },
-      "rotation": {
-        "x": -0.250508337068424,
-        "y": -162.3309536117511,
-        "z": -121.49546670899727
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.861959508769854,
+        "y": -0.4831501304625283,
+        "z": -0.13303734347668425,
+        "w": 0.07676471791090249
       }
     },
     {
@@ -3380,16 +3401,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 85.88118562647216,
         "z": -117.66071701351335
       },
-      "rotation": {
-        "x": -0.18709881478134013,
-        "y": 159.40067846256395,
-        "z": -121.29208069989517
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.8577049526461484,
+        "y": 0.4820493437224116,
+        "z": -0.1565347913765257,
+        "w": 0.08641471814319616
       }
     },
     {
@@ -3405,16 +3427,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 76.12025799515337,
         "z": -110.64093494421631
       },
-      "rotation": {
-        "x": 0.5541194781360586,
-        "y": 40.19952830466302,
-        "z": 88.31399925354323
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.24265500619266797,
+        "y": 0.24338392847294174,
+        "z": 0.6585832213167641,
+        "w": 0.669440775521441
       }
     },
     {
@@ -3430,16 +3453,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 53,
         "z": -63
       },
-      "rotation": {
-        "x": 0.000002394693953089506,
-        "y": 115.13726019912373,
-        "z": 85.35961262703795
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.5721714626874537,
+        "y": 0.6204949116955089,
+        "z": 0.3635506406502199,
+        "w": 0.3942547571417461
       }
     },
     {
@@ -3455,16 +3479,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 55,
         "z": -102
       },
-      "rotation": {
-        "x": 2.82849618946756e-7,
-        "y": 65.77695231630386,
-        "z": -71.21700794459751
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.3161615395109762,
+        "y": 0.4414713204837671,
+        "z": -0.4889269280040274,
+        "w": 0.6827118083034108
       }
     },
     {
@@ -3480,16 +3505,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 71,
         "z": -68
       },
-      "rotation": {
-        "x": -5.279720771229438e-13,
-        "y": 79.45470941050044,
-        "z": -123.27844407402654
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.5624222244434793,
+        "y": 0.3036031793409594,
+        "z": -0.676783131082773,
+        "w": 0.36533675482752603
       }
     },
     {
@@ -3505,16 +3531,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 72,
         "z": -80
       },
-      "rotation": {
-        "x": 0.0036044751251699007,
-        "y": 34.454724011846,
-        "z": -93.21631152766638
-      },
       "material": {
         "color": "0x6a4c2a"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.2151937419510249,
+        "y": 0.20348193344072182,
+        "z": -0.6940461283943042,
+        "w": 0.6561910757159216
       }
     },
     {
@@ -3530,16 +3557,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 29,
         "z": -60
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3555,16 +3583,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 63.58988369863561,
         "z": -76
       },
-      "rotation": {
-        "x": 14.999999999999998,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.13052619222005157,
+        "y": 0,
+        "z": 0,
+        "w": 0.9914448613738104
       }
     },
     {
@@ -3580,16 +3609,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 24,
         "z": -43
       },
-      "rotation": {
-        "x": 0,
-        "y": -29.999999999999993,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.2588190451025207,
+        "z": 0,
+        "w": 0.9659258262890683
       }
     },
     {
@@ -3605,16 +3635,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 14,
         "z": -29
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3630,16 +3661,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 44,
         "z": -45
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3655,16 +3687,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 21.33524661206111,
         "z": -34.78615639372975
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3680,16 +3713,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 37.91311006325847,
         "z": -50.102994125545955
       },
-      "rotation": {
-        "x": -38.882092147028175,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.33283676104842297,
+        "y": 0,
+        "z": 0,
+        "w": 0.9429844593071484
       }
     },
     {
@@ -3705,16 +3739,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 44.93311555995761,
         "z": -56.17092392386403
       },
-      "rotation": {
-        "x": -38.882092147028175,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.33283676104842297,
+        "y": 0,
+        "z": 0,
+        "w": 0.9429844593071484
       }
     },
     {
@@ -3730,16 +3765,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 47.951404830673305,
         "z": -61.48223604137541
       },
-      "rotation": {
-        "x": -0.007577594541401282,
-        "y": 55.03295468737288,
-        "z": -84.31013333298071
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.3101123596592775,
+        "y": 0.34245836401011,
+        "z": -0.5952822703862394,
+        "w": 0.657412816934594
       }
     },
     {
@@ -3752,19 +3788,20 @@ body:not(.game-active) #tutorial-text-container {
       ],
       "position": {
         "x": 86.00903895449446,
-        "y": 51.289986797822024,
+        "y": 48.785946710166634,
         "z": -68.64156111991316
-      },
-      "rotation": {
-        "x": 1.2832307833528562,
-        "y": 61.14969478306498,
-        "z": 177.82816867186975
       },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.508722977306152,
+        "y": 1.105509036527716e-9,
+        "z": 0.8609267232965542,
+        "w": 0.0024717351441808154
       }
     },
     {
@@ -3780,16 +3817,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 20.459775691036185,
         "z": -21.24788745613182
       },
-      "rotation": {
-        "x": -1.1642553040627421e-7,
-        "y": -100.23966376666321,
-        "z": 53.02841111591698
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.3425767213751029,
+        "y": -0.6866761974533543,
+        "z": 0.2862371827133699,
+        "w": 0.573746690670369
       }
     },
     {
@@ -3805,16 +3843,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 15.850493336341465,
         "z": 1.7552712918264213
       },
-      "rotation": {
-        "x": -9.609571113228074e-8,
-        "y": -100.23966376666338,
-        "z": 36.106375452368084
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.2378130637701274,
+        "y": -0.7296080844380627,
+        "z": 0.19870276390402739,
+        "w": 0.6096180783406825
       }
     },
     {
@@ -3830,16 +3869,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 15.214992591447817,
         "z": 26.085439173988206
       },
-      "rotation": {
-        "x": 0,
-        "y": -92.25758896837975,
-        "z": -32.838597431341526
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.20377274079759153,
+        "y": -0.6915003637016277,
+        "z": -0.19589774166642204,
+        "w": 0.6647766481445854
       }
     },
     {
@@ -3855,16 +3895,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": -6.0481755732977724,
         "z": 63.93067565274836
       },
-      "rotation": {
-        "x": 2.2263882770244617e-14,
-        "y": 68.15753727188711,
-        "z": -32.8385966344744
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.15838602784269035,
+        "y": 0.5374811088018825,
+        "z": -0.2341220141195986,
+        "w": 0.7944902808530109
       }
     },
     {
@@ -3880,16 +3921,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 8.749105517194373,
         "z": 87.54371579543289
       },
-      "rotation": {
-        "x": 5.693192879819695e-13,
-        "y": -33.275112406610226,
-        "z": -32.83859663451283
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.08093151698072429,
+        "y": -0.27464014393343517,
+        "z": -0.2708308344162229,
+        "w": 0.919061227573459
       }
     },
     {
@@ -3905,16 +3947,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 22.895209071405027,
         "z": 38.02647670167605
       },
-      "rotation": {
-        "x": 15.143381070579027,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.13176662110792284,
+        "y": 0,
+        "z": 0,
+        "w": 0.9912807662624152
       }
     },
     {
@@ -3930,16 +3973,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 29.16453076047876,
         "z": 98.4697841469163
       },
-      "rotation": {
-        "x": 2.3625160173911003e-11,
-        "y": -75.08320608500125,
-        "z": -17.006929830235254
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.0901022362277215,
+        "y": -0.6026388380758732,
+        "z": -0.11724714700520031,
+        "w": 0.7841945704915754
       }
     },
     {
@@ -3955,16 +3999,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 14.56276645999925,
         "z": 76.74218502839379
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -3980,16 +4025,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 27.970640772512674,
         "z": 90.44763827906785
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4005,16 +4051,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 37.217918242155775,
         "z": 79.63151800681264
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 11.602888448922492
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0.1010813745835569,
+        "w": 0.9948781612400076
       }
     },
     {
@@ -4030,16 +4077,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 26.911519426701524,
         "z": 95.0503816369429
       },
-      "rotation": {
-        "x": 3.252117161796446e-13,
-        "y": 19.79649258007332,
-        "z": -32.83859663451045
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.048589739830116316,
+        "y": 0.1648887063838468,
+        "z": -0.2784569778163475,
+        "w": 0.9449404548413033
       }
     },
     {
@@ -4052,19 +4100,20 @@ body:not(.game-active) #tutorial-text-container {
       ],
       "position": {
         "x": 30.193187022495092,
-        "y": 16.217152544064966,
+        "y": 11.827106045351819,
         "z": 98.58024964348049
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
       },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4080,16 +4129,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 26.972067302874507,
         "z": 112.06285281708546
       },
-      "rotation": {
-        "x": 0,
-        "y": -18.094412849965018,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.15724817572743743,
+        "z": 0,
+        "w": 0.9875591178407462
       }
     },
     {
@@ -4105,16 +4155,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 34.81176621909163,
         "z": 111.20743834425755
       },
-      "rotation": {
-        "x": 1.033680271475643e-13,
-        "y": -27.95024943119116,
-        "z": -32.83859663451221
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.06826366372119816,
+        "y": -0.2316519339959983,
+        "z": -0.27429787371895875,
+        "w": 0.9308265843671049
       }
     },
     {
@@ -4130,16 +4181,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 42.93780279536036,
         "z": 123.74010805467822
       },
-      "rotation": {
-        "x": 0,
-        "y": 26.9190206453957,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0.23275815301491712,
+        "z": 0,
+        "w": 0.9725346483314024
       }
     },
     {
@@ -4155,16 +4207,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 26.752521549425786,
         "z": 108.18671879835095
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4180,16 +4233,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 10.896985690197845,
         "z": 4.071404139913404
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x4a360d"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4201,20 +4255,21 @@ body:not(.game-active) #tutorial-text-container {
         2
       ],
       "position": {
-        "x": -16.963380365255006,
-        "y": 9.956951673356286,
-        "z": 45.58524719962324
-      },
-      "rotation": {
-        "x": 0.04884083200837104,
-        "y": 39.17238140566624,
-        "z": -10.468226860249773
+        "x": 8.167281172759477,
+        "y": 8.83917179813707,
+        "z": 47.51287415780578
       },
       "material": {
         "color": "0x4a360d"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.0301811416924442,
+        "y": 0.33386331025978844,
+        "z": -0.08541310152222671,
+        "w": 0.9382584882839434
       }
     },
     {
@@ -4230,16 +4285,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 13.710282920298589,
         "z": 104.24026283176404
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": -45.96157801089983
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": -0.3904224657577357,
+        "w": 0.9206358119428386
       }
     },
     {
@@ -4255,16 +4311,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 27.14402102259502,
         "z": 71.27933434377137
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": -28.47670272948068
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": -0.24595623647711531,
+        "w": 0.9692809343724931
       }
     },
     {
@@ -4280,16 +4337,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 36.83063867449553,
         "z": 69.44690124835651
       },
-      "rotation": {
-        "x": -1.5902773407317584e-15,
-        "y": -22.21238860452239,
-        "z": -59.32227760111469
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.09532572947307108,
+        "y": -0.16738749191735255,
+        "z": -0.48560140901442134,
+        "w": 0.852693206501174
       }
     },
     {
@@ -4305,16 +4363,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 40.706929044312034,
         "z": 79.45791878705106
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x3a6e30"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4330,16 +4389,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 44.415061610702,
         "z": 64.64880231849389
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x3a6e30"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4355,16 +4415,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 35.5409828752305,
         "z": 76.99252505175632
       },
-      "rotation": {
-        "x": 0,
-        "y": 49.85261082776926,
-        "z": -28.476702729480692
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.10365879880517978,
+        "y": 0.4085055894533636,
+        "z": -0.22304556416179627,
+        "w": 0.8789930108501279
       }
     },
     {
@@ -4380,16 +4441,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 13.193333327164158,
         "z": 50.411358755435685
       },
-      "rotation": {
-        "x": -1.5902773407317584e-15,
-        "y": 100.58302606712219,
-        "z": -28.476702729480692
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.18921534499072235,
+        "y": 0.7456726002037578,
+        "z": -0.15713695772169142,
+        "w": 0.6192559269343977
       }
     },
     {
@@ -4405,16 +4467,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 10.524220711791596,
         "z": -0.7548334848301224
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 18.395784304852885
-      },
       "material": {
         "color": "0x4a360d"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0.15984487194576527,
+        "w": 0.9871421462548552
       }
     },
     {
@@ -4430,16 +4493,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 13.590334704887791,
         "z": -3.040455419992405
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x3a6e30"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4455,16 +4519,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 26.815032418090404,
         "z": 49.75164172131486
       },
-      "rotation": {
-        "x": 0,
-        "y": -32.089124874482785,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.2763849044740639,
+        "z": 0,
+        "w": 0.9610470251651907
       }
     },
     {
@@ -4480,16 +4545,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 8.266914924760282,
         "z": 53.16579049766363
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4505,16 +4571,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 7.478559060646482,
         "z": 47.941194508358286
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4530,16 +4597,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 44.81563362541057,
         "z": 43.68285629494328
       },
-      "rotation": {
-        "x": -28.68411752824971,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.24771026559101988,
+        "y": 0,
+        "z": 0,
+        "w": 0.9688341572843241
       }
     },
     {
@@ -4555,16 +4623,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 44.70850258368087,
         "z": 51.217454033595935
       },
-      "rotation": {
-        "x": -1.5152066026196358,
-        "y": -76.76854441184341,
-        "z": 53.340248036507745
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": -0.2879449256898477,
+        "y": -0.5501682184071313,
+        "z": 0.36324425668270305,
+        "w": 0.6945907148898708
       }
     },
     {
@@ -4580,16 +4649,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 37.727750976519374,
         "z": 49.53365780679029
       },
-      "rotation": {
-        "x": 0,
-        "y": -41.38976800998778,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.3533913156771818,
+        "z": 0,
+        "w": 0.9354755892079443
       }
     },
     {
@@ -4605,16 +4675,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 49.24751105477968,
         "z": 50.02072800937353
       },
-      "rotation": {
-        "x": 0,
-        "y": -35.2837613540721,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.3030665500695695,
+        "z": 0,
+        "w": 0.9529693941721996
       }
     },
     {
@@ -4630,16 +4701,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 43.27926588506584,
         "z": 48.445936727617884
       },
-      "rotation": {
-        "x": 0,
-        "y": -42.9866508380507,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.3663928367185759,
+        "z": 0,
+        "w": 0.930460256647921
       }
     },
     {
@@ -4655,16 +4727,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 43.14627343513631,
         "z": 42.996683733555464
       },
-      "rotation": {
-        "x": 0,
-        "y": -27.59117143827402,
-        "z": 0
-      },
       "material": {
         "color": "0xcccccc"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.23845863705844605,
+        "z": 0,
+        "w": 0.9711526545359531
       }
     },
     {
@@ -4680,16 +4753,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 39.82530033247296,
         "z": 51.987652666575514
       },
-      "rotation": {
-        "x": 0,
-        "y": -35.79258524780655,
-        "z": 0
-      },
       "material": {
         "color": "0x5c5c5c"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.30729504336552926,
+        "z": 0,
+        "w": 0.9516142896798984
       }
     },
     {
@@ -4702,19 +4776,20 @@ body:not(.game-active) #tutorial-text-container {
       ],
       "position": {
         "x": -59.9020125252128,
-        "y": 52.23882690033993,
+        "y": 51.70108498608498,
         "z": 49.98928834947113
-      },
-      "rotation": {
-        "x": 0,
-        "y": -37.55575292933485,
-        "z": 0
       },
       "material": {
         "color": "0x383838"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": -0.32190014292468355,
+        "z": 0,
+        "w": 0.946773625522526
       }
     },
     {
@@ -4730,16 +4805,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 10.202317605758715,
         "z": 15.727945327451788
       },
-      "rotation": {
-        "x": 1.476337810184343,
-        "y": 64.14508632677618,
-        "z": 25.282354054842866
-      },
       "material": {
         "color": "0x4a360d"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.1268474130342984,
+        "y": 0.5156890739402777,
+        "z": 0.2004383821710644,
+        "w": 0.8232854716183028
       }
     },
     {
@@ -4755,16 +4831,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 22.4094109415763,
         "z": 56.31434023852501
       },
-      "rotation": {
-        "x": -8.622784787364266,
-        "y": 118.94687474089895,
-        "z": 25.778265333026518
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.15438015754240372,
+        "y": 0.8458313294649622,
+        "z": 0.08213033338070272,
+        "w": 0.5039749372652294
       }
     },
     {
@@ -4780,16 +4857,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 31.08139683645426,
         "z": 46.81054226757902
       },
-      "rotation": {
-        "x": 14.28113988349118,
-        "y": 158.89368993759135,
-        "z": 41.94694130073273
-      },
       "material": {
         "color": "0x563815"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0.3704098465503834,
+        "y": 0.9026840866596579,
+        "z": 0.16749095036375744,
+        "w": 0.1410842543170071
       }
     },
     {
@@ -4805,16 +4883,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 37.91059814787482,
         "z": 43.74060427811049
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x3a6e30"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4830,16 +4909,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 6.387238505765449,
         "z": -17.734840044105717
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x735121"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4855,16 +4935,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 17.91042558508134,
         "z": -18.43066388000493
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x735121"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4880,16 +4961,17 @@ body:not(.game-active) #tutorial-text-container {
         "y": 28.467242371662554,
         "z": -19.172086980360117
       },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
       "material": {
         "color": "0x3a6e30"
       },
       "physics": {
         "mass": 0
+      },
+      "quaternion": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4905,10 +4987,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 5,
         "z": 0
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4924,10 +5007,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 66.26286700738792,
         "z": -71.55050709782384
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4943,10 +5027,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 39.83547957613843,
         "z": -54.4651136497402
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4962,10 +5047,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 20,
         "z": -50
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 1
       }
     },
     {
@@ -4981,10 +5067,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 69.6799060058554,
         "z": -80
       },
-      "rotation": {
-        "x": -90,
+      "quaternion": {
+        "x": -0.7071067811865475,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 0.7071067811865476
       }
     },
     {
@@ -4999,10 +5086,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 41.40933911874975,
         "z": 46.93368542850366
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
-        "y": -51.01487947013285,
-        "z": 0
+        "y": -0.4306282919574751,
+        "z": 0,
+        "w": 0.9025293757910529
       }
     },
     {
@@ -5017,10 +5105,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 41.05393563175382,
         "z": 48.76459262445475
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
-        "y": -21.640733653036026,
-        "z": 0
+        "y": -0.1877304746020014,
+        "z": 0,
+        "w": 0.9822205805753143
       }
     }
   ],
@@ -5102,10 +5191,11 @@ body:not(.game-active) #tutorial-text-container {
         "y": 101,
         "z": -121
       },
-      "rotation": {
+      "quaternion": {
         "x": 0,
         "y": 0,
-        "z": 0
+        "z": 0,
+        "w": 1
       }
     }
   ]
@@ -9339,6 +9429,8 @@ export class InputManager extends EventEmitter {
 
 === FILE: src/core/Physics.js ===
 --------------------------------------------------
+// src/core/Physics.js
+
 import * as CANNON from 'cannon-es';
 
 export class Physics {
@@ -9348,7 +9440,8 @@ export class Physics {
             allowSleep: true,
         });
 
-        this.world.broadphase = new CANNON.SAPBroadphase(this.world);
+        // ЗАМЕНА АЛГОРИТМА НА БОЛЕЕ НАДЕЖНЫЙ ДЛЯ СТАТИЧЕСКИХ МИРОВ
+        this.world.broadphase = new CANNON.NaiveBroadphase();
 
         this.bodiesToRemove = new Set();
     }
@@ -9467,6 +9560,8 @@ export class Renderer {
 
 === FILE: src/editor/EditorActions.js ===
 --------------------------------------------------
+// src/editor/EditorActions.js
+
  import * as THREE from 'three';
     import { StateChangeCommand } from './UndoManager.js';
     
@@ -9499,7 +9594,7 @@ export class Renderer {
             const boxData = {
                 type: "Box", name: `Box_${Date.now()}`, size: [2, 2, 2],
                 position: { x: spawnPos.x, y: spawnPos.y, z: spawnPos.z },
-                rotation: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }, // Keep for initial creation
                 material: { color: "0xcccccc" }, physics: { mass: 0 }
             };
             const newObj = this.app.levelManager.createObject(boxData);
@@ -9637,7 +9732,7 @@ export class Renderer {
         }
         
         _bakeScaleIntoDefinition(entity) {
-            const transformSource = entity.helperMesh || entity.mesh;
+            const transformSource = entity.helperMesh || entity.mesh || entity.picker || entity;
             if (entity && transformSource && entity.definition?.size) {
                 const scale = transformSource.scale;
                 if (scale.x !== 1 || scale.y !== 1 || scale.z !== 1) {
@@ -9677,7 +9772,15 @@ export class Renderer {
                     tempCentroid.add(mesh.position);
                     validObjects++;
                     
-                    if (entity.definition.rotation) {
+                    if (entity.definition.quaternion !== undefined) {
+                        entity.definition.quaternion = {
+                            x: mesh.quaternion.x,
+                            y: mesh.quaternion.y,
+                            z: mesh.quaternion.z,
+                            w: mesh.quaternion.w
+                        };
+                        delete entity.definition.rotation;
+                    } else if (entity.definition.rotation) { // Fallback for older format if needed
                         const rot = new THREE.Euler().setFromQuaternion(mesh.quaternion, 'YXZ');
                         entity.definition.rotation = {
                             x: THREE.MathUtils.radToDeg(rot.x),
@@ -9815,9 +9918,16 @@ export class Renderer {
                 if (!obj.definition || !transformSource) return;
     
                 obj.definition.position = { x: transformSource.position.x, y: transformSource.position.y, z: transformSource.position.z };
-                if (obj.definition.rotation) {
-                    const rot = new THREE.Euler().setFromQuaternion(transformSource.quaternion, 'YXZ');
-                    obj.definition.rotation = { x: THREE.MathUtils.radToDeg(rot.x), y: THREE.MathUtils.radToDeg(rot.y), z: THREE.MathUtils.radToDeg(rot.z) };
+                
+                // NEW: Save quaternion instead of euler angles
+                if (obj.definition.rotation !== undefined) {
+                    obj.definition.quaternion = {
+                        x: transformSource.quaternion.x,
+                        y: transformSource.quaternion.y,
+                        z: transformSource.quaternion.z,
+                        w: transformSource.quaternion.w
+                    };
+                    delete obj.definition.rotation; // Remove the old property
                 }
             });
     
@@ -11296,128 +11406,129 @@ main.run();
             }
         }
         
-        applyDefinition(obj) {
-            const type = obj.userData?.gameEntity?.type;
-            const def = obj.definition;
-        
-            if (!def || !type) return;
-        
-            if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
-                this.syncObjectTransforms(obj);
-                return;
-            }
-        
-            if (type === 'DirectionalLight') {
-                const light = obj.light;
-                light.color.set(parseInt(def.color, 16));
-                light.intensity = def.intensity;
-                light.position.set(def.position.x, def.position.y, def.position.z);
-                if (def.targetPosition) {
-                    light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
-                }
-                obj.picker.position.copy(light.position);
-                obj.targetHelper.position.copy(light.target.position);
-                light.target.updateMatrixWorld(true);
-                obj.helper.update();
-                return;
-            }
-    
-            if (type === 'Waterfall') {
-                const mesh = obj.mesh;
-                mesh.position.set(def.position.x, def.position.y, def.position.z);
-                if (def.rotation) {
-                    mesh.rotation.set(THREE.MathUtils.degToRad(def.rotation.x || 0), THREE.MathUtils.degToRad(def.rotation.y || 0), THREE.MathUtils.degToRad(def.rotation.z || 0));
-                }
-                if (def.size) {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
-                }
-                return;
-            }
-    
-            if (type === 'Water') {
-                const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
-                const position = def.position;
-                const rot = def.rotation ? new THREE.Euler(
-                    THREE.MathUtils.degToRad(def.rotation.x || 0),
-                    THREE.MathUtils.degToRad(def.rotation.y || 0),
-                    THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
-                ) : new THREE.Euler();
-                const quat = new THREE.Quaternion().setFromEuler(rot);
-    
-                obj.helperMesh.position.set(position.x, position.y, position.z);
-                obj.helperMesh.quaternion.copy(quat);
-                obj.helperMesh.geometry.dispose();
-                obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
-    
-                obj.mesh.geometry.dispose();
-                obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
-    
-                if(obj.body && obj.body.shapes[0]){
-                     const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
-                     obj.body.shapes[0].halfExtents.copy(halfExtents);
-                     obj.body.shapes[0].updateConvexPolyhedronRepresentation();
-                     obj.body.updateBoundingRadius();
-                }
-                
-                this.syncObjectTransforms(obj); 
-                return;
-            }
+        // В файле: src/editor/LevelEditor.js
 
-            if (type === 'NPC') {
-                const team = def.team || 'enemy';
-                const color = team === 'enemy' ? 0x990000 : 0x009933;
-                obj.mesh.material.color.set(color);
-        
-                if (obj.body) {
-                    if (team === 'enemy') {
-                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ENEMY;
-                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
-                    } else { // ally
-                        obj.body.collisionFilterGroup = COLLISION_GROUPS.ALLY;
-                        obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
-                    }
-                }
-            }
-            
-            const mesh = obj.mesh;
-            const body = obj.body;
-            mesh.position.set(def.position.x, def.position.y, def.position.z);
-        
-            if (def.rotation && obj.isDead === undefined) {
-                 mesh.rotation.set(
-                    THREE.MathUtils.degToRad(def.rotation.x || 0),
-                    THREE.MathUtils.degToRad(def.rotation.y || 0),
-                    THREE.MathUtils.degToRad(def.rotation.z || 0)
-                );
-            }
-        
-            if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial && type !== 'NPC') {
-                mesh.material.color.set(parseInt(def.material.color, 16));
-            }
-        
-            if (def.size) {
-                if (type === 'Trigger' || type === 'DeathTrigger') {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.BoxGeometry(...def.size);
-                    if (type === 'Trigger' && def.color) {
-                        mesh.material.color.set(parseInt(def.color, 16));
-                    }
-                } else if (def.type === 'Plane') {
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
-                } else if (def.type === 'Box' && body?.shapes[0]) {
-                    const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
-                    body.shapes[0].halfExtents.copy(halfExtents);
-                    body.shapes[0].updateConvexPolyhedronRepresentation();
-                    body.updateBoundingRadius();
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.BoxGeometry(...def.size);
-                }
-            }
-        
-            this.syncObjectTransforms(obj);
+applyDefinition(obj) {
+    const type = obj.userData?.gameEntity?.type;
+    const def = obj.definition;
+
+    if (!def || !type) return;
+
+    // Обработка особых случаев с явным return
+    if (type === 'SpawnPoint' || type === 'DeathSpawnPoint') {
+        this.syncObjectTransforms(obj);
+        return;
+    }
+
+    if (type === 'DirectionalLight') {
+        const light = obj.light;
+        light.color.set(parseInt(def.color, 16));
+        light.intensity = def.intensity;
+        light.position.set(def.position.x, def.position.y, def.position.z);
+        if (def.targetPosition) {
+            light.target.position.set(def.targetPosition.x, def.targetPosition.y, def.targetPosition.z);
         }
+        obj.picker.position.copy(light.position);
+        obj.targetHelper.position.copy(light.target.position);
+        light.target.updateMatrixWorld(true);
+        obj.helper.update();
+        return;
+    }
+
+    if (type === 'Water') {
+        const size = (def.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
+        const position = def.position;
+        const rot = def.rotation ? new THREE.Euler(
+            THREE.MathUtils.degToRad(def.rotation.x || 0),
+            THREE.MathUtils.degToRad(def.rotation.y || 0),
+            THREE.MathUtils.degToRad(def.rotation.z || 0), 'YXZ'
+        ) : new THREE.Euler();
+        const quat = new THREE.Quaternion().setFromEuler(rot);
+
+        obj.helperMesh.position.set(position.x, position.y, position.z);
+        obj.helperMesh.quaternion.copy(quat);
+        obj.helperMesh.geometry.dispose();
+        obj.helperMesh.geometry = new THREE.BoxGeometry(...size);
+
+        obj.mesh.geometry.dispose();
+        obj.mesh.geometry = new THREE.PlaneGeometry(size[0], size[2]);
+
+        if(obj.body && obj.body.shapes[0]){
+             const halfExtents = new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2);
+             obj.body.shapes[0].halfExtents.copy(halfExtents);
+             obj.body.shapes[0].updateConvexPolyhedronRepresentation();
+             obj.body.updateBoundingRadius();
+        }
+        
+        this.syncObjectTransforms(obj); 
+        return;
+    }
+
+    // Обработка динамических/интерактивных объектов
+    if (type === 'NPC') {
+        const team = def.team || 'enemy';
+        const color = team === 'enemy' ? 0x990000 : 0x009933;
+        obj.mesh.material.color.set(color);
+
+        if (obj.body) {
+            if (team === 'enemy') {
+                obj.body.collisionFilterGroup = COLLISION_GROUPS.ENEMY;
+                obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ALLY | COLLISION_GROUPS.PLAYER_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+            } else { // ally
+                obj.body.collisionFilterGroup = COLLISION_GROUPS.ALLY;
+                obj.body.collisionFilterMask = COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER;
+            }
+        }
+        // NPC не должен обновлять свою позицию из definition, так как им управляет AI
+        // Но мы все равно синхронизируем на случай, если его переместили в редакторе
+        this.syncObjectTransforms(obj);
+
+        // Обработка статической геометрии и триггеров
+        } else {
+        const mesh = obj.mesh;
+        const body = obj.body;
+        
+        mesh.position.set(def.position.x, def.position.y, def.position.z);
+    
+        if (def.rotation) {
+             mesh.rotation.set(
+                THREE.MathUtils.degToRad(def.rotation.x || 0),
+                THREE.MathUtils.degToRad(def.rotation.y || 0),
+                THREE.MathUtils.degToRad(def.rotation.z || 0)
+            );
+        }
+    
+        if (def.material?.color && mesh.material && !mesh.material.isWireframeMaterial) {
+            mesh.material.color.set(parseInt(def.material.color, 16));
+        }
+    
+        if (def.size) {
+            if (type === 'Trigger' || type === 'DeathTrigger') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
+                if (type === 'Trigger' && def.color) {
+                    mesh.material.color.set(parseInt(def.color, 16));
+                }
+            } else if (type === 'Waterfall') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
+            } else if (def.type === 'Plane') {
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(def.size[0], def.size[1]);
+            } else if (def.type === 'Box' && body?.shapes[0]) {
+                const halfExtents = new CANNON.Vec3(def.size[0] / 2, def.size[1] / 2, def.size[2] / 2);
+                body.shapes[0].halfExtents.copy(halfExtents);
+                body.shapes[0].updateConvexPolyhedronRepresentation();
+                body.updateBoundingRadius();
+                mesh.geometry.dispose();
+                mesh.geometry = new THREE.BoxGeometry(...def.size);
+            }
+        }
+    
+        // После всех обновлений mesh, синхронизируем физическое тело
+        this.syncObjectTransforms(obj);
+        }
+        }       
         
         syncObjectTransforms(entityToSync) {
             const entity = entityToSync || this.primarySelectedObject;
@@ -15346,6 +15457,8 @@ export class WeaponFactory {
 
 === FILE: src/game/world/LevelManager.js ===
 --------------------------------------------------
+// src/game/world/LevelManager.js
+
  import * as THREE from 'three';
     import * as CANNON from 'cannon-es';
     import { NPCPrefab } from '../prefabs/NPCPrefab.js';
@@ -15526,7 +15639,12 @@ export class WeaponFactory {
             const entity = { id: THREE.MathUtils.generateUUID(), type: 'Waterfall', mesh: waterfallMesh, definition: objData };
     
             entity.mesh.position.set(objData.position.x, objData.position.y, objData.position.z);
-            if (objData.rotation) entity.mesh.rotation.set(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0));
+            if (objData.quaternion) {
+                entity.mesh.quaternion.set(objData.quaternion.x, objData.quaternion.y, objData.quaternion.z, objData.quaternion.w);
+            } else if (objData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0), 'YXZ');
+                entity.mesh.quaternion.setFromEuler(euler);
+            }
     
             entity.mesh.castShadow = false;
             entity.mesh.receiveShadow = false;
@@ -15542,13 +15660,14 @@ export class WeaponFactory {
         createWater(objData) {
             const size = (objData.size || [1, 1, 1]).map(s => Math.abs(s) || 0.1);
             const position = new CANNON.Vec3(objData.position.x, objData.position.y, objData.position.z);
-            const rotation = objData.rotation ? new THREE.Euler(
-                THREE.MathUtils.degToRad(objData.rotation.x), 
-                THREE.MathUtils.degToRad(objData.rotation.y), 
-                THREE.MathUtils.degToRad(objData.rotation.z), 'YXZ') 
-            : new THREE.Euler();
             
-            const cannonQuat = new CANNON.Quaternion().setFromEuler(rotation.x, rotation.y, rotation.z);
+            const cannonQuat = new CANNON.Quaternion();
+            if (objData.quaternion) {
+                cannonQuat.set(objData.quaternion.x, objData.quaternion.y, objData.quaternion.z, objData.quaternion.w);
+            } else if (objData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(objData.rotation.x), THREE.MathUtils.degToRad(objData.rotation.y), THREE.MathUtils.degToRad(objData.rotation.z), 'YXZ');
+                cannonQuat.setFromEuler(euler.x, euler.y, euler.z, euler.order);
+            }
             
             const shape = new CANNON.Box(new CANNON.Vec3(size[0] / 2, size[1] / 2, size[2] / 2));
             const body = new CANNON.Body({
@@ -15633,11 +15752,31 @@ export class WeaponFactory {
             
             body = new CANNON.Body({ mass: objData.physics?.mass ?? 0, shape, type: (objData.physics?.mass ?? 0) > 0 ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC, collisionFilterGroup: COLLISION_GROUPS.WORLD });
             
+            // --- ИСПРАВЛЕННАЯ ЛОГИКА ---
             mesh.position.set(objData.position.x, objData.position.y, objData.position.z);
-            if (objData.rotation) mesh.rotation.set(THREE.MathUtils.degToRad(objData.rotation.x || 0), THREE.MathUtils.degToRad(objData.rotation.y || 0), THREE.MathUtils.degToRad(objData.rotation.z || 0));
-            
+
+            if (objData.quaternion) {
+                mesh.quaternion.set(
+                    objData.quaternion.x,
+                    objData.quaternion.y,
+                    objData.quaternion.z,
+                    objData.quaternion.w
+                );
+            } else if (objData.rotation) { // Fallback for old levels
+                const euler = new THREE.Euler(
+                    THREE.MathUtils.degToRad(objData.rotation.x || 0),
+                    THREE.MathUtils.degToRad(objData.rotation.y || 0),
+                    THREE.MathUtils.degToRad(objData.rotation.z || 0),
+                    'YXZ'
+                );
+                mesh.quaternion.setFromEuler(euler);
+            }
+
+            // ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ: Копируем трансформацию из mesh в body
             body.position.copy(mesh.position);
             body.quaternion.copy(mesh.quaternion);
+            // --- КОНЕЦ ИСПРАВЛЕННОЙ ЛОГИКИ ---
+
             mesh.castShadow = true;
             mesh.receiveShadow = true;
     
@@ -15667,10 +15806,13 @@ export class WeaponFactory {
             const shape = new CANNON.Box(new CANNON.Vec3(...size.map(s => s / 2)));
             const body = new CANNON.Body({ type: CANNON.Body.STATIC, isTrigger: true, shape, position: new CANNON.Vec3(triggerData.position.x, triggerData.position.y, triggerData.position.z), collisionFilterGroup: COLLISION_GROUPS.TRIGGER, collisionFilterMask: COLLISION_GROUPS.PLAYER | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ALLY });
             
-            if (triggerData.rotation) {
-                mesh.rotation.set(THREE.MathUtils.degToRad(triggerData.rotation.x || 0), THREE.MathUtils.degToRad(triggerData.rotation.y || 0), THREE.MathUtils.degToRad(triggerData.rotation.z || 0));
-                body.quaternion.copy(mesh.quaternion);
+            if (triggerData.quaternion) {
+                body.quaternion.set(triggerData.quaternion.x, triggerData.quaternion.y, triggerData.quaternion.z, triggerData.quaternion.w);
+            } else if (triggerData.rotation) {
+                const euler = new THREE.Euler(THREE.MathUtils.degToRad(triggerData.rotation.x || 0), THREE.MathUtils.degToRad(triggerData.rotation.y || 0), THREE.MathUtils.degToRad(triggerData.rotation.z || 0), 'YXZ');
+                body.quaternion.setFromEuler(euler.x, euler.y, euler.z, euler.order);
             }
+            mesh.quaternion.copy(body.quaternion);
             
             const entityType = isDeathTrigger ? 'DeathTrigger' : 'Trigger';
             const entity = { type: entityType, mesh, body, definition: triggerData, message: triggerData.message, duration: triggerData.duration, hasFired: false };
