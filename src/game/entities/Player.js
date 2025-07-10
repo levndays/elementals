@@ -1,3 +1,4 @@
+// src/game/entities/Player.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -7,7 +8,7 @@ import { AbilityLoadoutComponent } from '../components/AbilityLoadoutComponent.j
 import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { AbilityFactory } from '../abilities/AbilityFactory.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { COLLISION_GROUPS, RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 import { WeaponFactory } from '../weapons/WeaponFactory.js';
 
 /**
@@ -146,12 +147,15 @@ export class Player {
         }
 
         // Load and set new weapon
-        const weaponId = loadoutData?.weapon || 'WEAPON_KATANA';
+        const weaponId = loadoutData?.weapon || 'WEAPON_REVOLVER';
         this.weapon = await WeaponFactory.create(weaponId);
         
         if (this.weapon) {
             this.weapon.wielder = this;
             if (this.weapon.mesh) {
+                this.weapon.mesh.traverse(child => {
+                    child.layers.set(RENDERING_LAYERS.VIEWMODEL);
+                });
                 this.camera.add(this.weapon.mesh);
             }
         }

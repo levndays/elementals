@@ -11,6 +11,7 @@ import { VFXSystem } from './systems/VFXSystem.js';
 import { WorldUISystem } from './systems/WorldUISystem.js';
 import { PhysicsSyncSystem } from '../game/systems/PhysicsSyncSystem.js';
 import { AbilityIconService } from './ui/AbilityIconService.js';
+import { RENDERING_LAYERS } from '../shared/CollisionGroups.js';
 
 class App {
     constructor() {
@@ -94,7 +95,29 @@ class App {
         this.ui.update(this.game);
 
         // 6. Render
-        this.core.renderer.render();
+        const { renderer, camera, scene, composer } = this.core.renderer;
+        
+        renderer.autoClear = false;
+        renderer.clear();
+
+        // Pass 1: Render the world scene (everything EXCEPT the viewmodel layer).
+        camera.layers.enableAll();
+        camera.layers.disable(RENDERING_LAYERS.VIEWMODEL);
+
+        if (composer) {
+            composer.render(deltaTime);
+        } else {
+            renderer.render(scene, camera);
+        }
+
+        // Pass 2: Render the viewmodel (on its own layer) on top.
+        renderer.clearDepth(); // Clear depth buffer to draw weapon on top
+        camera.layers.set(RENDERING_LAYERS.VIEWMODEL); // ONLY see the viewmodel
+        renderer.render(scene, camera);
+
+        // Reset for next frame
+        renderer.autoClear = true;
+        camera.layers.enableAll();
 
         // 7. Reset input deltas
         this.core.input.update();

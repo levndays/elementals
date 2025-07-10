@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-10T21:40:43.677850
+Snapshot created on: 2025-07-10T22:32:07.319573
 ================================================================================
 
 === FILE: asset-editor.html ===
@@ -394,6 +394,7 @@ Snapshot created on: 2025-07-10T21:40:43.677850
 
 === FILE: index.html ===
 --------------------------------------------------
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -445,6 +446,11 @@ Snapshot created on: 2025-07-10T21:40:43.677850
             <div class="menu-options">
                 <button id="death-quit-btn">Return to Menu</button>
             </div>
+        </div>
+        <!-- Ready Screen -->
+        <div id="ready-screen" class="menu-screen" style="display: none;">
+            <h2 id="ready-screen-level-name">Level Loaded</h2>
+            <p class="ready-prompt">Click to Start</p>
         </div>
     </div>
 
@@ -2447,7 +2453,6 @@ body:not(.game-active) #tutorial-text-container {
 
 === FILE: css/menu.css ===
 --------------------------------------------------
-/* --- MENU SYSTEM --- */
 #menu-system {
     position: absolute;
     inset: 0;
@@ -2565,6 +2570,29 @@ body:not(.game-active) #tutorial-text-container {
     border-color: var(--color-text-dark) !important;
     color: var(--color-text-light) !important;
     box-shadow: none !important;
+}
+
+/* NEW: Ready Screen styles */
+#ready-screen {
+    cursor: pointer;
+}
+
+.ready-prompt {
+    font-size: 1.5rem;
+    color: var(--color-text-mid);
+    margin-top: -20px;
+    animation: prompt-pulse 2s infinite ease-in-out;
+}
+
+@keyframes prompt-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
 }
 --------------------------------------------------
 === END OF FILE: css/menu.css ===
@@ -7758,6 +7786,7 @@ export class ViewModelGuide extends THREE.Group {
 
 === FILE: src/client/client_main.js ===
 --------------------------------------------------
+// src/client/client_main.js
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.js';
 import { Physics } from '../core/Physics.js';
@@ -7770,6 +7799,7 @@ import { VFXSystem } from './systems/VFXSystem.js';
 import { WorldUISystem } from './systems/WorldUISystem.js';
 import { PhysicsSyncSystem } from '../game/systems/PhysicsSyncSystem.js';
 import { AbilityIconService } from './ui/AbilityIconService.js';
+import { RENDERING_LAYERS } from '../shared/CollisionGroups.js';
 
 class App {
     constructor() {
@@ -7814,6 +7844,12 @@ class App {
         });
 
         // 6. Load initial assets, set up game, start loop
+        this.core.assets.queue([{
+            name: 'npcMannequin',
+            type: 'gltf',
+            path: 'https://threejs.org/examples/models/gltf/Soldier.glb'
+        }]);
+        await this.core.assets.loadAll();
         await this.game.init();
 
         this.core.renderer.renderer.setAnimationLoop(() => this.animate());
@@ -7847,7 +7883,29 @@ class App {
         this.ui.update(this.game);
 
         // 6. Render
-        this.core.renderer.render();
+        const { renderer, camera, scene, composer } = this.core.renderer;
+        
+        renderer.autoClear = false;
+        renderer.clear();
+
+        // Pass 1: Render the world scene (layers 0 and 1).
+        camera.layers.set(RENDERING_LAYERS.DEFAULT);
+        camera.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
+
+        if (composer) {
+            composer.render(deltaTime);
+        } else {
+            renderer.render(scene, camera);
+        }
+
+        // Pass 2: Render the viewmodel (on its own layer) on top.
+        renderer.clearDepth(); // Clear depth buffer to draw weapon on top
+        camera.layers.set(RENDERING_LAYERS.VIEWMODEL); // ONLY see the viewmodel
+        renderer.render(scene, camera);
+
+        // Reset for next frame
+        renderer.autoClear = true;
+        camera.layers.enableAll();
 
         // 7. Reset input deltas
         this.core.input.update();
@@ -10066,8 +10124,9 @@ export class VFXSystem {
 
 === FILE: src/client/systems/WorldUISystem.js ===
 --------------------------------------------------
-// ~ src/client/systems/WorldUISystem.js
+// src/client/systems/WorldUISystem.js
 import { HealthBar } from '../ui/HealthBar.js';
+import * as CANNON from 'cannon-es';
 
 /**
  * Manages 3D UI elements that exist in the world space, like enemy health bars.
@@ -10125,7 +10184,15 @@ export class WorldUISystem {
             }
             
             const position = entity.physics.body.position.clone();
-            position.y += (entity.mesh.geometry.parameters.height || 1.0) + 1.0;
+            
+            // Calculate height offset based on physics body, not mesh geometry.
+            let heightOffset = 2.0; // Default offset
+            if (entity.physics.body.shapes[0] && entity.physics.body.shapes[0] instanceof CANNON.Sphere) {
+                // The physics body is centered at y=radius, so its top is at y=2*radius.
+                // We add a small margin above that.
+                heightOffset = entity.physics.body.shapes[0].radius * 2 + 0.5;
+            }
+            position.y += heightOffset;
 
             const isVisible = this.world.player.camera.position.distanceTo(position) < 30;
             healthBar.setVisible(isVisible);
@@ -11512,6 +11579,7 @@ export class TutorialManager {
 === FILE: src/client/ui/UIManager.js ===
 --------------------------------------------------
 // src/client/ui/UIManager.js
+// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -11528,6 +11596,7 @@ export class UIManager {
             levelSelect: document.getElementById('level-select-menu'),
             pauseMenu: document.getElementById('pause-menu'),
             deathScreen: document.getElementById('death-screen'),
+            readyScreen: document.getElementById('ready-screen'),
         };
 
         this.elements = {
@@ -11541,6 +11610,7 @@ export class UIManager {
             energyBarContainer: document.getElementById('energy-bar-container'),
             abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
             underwaterOverlay: document.getElementById('vfx-underwater-overlay'),
+            readyScreenLevelName: document.getElementById('ready-screen-level-name'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -11563,18 +11633,31 @@ export class UIManager {
         }
     }
 
+    showReadyScreen(levelName) {
+        if (this.elements.readyScreenLevelName) {
+            this.elements.readyScreenLevelName.textContent = levelName;
+        }
+        this.setLoading(false);
+        this.showScreen('readyScreen');
+    }
+
     setLoading(isLoading) {
         if (isLoading) {
+            // You might want a dedicated loading overlay instead of overwriting the main menu
             this.showScreen('mainMenu');
             this.screens.mainMenu.innerHTML = '<h2>Loading...</h2>';
         } else {
-            this.screens.mainMenu.innerHTML = `
-                <h1>ELEMENTALS</h1>
-                <div class="menu-options">
-                    <button id="play-btn">Play</button>
-                    <button id="loadout-btn">Loadout</button>
-                    <button id="editor-btn">Level Editor</button>
-                </div>`;
+            // Only restore the main menu if it was actually in a loading state
+            if (this.screens.mainMenu.querySelector('h2')) {
+                 this.screens.mainMenu.innerHTML = `
+                    <h1>ELEMENTALS</h1>
+                    <div class="menu-options">
+                        <button id="play-btn">Play</button>
+                        <button id="loadout-btn">Loadout</button>
+                        <button id="editor-btn">Level Editor</button>
+                        <button id="asset-editor-btn">Asset Editor</button>
+                    </div>`;
+            }
         }
     }
 
@@ -11583,6 +11666,7 @@ export class UIManager {
             const playBtn = document.getElementById('play-btn');
             const loadoutBtn = document.getElementById('loadout-btn');
             const editorBtn = document.getElementById('editor-btn');
+            const assetEditorBtn = document.getElementById('asset-editor-btn');
 
             if (playBtn) playBtn.onclick = () => {
                 this.populateLevelList(game);
@@ -11590,6 +11674,7 @@ export class UIManager {
             };
             if (loadoutBtn) loadoutBtn.onclick = () => { window.location.href = 'loadout.html'; };
             if (editorBtn) editorBtn.onclick = () => { window.location.href = 'editor.html'; };
+            if (assetEditorBtn) assetEditorBtn.onclick = () => { window.location.href = 'asset-editor.html'; };
         };
         
         setupMainMenuListeners();
@@ -11605,6 +11690,7 @@ export class UIManager {
         this.elements.resumeBtn.onclick = () => game.requestPointerLock();
         this.elements.pauseQuitBtn.onclick = () => game.returnToMenu();
         this.elements.deathQuitBtn.onclick = () => game.returnToMenu();
+        this.screens.readyScreen.onclick = () => game.requestPointerLock();
     }
 
     async populateLevelList(game) {
@@ -12029,7 +12115,7 @@ export class Renderer {
         }
 
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
 
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -12051,16 +12137,9 @@ export class Renderer {
         window.addEventListener('resize', this._onWindowResize);
     }
     
-    setupPostProcessing(mainScene, camera, viewModelScene = null) {
+    setupPostProcessing(mainScene, camera) {
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(new RenderPass(mainScene, camera));
-
-        if (viewModelScene) {
-            const viewModelPass = new RenderPass(viewModelScene, camera);
-            viewModelPass.clear = false;
-            viewModelPass.clearDepth = true;
-            this.composer.addPass(viewModelPass);
-        }
         
         this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         this.bloomPass.threshold = 0.9;
@@ -14345,8 +14424,9 @@ export class Game {
 
             this.playerController.attach(this.world.player);
             
-            this.gameState = 'AWAITING_PLAY';
-            this.requestPointerLock();
+            this.gameState = 'READY';
+            this.ui.showReadyScreen(this.world.levelName);
+
         } catch (error) {
             console.error("Failed to start level:", error);
             this.returnToMenu();
@@ -14354,7 +14434,7 @@ export class Game {
     }
 
     startGameplay() {
-        if (this.gameState !== 'AWAITING_PLAY') return;
+        if (this.gameState !== 'READY') return;
         this.gameState = 'PLAYING';
         this.ui.setLoading(false);
         this.ui.showScreen('none');
@@ -14376,9 +14456,8 @@ export class Game {
 
     respawnPlayer() {
         this.world.resetPlayer();
-        this.gameState = 'AWAITING_PLAY';
-        this.ui.showScreen('none');
-        this.requestPointerLock();
+        this.gameState = 'READY';
+        this.ui.showReadyScreen(this.world.levelName);
     }
     
     returnToMenu() {
@@ -14409,7 +14488,7 @@ export class Game {
     _setupEventListeners() {
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement) {
-                if (this.gameState === 'AWAITING_PLAY') this.startGameplay();
+                if (this.gameState === 'READY') this.startGameplay();
                 if (this.gameState === 'PAUSED') {
                     this.gameState = 'PLAYING';
                     this.ui.showScreen('none');
@@ -15758,6 +15837,7 @@ export class StatusEffect {
 
 === FILE: src/game/entities/NPC.js ===
 --------------------------------------------------
+// src/game/entities/NPC.js
 import * as THREE from 'three';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { AIComponent } from '../components/AIComponent.js';
@@ -15787,23 +15867,27 @@ export class NPC {
         this.physics = new PhysicsBodyComponent(body);
         this.statusEffects = new StatusEffectComponent();
 
+        // Animation state
+        this.mixer = null;
+        this.animations = new Map(); // name -> AnimationClip
+        this.activeAction = null;
+        this.isAttackingAnimation = false;
+
+        // Ragdoll state
+        this.ragdoll = {
+            bodies: [],
+            constraints: [],
+            bodyBoneMap: new Map(), // Map<CANNON.Body, THREE.Bone>
+        };
+
         // Client-side visual state
-        this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
-        // Store original base color as well for status effects that tint the model
-        this.originalColor = new THREE.Color(mesh.material.color.getHex()); 
+        this.originalEmissive = new THREE.Color(0x000000); // Updated in prefab
+        this.originalColor = new THREE.Color(0xffffff); // Updated in prefab
         this.isDead = false;
         
         // Water interaction state
         this.isInWater = false;
         this.currentWaterVolume = null;
-
-        // Melee animation state
-        this.isAttacking = false;
-        this.attackAnimationTimer = 0;
-        this.attackAnimationDuration = 0.4; // seconds
-        this.leftHand = null;
-        this.rightHand = null;
-        this.whichHand = 'left'; // For alternating punches
 
         // Link back to entity for easy access from physics/rendering
         const gameEntityLink = { type: 'NPC', entity: this };
@@ -15813,7 +15897,7 @@ export class NPC {
         body.userData.entity = this; // Use consistent .entity property for collisions
     }
     
-    takeDamage(amount) {
+    takeDamage(amount, impulse = null, hitPoint = null) {
         if (this.isDead) return;
 
         this.health.currentHealth -= amount;
@@ -15821,14 +15905,14 @@ export class NPC {
 
         if (this.health.currentHealth <= 0) {
             this.health.currentHealth = 0;
-            this.die();
+            this.die(impulse, hitPoint);
         }
     }
 
-    die() {
+    die(killingImpulse, hitPoint) {
         if (this.isDead) return;
         this.isDead = true;
-        this.world.emit('npcDied', { entity: this });
+        this.world.emit('npcDied', { entity: this, killingImpulse, hitPoint });
     }
 
     dispose() {
@@ -15837,20 +15921,22 @@ export class NPC {
             this.world.physics.queueForRemoval(this.physics.body);
             this.physics.body = null;
         }
+        if (this.ragdoll.bodies.length > 0) {
+            this.ragdoll.bodies.forEach(body => this.world.physics.queueForRemoval(body));
+            this.ragdoll.constraints.forEach(constraint => this.world.physics.world.removeConstraint(constraint));
+        }
         if (this.mesh) {
-            // Restore original colors before disposing
-            if (this.originalColor && this.mesh.material) {
-                this.mesh.material.color.copy(this.originalColor);
-                this.mesh.material.emissive.copy(this.originalEmissive);
-                this.mesh.material.emissiveIntensity = 1.0;
-            }
-            this.mesh.userData.entity = null;
-            this.mesh.geometry?.dispose();
-            if (this.mesh.material.dispose) {
-                this.mesh.material.dispose();
-            }
             this.world.scene.remove(this.mesh);
+            this.mesh.traverse(child => {
+                if (child.isMesh) {
+                    child.geometry.dispose();
+                    child.material.dispose();
+                }
+            });
             this.mesh = null;
+        }
+        if (this.mixer) {
+            this.mixer.stopAllAction();
         }
     }
 }
@@ -15869,27 +15955,20 @@ import { AbilityLoadoutComponent } from '../components/AbilityLoadoutComponent.j
 import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { AbilityFactory } from '../abilities/AbilityFactory.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-import { CustomWeapon } from '../weapons/CustomWeapon.js';
+import { COLLISION_GROUPS, RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
+import { WeaponFactory } from '../weapons/WeaponFactory.js';
 
 /**
  * Encapsulates the player entity's state, components, and core logic.
  */
 export class Player {
-    constructor(world, camera, weapon, body) {
+    constructor(world, camera, body) {
         this.id = THREE.MathUtils.generateUUID();
         this.type = 'player';
         this.team = 'player';
         this.world = world;
         this.camera = camera;
-        this.weapon = weapon;
-        
-        if (this.weapon) {
-            this.weapon.wielder = this;
-            if (this.weapon.mesh) {
-                this.camera.add(this.weapon.mesh);
-            }
-        }
+        this.weapon = null; // Initialized as null
         
         this.health = new HealthComponent(GAME_CONFIG.PLAYER.MAX_HEALTH);
         this.input = new PlayerInputComponent();
@@ -16007,11 +16086,31 @@ export class Player {
         this.selectAbility(newIndex);
     }
 
-    applyLoadout(loadoutData) {
-        // Ensure loadoutData is an object and has a 'cards' array property.
+    async applyLoadout(loadoutData) {
+        // Clear existing weapon
+        if (this.weapon) {
+            if (this.weapon.mesh) this.camera.remove(this.weapon.mesh);
+            this.weapon = null;
+        }
+
+        // Load and set new weapon
+        const weaponId = loadoutData?.weapon || 'WEAPON_REVOLVER';
+        this.weapon = await WeaponFactory.create(weaponId);
+        
+        if (this.weapon) {
+            this.weapon.wielder = this;
+            if (this.weapon.mesh) {
+                this.weapon.mesh.traverse(child => {
+                    child.layers.set(RENDERING_LAYERS.VIEWMODEL);
+                });
+                this.camera.add(this.weapon.mesh);
+            }
+        }
+
+        // Load abilities
         const cardIds = (loadoutData && Array.isArray(loadoutData.cards)) 
             ? loadoutData.cards 
-            : [null, null, null, null]; // Default to empty slots if data is malformed.
+            : [null, null, null, null];
         
         this.abilities.abilities = cardIds.map(cardId => 
             cardId ? AbilityFactory.create(cardId, this) : null
@@ -16088,12 +16187,14 @@ export class Player {
 
 === FILE: src/game/prefabs/NPCPrefab.js ===
 --------------------------------------------------
+// src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 /**
  * A factory for creating NPC entities with all their required components.
@@ -16109,16 +16210,28 @@ export class NPCPrefab {
         const config = GAME_CONFIG.NPC.BASE;
         const team = definition.team || 'enemy';
 
-        // 1. Visuals (Mesh)
-        const geometry = new THREE.CapsuleGeometry(0.7, 1.0, 4, 8);
-        const color = team === 'enemy' ? 0x990000 : 0x009933; // Red for enemies, Green for allies
-        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.4, emissive: 0x000000 });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        mesh.position.copy(definition.position);
-        mesh.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
+        // 1. Visuals (Mesh) - Clone from pre-loaded asset
+        const originalGltf = world.core.assets.get('npcMannequin');
+        
+        const containerGroup = new THREE.Group();
+        const modelMesh = SkeletonUtils.clone(originalGltf.scene);
+        modelMesh.rotation.y = Math.PI;
+        containerGroup.add(modelMesh);
+        containerGroup.scale.setScalar(0.9);
+        
+        const teamColor = team === 'enemy' ? new THREE.Color(0x990000) : new THREE.Color(0x009933);
+        containerGroup.traverse(child => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
+                child.material = child.material.clone();
+                child.material.color.lerp(teamColor, 0.4);
+            }
+        });
+        
+        containerGroup.position.copy(definition.position);
 
-        // 2. Physics (Body)
+        // 2. Physics (Body) - Use a Sphere for live state.
         const shape = new CANNON.Sphere(config.RADIUS);
         
         let group, mask;
@@ -16132,34 +16245,82 @@ export class NPCPrefab {
         
         const body = new CANNON.Body({
             mass: config.MASS,
-            shape,
             position: new CANNON.Vec3(definition.position.x, definition.position.y, definition.position.z),
             fixedRotation: true,
             collisionFilterGroup: group,
             collisionFilterMask: mask,
             linearDamping: 0.1,
         });
+        body.addShape(shape, new CANNON.Vec3(0, config.RADIUS, 0));
 
         // 3. Entity creation
-        const entity = new NPC(world, body, mesh, definition);
-        
-        // 4. Add melee "hands" if applicable
-        if (entity.attackType === 'melee') {
-            const handGeo = new THREE.SphereGeometry(0.3, 8, 8);
-            const handMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 });
-            
-            entity.leftHand = new THREE.Mesh(handGeo, handMat);
-            entity.leftHand.position.set(-0.7, 0.2, 0.5); // Position relative to parent capsule
-            entity.leftHand.castShadow = true;
-            
-            entity.rightHand = new THREE.Mesh(handGeo, handMat);
-            entity.rightHand.position.set(0.7, 0.2, 0.5); // Position relative to parent capsule
-            entity.rightHand.castShadow = true;
+        const entity = new NPC(world, body, containerGroup, definition);
 
-            mesh.add(entity.leftHand, entity.rightHand);
-        }
+        // 4. Animation Setup
+        entity.mixer = new THREE.AnimationMixer(modelMesh);
+        originalGltf.animations.forEach(clip => entity.animations.set(clip.name, clip));
+        const idleAction = entity.mixer.clipAction(entity.animations.get('Idle'));
+        idleAction.play();
+        entity.activeAction = idleAction;
+
+        // 5. Create Ragdoll Physics Skeleton
+        this._createRagdoll(entity);
         
         return entity;
+    }
+
+    static _createRagdoll(entity) {
+        const bones = {};
+        entity.mesh.traverse(child => {
+            if (child.isBone) bones[child.name] = child;
+        });
+
+        const massPerBody = entity.physics.body.mass / Object.keys(bones).length;
+        const box = (w, h, d) => new CANNON.Box(new CANNON.Vec3(w/2, h/2, d/2));
+
+        const bodyDefs = {
+            'Hips': { shape: box(0.28, 0.22, 0.2), mass: massPerBody * 4 },
+            'Spine': { shape: box(0.25, 0.25, 0.25), mass: massPerBody * 4 },
+            'Head': { shape: new CANNON.Sphere(0.12), mass: massPerBody * 2 },
+            'LeftArm': { shape: box(0.1, 0.4, 0.1), mass: massPerBody },
+            'RightArm': { shape: box(0.1, 0.4, 0.1), mass: massPerBody },
+            'LeftForeArm': { shape: box(0.08, 0.4, 0.08), mass: massPerBody },
+            'RightForeArm': { shape: box(0.08, 0.4, 0.08), mass: massPerBody },
+            'LeftUpLeg': { shape: box(0.15, 0.5, 0.15), mass: massPerBody * 2 },
+            'RightUpLeg': { shape: box(0.15, 0.5, 0.15), mass: massPerBody * 2 },
+            'LeftLeg': { shape: box(0.12, 0.5, 0.12), mass: massPerBody * 2 },
+            'RightLeg': { shape: box(0.12, 0.5, 0.12), mass: massPerBody * 2 },
+        };
+        
+        for (const name in bodyDefs) {
+            const bone = bones[name];
+            if (!bone) continue;
+
+            const body = new CANNON.Body({ mass: bodyDefs[name].mass, shape: bodyDefs[name].shape });
+            entity.ragdoll.bodies.push(body);
+            entity.ragdoll.bodyBoneMap.set(body, bone);
+        }
+
+        const addConstraint = (bone1, bone2, pivot1, pivot2) => {
+            const body1 = entity.ragdoll.bodyBoneMap.get(bones[bone1]);
+            const body2 = entity.ragdoll.bodyBoneMap.get(bones[bone2]);
+            if (body1 && body2) {
+                const c = new CANNON.PointToPointConstraint(body1, new CANNON.Vec3(...pivot1), body2, new CANNON.Vec3(...pivot2));
+                entity.ragdoll.constraints.push(c);
+            }
+        };
+
+        // Connect joints
+        addConstraint('Spine', 'Hips', [0, -0.125, 0], [0, 0.11, 0]);
+        addConstraint('Spine', 'Head', [0, 0.125, 0], [0, -0.12, 0]);
+        addConstraint('Spine', 'LeftArm', [-0.125, 0, 0], [0, 0.2, 0]);
+        addConstraint('Spine', 'RightArm', [0.125, 0, 0], [0, 0.2, 0]);
+        addConstraint('LeftArm', 'LeftForeArm', [0, -0.2, 0], [0, 0.2, 0]);
+        addConstraint('RightArm', 'RightForeArm', [0, -0.2, 0], [0, 0.2, 0]);
+        addConstraint('Hips', 'LeftUpLeg', [-0.1, -0.11, 0], [0, 0.25, 0]);
+        addConstraint('Hips', 'RightUpLeg', [0.1, -0.11, 0], [0, 0.25, 0]);
+        addConstraint('LeftUpLeg', 'LeftLeg', [0, -0.25, 0], [0, 0.25, 0]);
+        addConstraint('RightUpLeg', 'RightLeg', [0, -0.25, 0], [0, 0.25, 0]);
     }
 }
 --------------------------------------------------
@@ -16168,6 +16329,7 @@ export class NPCPrefab {
 
 === FILE: src/game/prefabs/PlayerPrefab.js ===
 --------------------------------------------------
+// src/game/prefabs/PlayerPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';
@@ -16179,7 +16341,7 @@ import { GAME_CONFIG } from '../../shared/config.js';
  * A factory for creating the player entity with all its required components.
  */
 export class PlayerPrefab {
-    static async create(world, camera, viewModelScene, loadoutData) {
+    static async create(world, camera, loadoutData) {
         const { physics } = world;
         const config = GAME_CONFIG.PLAYER;
 
@@ -16203,20 +16365,9 @@ export class PlayerPrefab {
         );
         physics.addContactMaterial(playerWorldContactMaterial);
         
-        const weaponId = loadoutData?.weapon || 'WEAPON_KATANA';
-        const weapon = await WeaponFactory.create(weaponId);
-
-        const entity = new Player(world, camera, weapon, body);
+        const entity = new Player(world, camera, body);
         
-        // Setup viewmodel scene with its own lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
-        directionalLight.position.set(0.5, 0.8, -0.2).normalize();
-        
-        // The camera should NOT be added to the scene it renders.
-        viewModelScene.add(ambientLight, directionalLight);
-        
-        entity.applyLoadout(loadoutData || { cards: [null, null, null, null], weapon: null });
+        await entity.applyLoadout(loadoutData || { cards: [null, null, null, null], weapon: null });
         
         return entity;
     }
@@ -16260,6 +16411,7 @@ export class AbilitySystem {
 
 === FILE: src/game/systems/AISystem.js ===
 --------------------------------------------------
+// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -16292,7 +16444,6 @@ export class AISystem {
         for (const npc of world.getNPCs()) {
             if (npc.isDead) continue;
 
-            this._updateAnimations(npc, deltaTime);
             this._updateTimers(npc.ai, deltaTime);
 
             if (npc.ai.isKnockedBack) {
@@ -16461,12 +16612,7 @@ export class AISystem {
         
         if (this._forward.dot(toTarget) > 0.7) { // Check if target is roughly in front (cone)
             target.takeDamage(config.DAMAGE);
-            // Trigger animation state
-            if (!npc.isAttacking) {
-                npc.isAttacking = true;
-                npc.attackAnimationTimer = 0;
-                npc.whichHand = (npc.whichHand === 'left') ? 'right' : 'left'; // Alternate hands
-            }
+            npc.world.emit('npcMeleeAttack', { npc });
         }
     }
 
@@ -16654,28 +16800,6 @@ export class AISystem {
 
         return null; // No avoidance needed
     }
-
-    _updateAnimations(npc, deltaTime) {
-        if (!npc.isAttacking || npc.attackType !== 'melee') return;
-
-        npc.attackAnimationTimer += deltaTime;
-        const progress = Math.min(npc.attackAnimationTimer / npc.attackAnimationDuration, 1.0);
-
-        // A simple "punch" animation: forward then back
-        // The sin curve creates a smooth 0 -> 1 -> 0 motion over the animation duration.
-        const punchProgress = Math.sin(progress * Math.PI);
-
-        const handToAnimate = (npc.whichHand === 'left') ? npc.leftHand : npc.rightHand;
-        if (handToAnimate) {
-            const initialZ = 0.5; // From prefab
-            const punchDistance = 0.8;
-            handToAnimate.position.z = initialZ + punchProgress * punchDistance;
-        }
-
-        if (progress >= 1.0) {
-            npc.isAttacking = false;
-        }
-    }
 }
 --------------------------------------------------
 === END OF FILE: src/game/systems/AISystem.js ===
@@ -16780,11 +16904,11 @@ export class AnimationSystem {
 
 === FILE: src/game/systems/DeathSystem.js ===
 --------------------------------------------------
-// ~ src/game/systems/DeathSystem.js
+// src/game/systems/DeathSystem.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-const DEATH_DURATION = 2.5; // seconds
+const DEATH_DURATION = 5.0; // seconds, increased for ragdolls
 
 /**
  * Manages the death sequence for entities, providing a more visually
@@ -16801,11 +16925,11 @@ export class DeathSystem {
      */
     update(world, deltaTime) {
         // Find newly dead NPCs and start their death sequence
-        for (const npc of world.getNPCs()) {
-            if (npc.isDead && !this.dyingEntities.has(npc)) {
-                this.startDeathSequence(npc);
+        world.on('npcDied', ({ entity, killingImpulse, hitPoint }) => {
+            if (entity.isDead && !this.dyingEntities.has(entity)) {
+                this.startDeathSequence(world, entity, killingImpulse, hitPoint);
             }
-        }
+        });
 
         // Update ongoing death sequences
         for (const [entity, state] of this.dyingEntities.entries()) {
@@ -16822,31 +16946,50 @@ export class DeathSystem {
 
     /**
      * Initiates the death sequence for an NPC.
+     * @param {import('../world/World.js').World} world
      * @param {import('../entities/NPC.js').NPC} npc
+     * @param {CANNON.Vec3} [killingImpulse]
+     * @param {CANNON.Vec3} [hitPoint]
      */
-    startDeathSequence(npc) {
+    startDeathSequence(world, npc, killingImpulse, hitPoint) {
         this.dyingEntities.set(npc, { timer: DEATH_DURATION });
         
-        if (npc.physics?.body) {
-            const body = npc.physics.body;
-            // Make it a ragdoll
-            body.fixedRotation = false;
-            body.updateMassProperties();
+        // --- Ragdoll Activation ---
+        if (npc.ragdoll?.bodies.length > 0) {
+            // Remove the main collider
+            world.physics.queueForRemoval(npc.physics.body);
+            npc.physics.body = null;
+            
+            // Add ragdoll bodies and constraints to the world
+            npc.ragdoll.bodies.forEach(body => {
+                const bone = npc.ragdoll.bodyBoneMap.get(body);
+                const worldPos = new THREE.Vector3();
+                const worldQuat = new THREE.Quaternion();
+                bone.getWorldPosition(worldPos);
+                bone.getWorldQuaternion(worldQuat);
+                
+                body.position.copy(worldPos);
+                body.quaternion.copy(worldQuat);
+                
+                world.physics.addBody(body);
+            });
+            npc.ragdoll.constraints.forEach(c => world.physics.world.addConstraint(c));
 
-            // Give it a little push for a dynamic fall
-            const impulse = new CANNON.Vec3(
-                (Math.random() - 0.5) * 100,
-                Math.random() * 150,
-                (Math.random() - 0.5) * 100
-            );
-            const point = new CANNON.Vec3(0, 0.5, 0);
-            body.applyImpulse(impulse, point);
+            // Apply killing force
+            if (killingImpulse) {
+                const torsoBody = npc.ragdoll.bodyBoneMap.get(npc.mesh.getObjectByName('Spine'));
+                if (torsoBody) {
+                    torsoBody.applyImpulse(killingImpulse.scale(0.1), hitPoint || torsoBody.position);
+                }
+            }
         }
-
+        
         // Prepare material for fading
-        if (npc.mesh?.material) {
-            npc.mesh.material.transparent = true;
-        }
+        npc.mesh?.traverse(child => {
+            if (child.isMesh) {
+                child.material.transparent = true;
+            }
+        });
     }
 
     /**
@@ -16855,9 +16998,11 @@ export class DeathSystem {
      * @param {number} timer
      */
     updateFadeOut(entity, timer) {
-        if (entity.mesh?.material) {
+        if (entity.mesh?.material) { // This won't work for group, need to traverse
             const opacity = Math.max(0, timer / DEATH_DURATION);
-            entity.mesh.material.opacity = opacity;
+            entity.mesh.traverse(child => {
+                if(child.isMesh) child.material.opacity = opacity;
+            });
         }
     }
 }
@@ -17131,6 +17276,113 @@ export class MovementSystem {
 === END OF FILE: src/game/systems/MovementSystem.js ===
 
 
+=== FILE: src/game/systems/NPCAnimationSystem.js ===
+--------------------------------------------------
+// src/game/systems/NPCAnimationSystem.js
+import * as THREE from 'three';
+const FADE_DURATION = 0.2; // seconds
+
+/**
+ * Manages the animations for all NPC entities in the world.
+ */
+export class NPCAnimationSystem {
+    constructor(world) {
+        this._boundOnMeleeAttack = this.onMeleeAttack.bind(this);
+        world.on('npcMeleeAttack', this._boundOnMeleeAttack);
+    }
+
+    /**
+     * @param {import('../world/World.js').World} world
+     * @param {number} deltaTime
+     */
+    update(world, deltaTime) {
+        for (const npc of world.getNPCs()) {
+            if (npc.isDead || !npc.mixer) continue;
+
+            const newActionName = this._determineAction(npc);
+            if (npc.activeAction?.getClip().name !== newActionName) {
+                const newActionClip = npc.animations.get(newActionName);
+                if (newActionClip) {
+                    const newAction = npc.mixer.clipAction(newActionClip);
+                    this._crossFadeTo(npc, newAction);
+                }
+            }
+            
+            npc.mixer.update(deltaTime);
+        }
+    }
+
+    onMeleeAttack({ npc }) {
+        if (!npc || npc.isDead || !npc.mixer || npc.isAttackingAnimation) return;
+
+        const attackActionClip = npc.animations.get('Run');
+        if (!attackActionClip) return;
+
+        const attackAction = npc.mixer.clipAction(attackActionClip);
+        npc.isAttackingAnimation = true;
+        
+        // This makes the run animation look like a quick lunge
+        attackAction.setLoop(THREE.LoopOnce);
+        attackAction.clampWhenFinished = true;
+        attackAction.timeScale = 2.5; // Play it faster
+        attackAction.weight = 1;
+        
+        const onAnimationFinish = (e) => {
+            if (e.action === attackAction) {
+                npc.isAttackingAnimation = false;
+                npc.mixer.removeEventListener('finished', onAnimationFinish);
+            }
+        };
+        npc.mixer.addEventListener('finished', onAnimationFinish);
+        
+        this._crossFadeTo(npc, attackAction);
+    }
+
+    _determineAction(npc) {
+        const { ai, physics } = npc;
+
+        // If an attack animation is playing, don't interrupt it.
+        if (npc.isAttackingAnimation) {
+            return npc.activeAction.getClip().name;
+        }
+
+        // Running has the next priority
+        if (physics.body.velocity.lengthSquared() > 0.5) {
+            return 'Run';
+        }
+
+        // Default to Idle
+        return 'Idle';
+    }
+
+    _crossFadeTo(npc, newAction) {
+        const oldAction = npc.activeAction;
+        npc.activeAction = newAction;
+
+        if (oldAction && oldAction !== newAction) {
+            oldAction.fadeOut(FADE_DURATION);
+        }
+        
+        // Ensure properties are reset unless it's the attack animation that sets its own
+        if (!npc.isAttackingAnimation) {
+             newAction.setLoop(THREE.LoopRepeat);
+             newAction.timeScale = 1;
+        }
+
+        newAction.reset()
+                 .setEffectiveWeight(1)
+                 .fadeIn(FADE_DURATION)
+                 .play();
+    }
+
+    dispose(world) {
+        world.off('npcMeleeAttack', this._boundOnMeleeAttack);
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/game/systems/NPCAnimationSystem.js ===
+
+
 === FILE: src/game/systems/OutOfBoundsSystem.js ===
 --------------------------------------------------
 import { GAME_CONFIG } from '../../shared/config.js';
@@ -17168,6 +17420,8 @@ export class OutOfBoundsSystem {
 === FILE: src/game/systems/PhysicsSyncSystem.js ===
 --------------------------------------------------
 // src/game/systems/PhysicsSyncSystem.js
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
 
 /**
  * Synchronizes the visual representation (Three.js mesh) of entities
@@ -17181,7 +17435,11 @@ export class PhysicsSyncSystem {
     update(world) {
         // General sync for all entities with a mesh and body
         for (const entity of world.getEntities()) {
-            if (entity.mesh && entity.physics?.body) {
+            if (entity.isDead && entity.ragdoll?.bodies.length > 0) {
+                // Ragdoll sync
+                this._syncRagdoll(entity);
+            } else if (entity.mesh && entity.physics?.body) {
+                // Standard sync
                 entity.mesh.position.copy(entity.physics.body.position);
                 entity.mesh.quaternion.copy(entity.physics.body.quaternion);
             }
@@ -17190,6 +17448,32 @@ export class PhysicsSyncSystem {
         // Specific sync for the player's camera, which acts as the 'view'
         if (world.player && !world.player.isDead) {
             world.player.camera.position.copy(world.player.physics.body.position);
+        }
+    }
+
+    _syncRagdoll(npc) {
+        // The main container group follows the Hips bone's physics body
+        const hipsBody = npc.ragdoll.bodyBoneMap.get(npc.mesh.getObjectByName('Hips'));
+        if (hipsBody) {
+            npc.mesh.position.copy(hipsBody.position);
+            npc.mesh.quaternion.copy(hipsBody.quaternion);
+        }
+        
+        // Now, update each bone's rotation to match its physics body.
+        // We only need to sync rotations because the skinned mesh will handle positions
+        // relative to the parent bones.
+        for (const [body, bone] of npc.ragdoll.bodyBoneMap.entries()) {
+            // Get the physics rotation in world space
+            const physicsWorldQuat = new THREE.Quaternion().copy(body.quaternion);
+            
+            // Get the parent bone's world rotation
+            const parentWorldQuat = new THREE.Quaternion();
+            if (bone.parent && bone.parent.isBone) {
+                bone.parent.getWorldQuaternion(parentWorldQuat);
+            }
+            
+            // The bone's local rotation is the physics rotation relative to its parent's rotation.
+            bone.quaternion.copy(parentWorldQuat.invert()).multiply(physicsWorldQuat);
         }
     }
 }
@@ -17637,7 +17921,13 @@ export class WeaponSystem {
      * @param {number} deltaTime
      */
     update(world, deltaTime) {
-        for (const entity of world.getEntities()) {
+        // Specifically update the player's weapon if it exists and has an update method.
+        if (world.player?.weapon?.update) {
+            world.player.weapon.update(deltaTime);
+        }
+
+        // This loop is kept for potential future NPCs with complex, updatable weapons.
+        for (const entity of world.getNPCs()) {
             if (entity.weapon?.update) {
                 entity.weapon.update(deltaTime);
             }
@@ -17650,6 +17940,7 @@ export class WeaponSystem {
 
 === FILE: src/game/weapons/CustomWeapon.js ===
 --------------------------------------------------
+// src/game/weapons/CustomWeapon.js
 import * as THREE from 'three';
 import { Weapon } from './Weapon.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -17667,6 +17958,8 @@ export class CustomWeapon extends Weapon {
             cooldown: assetData.cooldown || 0.5,
         });
 
+        console.log(`[CustomWeapon] Constructor called for: ${assetData.assetName}`, assetData);
+
         this.assetData = assetData;
         this.range = assetData.range || 100;
         this.attackType = assetData.attackType || 'ranged';
@@ -17683,8 +17976,15 @@ export class CustomWeapon extends Weapon {
     }
 
     createMesh() {
+        console.log('[CustomWeapon] createMesh called.');
         this.mesh = new THREE.Group();
         this.mesh.name = this.assetData.assetName;
+
+        if (!this.assetData.geometry || this.assetData.geometry.length === 0) {
+            console.error(`[CustomWeapon] No geometry data found for ${this.assetData.assetName}! Cannot create mesh.`);
+            return;
+        }
+        console.log(`[CustomWeapon] Found ${this.assetData.geometry.length} parts to create.`);
 
         const geometryMap = {
             'Box': (s) => new THREE.BoxGeometry(s[0] || 1, s[1] || 1, s[2] || 1),
@@ -17694,7 +17994,12 @@ export class CustomWeapon extends Weapon {
 
         for (const partData of this.assetData.geometry) {
             const geoFn = geometryMap[partData.type];
-            if (!geoFn) continue;
+            if (!geoFn) {
+                console.warn(`[CustomWeapon] Unknown geometry type: ${partData.type}`);
+                continue;
+            }
+            
+            console.log(`[CustomWeapon] Creating part: ${partData.name} (${partData.type})`);
 
             const matData = partData.material || {};
             const material = new THREE.MeshStandardMaterial({
@@ -17735,6 +18040,7 @@ export class CustomWeapon extends Weapon {
                 this.mesh.rotation.fromArray(rotation.map(d => THREE.MathUtils.degToRad(d)), 'YXZ');
             }
         }
+        console.log('[CustomWeapon] Mesh created successfully.', this.mesh);
     }
 
     attack() {
@@ -17819,817 +18125,6 @@ export class CustomWeapon extends Weapon {
 === END OF FILE: src/game/weapons/CustomWeapon.js ===
 
 
-=== FILE: src/game/weapons/Katana.js ===
---------------------------------------------------
-// ~ src/game/weapons/Katana.js
-import * as THREE from 'three';
-import { Weapon } from './Weapon.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-
-export class Katana extends Weapon {
-    constructor() {
-        super(null, {
-            name: 'Katana',
-            damage: GAME_CONFIG.KATANA.DAMAGE,
-            cooldown: GAME_CONFIG.KATANA.COOLDOWN,
-        });
-
-        this.swingRange = GAME_CONFIG.KATANA.RANGE;
-        
-        // REWORK: State management for animations
-        this.state = 'idle'; // idle, swinging, inspecting
-        this.animationProgress = 0;
-        this.animationDuration = 0;
-
-        // Internal helpers
-        this._forward = new THREE.Vector3();
-        this._npcPos = new THREE.Vector3();
-        
-        this._defineKeyframes();
-        this.createMesh();
-        
-        this.mesh.position.copy(this.idlePosition);
-        this.mesh.quaternion.copy(this.qIdle);
-    }
-
-    _defineKeyframes() {
-        // --- Swing Animation ---
-        this.swingDuration = 0.45;
-        this.hitTiming = 120; // ms
-        this.idlePosition = new THREE.Vector3(0.35, -0.35, -0.7);
-        this.windUpPosition = new THREE.Vector3(0.5, 0.4, -0.6);
-        this.followThroughPosition = new THREE.Vector3(-0.4, -0.5, -0.7);
-        const idleRotation = new THREE.Euler(THREE.MathUtils.degToRad(10), THREE.MathUtils.degToRad(-15), THREE.MathUtils.degToRad(5), 'YXZ');
-        const windUpRotation = new THREE.Euler(THREE.MathUtils.degToRad(70), THREE.MathUtils.degToRad(30), THREE.MathUtils.degToRad(-20), 'YXZ');
-        const followThroughRotation = new THREE.Euler(THREE.MathUtils.degToRad(-45), THREE.MathUtils.degToRad(-40), THREE.MathUtils.degToRad(45), 'YXZ');
-        this.qIdle = new THREE.Quaternion().setFromEuler(idleRotation);
-        this.qWindUp = new THREE.Quaternion().setFromEuler(windUpRotation);
-        this.qFollowThrough = new THREE.Quaternion().setFromEuler(followThroughRotation);
-
-        // --- Inspect Animation ---
-        // Player must be out of water to inspect weapon.
-        this.inspectDuration = 2.5;
-        this.p_inspect_up = new THREE.Vector3(0.1, -0.1, -0.6);
-        this.q_inspect_up = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.5, -0.2, 0.2, 'YXZ'));
-        this.p_inspect_flat = this.p_inspect_up.clone();
-        this.q_inspect_flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-1.4, 0.1, -0.2, 'YXZ'));
-    }
-
-    createMesh() {
-        this.mesh = new THREE.Group();
-        const bladeMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.9, roughness: 0.3 });
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.01), bladeMat);
-        blade.position.y = 0.7 / 2 + 0.02 / 2;
-        blade.castShadow = true;
-        
-        const guardMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.5 });
-        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.15), guardMat);
-        guard.castShadow = true;
-        
-        const hiltMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
-        const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.25, 8), hiltMat);
-        hilt.position.y = -0.25 / 2 - 0.02 / 2;
-        hilt.castShadow = true;
-        
-        this.mesh.add(blade, guard, hilt);
-    }
-
-    attack() {
-        if (!this.canAttack() || this.state !== 'idle') return false;
-        
-        this.state = 'swinging';
-        this.animationDuration = this.swingDuration;
-        this.animationProgress = 0;
-        this.triggerCooldown();
-        setTimeout(() => { if (this.state === 'swinging') this.detectHit(); }, this.hitTiming);
-        return true;
-    }
-
-    inspect() {
-        if (this.state !== 'idle' || this.wielder.isInWater) return;
-        this.state = 'inspecting';
-        this.animationDuration = this.inspectDuration;
-        this.animationProgress = 0;
-    }
-
-    detectHit() {
-        if (!this.wielder) return;
-
-        this.wielder.camera.getWorldDirection(this._forward);
-        const playerPos = this.wielder.physics.body.position;
-
-        for (const npc of this.wielder.world.getEnemies()) {
-            if (npc.isDead || !npc.physics.body) continue;
-
-            this._npcPos.copy(npc.physics.body.position);
-            const distance = playerPos.distanceTo(this._npcPos);
-
-            if (distance < this.swingRange + npc.physics.body.shapes[0].radius) {
-                const toNPC = this._npcPos.clone().sub(playerPos).normalize();
-                if (this._forward.dot(toNPC) > 0.64) {
-                    let damage = this.damage;
-                    if (this.wielder.statusEffects.has('stonePlating')) {
-                        const effect = this.wielder.statusEffects.get('stonePlating');
-                        damage *= (1 + effect.properties.meleeDamageBoost);
-                    }
-                    if (this.wielder.isSlamming) {
-                        damage *= GAME_CONFIG.KATANA.SLAM_DAMAGE_MULTIPLIER;
-                    }
-                    npc.takeDamage(damage);
-                }
-            }
-        }
-    }
-
-    update(deltaTime) {
-        super.update(deltaTime);
-        if (this.state === 'idle') {
-            this.mesh.position.lerp(this.idlePosition, 10 * deltaTime);
-            this.mesh.quaternion.slerp(this.qIdle, 10 * deltaTime);
-            return;
-        }
-
-        this.animationProgress += deltaTime;
-        const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
-
-        switch(this.state) {
-            case 'swinging':
-                this.updateSwingAnimation(p);
-                break;
-            case 'inspecting':
-                this.updateInspectAnimation(p);
-                break;
-        }
-        
-        if (p >= 1.0) {
-            this.state = 'idle';
-        }
-    }
-
-    updateSwingAnimation(p) {
-        const windUpPhaseEnd = 0.20;
-        const slashPhaseEnd = 0.60;
-
-        let currentPosition = new THREE.Vector3();
-        let currentQuaternion = new THREE.Quaternion();
-        let phaseProgress, easedProgress;
-
-        if (p < windUpPhaseEnd) {
-            phaseProgress = p / windUpPhaseEnd;
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
-            currentPosition.lerpVectors(this.idlePosition, this.windUpPosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qIdle, this.qWindUp, easedProgress);
-        } else if (p < slashPhaseEnd) {
-            phaseProgress = (p - windUpPhaseEnd) / (slashPhaseEnd - windUpPhaseEnd);
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 4);
-            currentPosition.lerpVectors(this.windUpPosition, this.followThroughPosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qWindUp, this.qFollowThrough, easedProgress);
-        } else {
-            phaseProgress = (p - slashPhaseEnd) / (1.0 - slashPhaseEnd);
-            easedProgress = phaseProgress < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-            currentPosition.lerpVectors(this.followThroughPosition, this.idlePosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qFollowThrough, this.qIdle, easedProgress);
-        }
-
-        this.mesh.position.copy(currentPosition);
-        this.mesh.quaternion.copy(currentQuaternion);
-    }
-    
-    updateInspectAnimation(p) {
-        const p1_end = 0.15, p2_end = 0.8, p3_end = 1.0;
-        let phaseProgress, easedProgress;
-        let currentPosition = new THREE.Vector3();
-        let currentQuaternion = new THREE.Quaternion();
-    
-        if (p < p1_end) {
-            phaseProgress = p / p1_end;
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
-            currentPosition.lerpVectors(this.idlePosition, this.p_inspect_up, easedProgress);
-            currentQuaternion.slerpQuaternions(this.qIdle, this.q_inspect_up, easedProgress);
-        } else if (p < p2_end) {
-            phaseProgress = (p - p1_end) / (p2_end - p1_end);
-            easedProgress = phaseProgress < 0.5 ? 2 * 4 * phaseProgress**3 : 1 - Math.pow(-2 * phaseProgress + 2, 3) / 2; // Smoother in and out
-            currentPosition.lerpVectors(this.p_inspect_up, this.p_inspect_flat, easedProgress);
-            currentQuaternion.slerpQuaternions(this.q_inspect_up, this.q_inspect_flat, easedProgress);
-        } else {
-            phaseProgress = (p - p2_end) / (p3_end - p2_end);
-            easedProgress = 1 - Math.pow(1 - phaseProgress, 3);
-            currentPosition.lerpVectors(this.p_inspect_flat, this.idlePosition, easedProgress);
-            currentQuaternion.slerpQuaternions(this.q_inspect_flat, this.qIdle, easedProgress);
-        }
-    
-        this.mesh.position.copy(currentPosition);
-        this.mesh.quaternion.copy(currentQuaternion);
-    }
-}
---------------------------------------------------
-=== END OF FILE: src/game/weapons/Katana.js ===
-
-
-=== FILE: src/game/weapons/Revolver.js ===
---------------------------------------------------
-// ~ src/game/weapons/Revolver.js
-import * as THREE from 'three';
-import { Weapon } from './Weapon.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-
-export class Revolver extends Weapon {
-    constructor() {
-        super(null, {
-            name: 'Revolver',
-            damage: GAME_CONFIG.REVOLVER.DAMAGE,
-            cooldown: GAME_CONFIG.REVOLVER.COOLDOWN,
-        });
-
-        this.range = 200;
-        this.magazineSize = GAME_CONFIG.REVOLVER.MAGAZINE_SIZE;
-        this.magazineAmmo = this.magazineSize;
-        this.reserveAmmo = GAME_CONFIG.REVOLVER.RESERVE_AMMO;
-
-        this.state = 'idle'; // idle, firing, reloading, inspecting
-        this.animationProgress = 0;
-        this.animationDuration = 0;
-
-        this._defineKeyframes();
-        this.createMesh();
-        
-        this.mesh.position.copy(this.p_idle);
-        this.mesh.quaternion.copy(this.q_idle);
-    }
-
-    _defineKeyframes() {
-        // --- Base Positions & Rotations ---
-        // Weapon is offset to the right but rotated (yaw) to point towards the center crosshair.
-        this.p_idle = new THREE.Vector3(0.3, -0.4, -0.7);
-        this.q_idle = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.3, 0));
-        
-        // --- ADS (Aim Down Sights) - Future Use ---
-        // this.p_ads = new THREE.Vector3(0, -0.3, -0.5);
-        // this.q_ads = new THREE.Quaternion();
-
-        // --- Reloading Keyframes ---
-        this.p_reload_start = new THREE.Vector3(0.3, -0.5, -0.7);
-        this.q_reload_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.8, -0.4, 0.2));
-        
-        // --- Inspecting Keyframes ---
-        // Player must be out of water to inspect weapon.
-        this.inspectDuration = 3.5;
-        this.p_inspect_center = new THREE.Vector3(0.1, -0.35, -0.6);
-        this.q_inspect_start = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.2, 0.5));
-        this.q_inspect_roll = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.5, -0.2, -1.5));
-    }
-
-    createMesh() {
-        this.mesh = new THREE.Group();
-        const darkMetal = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.4 });
-        const gripRubber = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
-
-        // --- Frame ---
-        const frameGeo = new THREE.BoxGeometry(0.045, 0.1, 0.14);
-        const frame = new THREE.Mesh(frameGeo, darkMetal);
-        frame.position.set(0, -0.01, -0.05);
-
-        // --- Barrel Assembly ---
-        const barrelAssembly = new THREE.Group();
-        barrelAssembly.position.set(0, 0.045, -0.12);
-        const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.055, 0.22), darkMetal);
-        shroud.position.z = -0.09;
-        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 8), darkMetal);
-        barrel.rotation.x = Math.PI / 2;
-        barrel.position.z = -0.08;
-        barrelAssembly.add(shroud, barrel);
-
-        // --- Top Rail & Sights ---
-        const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.18), darkMetal);
-        topRail.position.set(0, 0.08, -0.11);
-        const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), darkMetal);
-        rearSight.position.set(0, 0.05, 0.02);
-
-        // --- Grip ---
-        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.16, 8), gripRubber);
-        grip.position.set(0, -0.1, 0.01);
-        grip.rotation.x = -0.2;
-        grip.scale.x = 1.3;
-
-        // --- Cylinder & Crane (for reload animation) ---
-        this.crane = new THREE.Group();
-        this.crane.position.set(-0.0225, -0.01, -0.05); // Pivot point on the frame
-        this.cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.07, 6), darkMetal);
-        this.cylinder.rotation.x = Math.PI / 2;
-        this.crane.add(this.cylinder);
-
-        // --- Hammer ---
-        this.hammer = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.04, 0.02), darkMetal);
-        this.hammer.position.set(0, 0.05, 0.02);
-        this.hammer.geometry.translate(0, -0.02, 0); // Set pivot to bottom
-
-        this.mesh.add(frame, barrelAssembly, topRail, rearSight, grip, this.crane, this.hammer);
-        this.mesh.scale.setScalar(1.1);
-        return this.mesh;
-    }
-
-    attack() {
-        if (this.state !== 'idle' || !this.canAttack()) return false;
-        
-        if (this.magazineAmmo <= 0) {
-            this.reload();
-            return false;
-        }
-
-        this.state = 'firing';
-        this.animationDuration = this.cooldown * 0.9;
-        this.animationProgress = 0;
-        this.magazineAmmo--;
-        this.triggerCooldown();
-
-        const raycaster = new THREE.Raycaster();
-        const camera = this.wielder.camera;
-        raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-        
-        const enemyMeshes = this.wielder.world.getEnemies().map(e => e.mesh).filter(Boolean);
-        const worldMeshes = this.wielder.world.getLevelObjects().map(e => e.mesh).filter(Boolean);
-        const entitiesToTest = [...enemyMeshes, ...worldMeshes];
-
-        const intersects = raycaster.intersectObjects(entitiesToTest, true);
-
-        let hitPoint = null;
-        if (intersects.length > 0) {
-            const hit = intersects[0];
-            if (hit.distance < this.range) {
-                hitPoint = hit.point; // Always set hit point
-                const gameEntityLink = hit.object.userData.gameEntity;
-                if (gameEntityLink?.type === 'NPC' && gameEntityLink.entity.team === 'enemy') {
-                    gameEntityLink.entity.takeDamage(this.damage);
-                }
-            }
-        }
-        
-        if (!hitPoint) {
-            hitPoint = raycaster.ray.at(this.range, new THREE.Vector3());
-        }
-
-        this.wielder.world.emit('weaponFired', { weapon: this, hitPoint });
-
-        if (this.magazineAmmo === 0) {
-            setTimeout(() => this.reload(), 500);
-        }
-
-        return true;
-    }
-
-    reload() {
-        if (this.state !== 'idle' || this.magazineAmmo === this.magazineSize || this.reserveAmmo <= 0) return;
-
-        this.state = 'reloading';
-        this.animationDuration = 2.8;
-        this.animationProgress = 0;
-    }
-
-    inspect() {
-        if (this.state !== 'idle' || this.wielder.isInWater) return;
-        this.state = 'inspecting';
-        this.animationDuration = this.inspectDuration;
-        this.animationProgress = 0;
-    }
-
-    update(deltaTime) {
-        super.update(deltaTime);
-        if (this.state === 'idle') {
-            this.mesh.position.lerp(this.p_idle, 10 * deltaTime);
-            this.mesh.quaternion.slerp(this.q_idle, 10 * deltaTime);
-            this.crane.rotation.y = THREE.MathUtils.lerp(this.crane.rotation.y, 0, 15 * deltaTime);
-            this.hammer.rotation.z = THREE.MathUtils.lerp(this.hammer.rotation.z, 0, 15 * deltaTime);
-            return;
-        }
-
-        this.animationProgress += deltaTime;
-        const p = Math.min(this.animationProgress / this.animationDuration, 1.0);
-
-        switch(this.state) {
-            case 'firing': this.updateFireAnimation(p, deltaTime); break;
-            case 'reloading': this.updateReloadAnimation(p, deltaTime); break;
-            case 'inspecting': this.updateInspectAnimation(p); break;
-        }
-        
-        if (p >= 1.0) {
-            if (this.state === 'reloading') {
-                const ammoNeeded = this.magazineSize - this.magazineAmmo;
-                const ammoToReload = Math.min(ammoNeeded, this.reserveAmmo);
-                this.magazineAmmo += ammoToReload;
-                this.reserveAmmo -= ammoToReload;
-            }
-            this.state = 'idle';
-        }
-    }
-
-    updateFireAnimation(p, deltaTime) {
-        const kickProgress = Math.sin(p * Math.PI); // A value from 0 -> 1 -> 0
-
-        // Rotational flip
-        const kickRotation = new THREE.Quaternion().setFromAxisAngle(
-            new THREE.Vector3(1, 0, 0),
-            kickProgress * -0.5 // flip amount
-        );
-        // Apply the kick rotation relative to the base idle rotation
-        this.mesh.quaternion.copy(this.q_idle).multiply(kickRotation);
-    
-        // Positional kickback
-        const kickPosition = this.p_idle.clone();
-        kickPosition.z += kickProgress * 0.2; // kickback amount
-        this.mesh.position.copy(kickPosition);
-
-        // Hammer animation (this is safe as it's a child object's local rotation)
-        const hammerCockBack = -Math.PI / 4;
-        if (p < 0.1) this.hammer.rotation.z = THREE.MathUtils.lerp(0, hammerCockBack, p / 0.1);
-        else this.hammer.rotation.z = THREE.MathUtils.lerp(hammerCockBack, 0, (p - 0.1) / 0.9);
-        
-        // Cylinder rotation
-        this.cylinder.rotation.y -= deltaTime * 20 * (1 - p);
-    }
-
-    updateReloadAnimation(p, deltaTime) {
-        // Phase 1: Bring to center and start opening (0.0 -> 0.2)
-        const p1 = Math.min(1, p / 0.2);
-        this.mesh.position.lerpVectors(this.p_idle, this.p_reload_start, p1);
-        this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_reload_start, p1);
-
-        // Phase 2: Swing cylinder out (0.1 -> 0.4)
-        const p2 = Math.min(1, Math.max(0, (p - 0.1) / 0.3));
-        const swingOutAngle = -Math.PI / 2.5;
-        this.crane.rotation.y = THREE.MathUtils.lerp(0, swingOutAngle, p2);
-
-        // Phase 3: Eject shells (0.4 -> 0.6) - a quick spin
-        if (p > 0.4 && p < 0.6) {
-            this.cylinder.rotation.y -= deltaTime * 50;
-        }
-
-        // Phase 4: Swing cylinder in (0.7 -> 0.9)
-        const p4 = Math.min(1, Math.max(0, (p - 0.7) / 0.2));
-        this.crane.rotation.y = THREE.MathUtils.lerp(swingOutAngle, 0, p4);
-
-        // Phase 5: Return to idle (0.8 -> 1.0)
-        const p5 = Math.min(1, Math.max(0, (p - 0.8) / 0.2));
-        this.mesh.position.lerpVectors(this.p_reload_start, this.p_idle, p5);
-        this.mesh.quaternion.slerpQuaternions(this.q_reload_start, this.q_idle, p5);
-    }
-    
-    updateInspectAnimation(p) {
-        const p1_end = 0.2, p2_end = 0.7, p3_end = 1.0;
-        
-        if (p < p1_end) { // Move to center
-            const progress = p / p1_end;
-            this.mesh.position.lerpVectors(this.p_idle, this.p_inspect_center, progress);
-            this.mesh.quaternion.slerpQuaternions(this.q_idle, this.q_inspect_start, progress);
-        } else if (p < p2_end) { // Roll
-            const progress = (p - p1_end) / (p2_end - p1_end);
-            this.mesh.quaternion.slerpQuaternions(this.q_inspect_start, this.q_inspect_roll, progress);
-            this.cylinder.rotation.y += 0.05 * (1.0 - progress);
-        } else { // Return to idle
-            const progress = (p - p2_end) / (p3_end - p2_end);
-            this.mesh.position.lerpVectors(this.p_inspect_center, this.p_idle, progress);
-            this.mesh.quaternion.slerpQuaternions(this.q_inspect_roll, this.q_idle, progress);
-        }
-    }
-}
---------------------------------------------------
-=== END OF FILE: src/game/weapons/Revolver.js ===
-
-
-=== FILE: src/game/weapons/Sai.js ===
---------------------------------------------------
-// ~ src/game/weapons/Sai.js
-import * as THREE from 'three';
-import { Weapon } from './Weapon.js';
-import { GAME_CONFIG } from '../../shared/config.js';
-import { BleedingEffect } from '../effects/BleedingEffect.js'; // Import BleedingEffect
-
-export class Sai extends Weapon {
-    constructor() {
-        super(null, {
-            name: 'Twin Sai',
-            damage: GAME_CONFIG.SAI.DAMAGE,
-            cooldown: GAME_CONFIG.SAI.COOLDOWN,
-        });
-
-        this.swingRange = GAME_CONFIG.SAI.RANGE;
-        
-        this.state = 'idle'; // idle, swinging, inspecting
-        this.animationProgress = 0;
-        this.animationDuration = 0;
-
-        // Internal helpers
-        this._forward = new THREE.Vector3();
-        this._npcPos = new THREE.Vector3();
-        
-        this._defineKeyframes();
-        this.createMesh(); // Creates this.mesh, this.leftSai, this.rightSai
-        
-        this.mesh.position.copy(this.idlePosition);
-        this.mesh.quaternion.copy(this.qIdle);
-    }
-
-    _defineKeyframes() {
-        // Sai Group Base position and rotation
-        // Adjusted to be further forward and slightly more centered.
-        this.idlePosition = new THREE.Vector3(0.0, -0.4, -0.8);
-        this.qIdle = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.05, 0, 0)); // Slight downward tilt
-
-        // Individual Sai offsets within the group (these will be animated)
-        // More spaced apart horizontally and slightly forward.
-        this.leftSaiIdlePos = new THREE.Vector3(-0.35, -0.05, 0.05);
-        this.rightSaiIdlePos = new THREE.Vector3(0.35, -0.05, 0.05);
-
-        // --- Swing Animation ---
-        this.swingDuration = 0.4;
-        this.hitTiming = 100; // ms (when hit detection occurs)
-
-        // Attack keyframes (for individual Sais, relative to group)
-        // Wind-up: Sais draw back and turn slightly.
-        this.leftSaiWindUpRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.4, 0.4, 0.1));
-        this.rightSaiWindUpRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.4, -0.4, -0.1));
-
-        // Impact: Sais thrust forward, rotating to meet the target.
-        this.leftSaiImpactRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.1, -0.2, 0.0)); // Less Z rotation, more focused
-        this.rightSaiImpactRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.1, 0.2, 0.0)); // Less Z rotation, more focused
-
-        // --- Inspect Animation ---
-        this.inspectDuration = 3.0;
-        this.inspectUpPos = new THREE.Vector3(0, -0.2, -0.6);
-        this.qInspectUp = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, 0, 0));
-
-        this.leftSaiInspectRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI * 0.5, 0, 0));
-        this.rightSaiInspectRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI * 0.5, 0, 0));
-    }
-
-    createMesh() {
-        this.mesh = new THREE.Group(); // Parent group for both Sais
-
-        const metalMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.9, roughness: 0.2 });
-        const gripMat = new THREE.MeshStandardMaterial({ color: 0xAA0000, roughness: 0.9 }); // Red fabric look
-
-        const createSingleSai = () => {
-            const saiGroup = new THREE.Group();
-            
-            // Main Blade (longer and thinner box, positioned with its base at 0,0,0)
-            const bladeGeo = new THREE.BoxGeometry(0.015, 0.4, 0.015);
-            const blade = new THREE.Mesh(bladeGeo, metalMat);
-            blade.position.y = 0.2; // Half its height to sit on the crossguard
-
-            // Yoku (Crossguard) - central block
-            const guardBaseGeo = new THREE.BoxGeometry(0.06, 0.02, 0.02); // Width, height, depth
-            const guardBase = new THREE.Mesh(guardBaseGeo, metalMat);
-            guardBase.position.y = 0; // At the junction of blade and hilt
-
-            // Prongs (Yoku) - more realistic curved shape
-            const prongRadius = 0.01;
-            const prongCurvature = 0.05; // controls how much it curves outward
-            const prongLength = 0.12;
-
-            // Right Prong
-            const rightProngGroup = new THREE.Group();
-            const rProngMain = new THREE.Mesh(
-                new THREE.CylinderGeometry(prongRadius, prongRadius, prongLength, 8),
-                metalMat
-            );
-            rProngMain.position.set(prongLength / 2, 0, 0);
-            rProngMain.rotation.z = Math.PI / 2;
-            rightProngGroup.add(rProngMain);
-
-            const rProngTip = new THREE.Mesh(
-                new THREE.CylinderGeometry(prongRadius, prongRadius, prongLength * 0.5, 8),
-                metalMat
-            );
-            rProngTip.position.set(prongLength * 0.8, prongCurvature, 0); // Position relative to main prong
-            rProngTip.rotation.z = Math.PI / 2;
-            rProngTip.rotation.y = Math.PI / 4; // Angle it slightly
-            rightProngGroup.add(rProngTip);
-
-            rightProngGroup.position.set(guardBase.geometry.parameters.width / 2, 0.01, 0); // Attach to right side of guardBase
-            saiGroup.add(rightProngGroup);
-
-            // Left Prong (mirrored)
-            const leftProngGroup = new THREE.Group();
-            const lProngMain = new THREE.Mesh(
-                new THREE.CylinderGeometry(prongRadius, prongRadius, prongLength, 8),
-                metalMat
-            );
-            lProngMain.position.set(-prongLength / 2, 0, 0);
-            lProngMain.rotation.z = Math.PI / 2;
-            leftProngGroup.add(lProngMain);
-
-            const lProngTip = new THREE.Mesh(
-                new THREE.CylinderGeometry(prongRadius, prongRadius, prongLength * 0.5, 8),
-                metalMat
-            );
-            lProngTip.position.set(-prongLength * 0.8, prongCurvature, 0);
-            lProngTip.rotation.z = Math.PI / 2;
-            lProngTip.rotation.y = -Math.PI / 4; // Angle it slightly
-            leftProngGroup.add(lProngTip);
-
-            leftProngGroup.position.set(-guardBase.geometry.parameters.width / 2, 0.01, 0); // Attach to left side of guardBase
-            saiGroup.add(leftProngGroup);
-            
-            // Hilt (wrapped handle)
-            const hiltGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.15, 8);
-            const hilt = new THREE.Mesh(hiltGeo, gripMat);
-            hilt.position.y = -0.075; // Half of its height
-
-            // Pommel (metal cap at the end of the hilt)
-            const pommelGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.01, 8);
-            const pommel = new THREE.Mesh(pommelGeo, metalMat);
-            pommel.position.y = -0.15;
-
-            saiGroup.add(blade, guardBase, hilt, pommel);
-            saiGroup.scale.setScalar(1.0); 
-            saiGroup.castShadow = true;
-            return saiGroup;
-        };
-
-        this.leftSai = createSingleSai();
-        this.rightSai = createSingleSai();
-
-        // Initial positions within the parent group
-        this.leftSai.position.copy(this.leftSaiIdlePos);
-        this.rightSai.position.copy(this.rightSaiIdlePos);
-
-        this.mesh.add(this.leftSai, this.rightSai);
-    }
-
-    attack() {
-        if (!this.canAttack() || this.state !== 'idle') return false;
-        
-        this.state = 'swinging';
-        this.animationDuration = this.swingDuration;
-        this.animationProgress = 0;
-        this.triggerCooldown();
-        setTimeout(() => { if (this.state === 'swinging') this.detectHit(); }, this.hitTiming);
-        return true;
-    }
-
-    inspect() {
-        // Only allow inspect from idle state and if not in water
-        if (this.state !== 'idle' || this.wielder.isInWater) return;
-        this.state = 'inspecting';
-        this.animationDuration = this.inspectDuration;
-        this.animationProgress = 0;
-    }
-
-    detectHit() {
-        if (!this.wielder) return;
-
-        this.wielder.camera.getWorldDirection(this._forward);
-        const playerPos = this.wielder.physics.body.position;
-
-        for (const npc of this.wielder.world.getEnemies()) {
-            if (npc.isDead || !npc.physics.body) continue;
-
-            this._npcPos.copy(npc.physics.body.position);
-            const distance = playerPos.distanceTo(this._npcPos);
-
-            if (distance < this.swingRange + npc.physics.body.shapes[0].radius) {
-                const toNPC = this._npcPos.clone().sub(playerPos).normalize();
-                if (this._forward.dot(toNPC) > 0.64) { // Roughly in a 50-degree cone in front
-                    let damage = this.damage;
-                    if (this.wielder.statusEffects.has('stonePlating')) {
-                        const effect = this.wielder.statusEffects.get('stonePlating');
-                        damage *= (1 + effect.properties.meleeDamageBoost);
-                    }
-                    if (this.wielder.isSlamming) {
-                        damage *= GAME_CONFIG.SAI.SLAM_DAMAGE_MULTIPLIER;
-                    }
-                    npc.takeDamage(damage);
-
-                    // Apply bleeding effect if enemy HP is low
-                    if (npc.health.currentHealth / npc.health.maxHealth < GAME_CONFIG.BLEEDING.HP_THRESHOLD_PERCENT) {
-                        // Only add if not already bleeding to prevent stacking/refreshing
-                        if (!npc.statusEffects.has('bleeding')) {
-                            const bleedingEffect = new BleedingEffect(npc);
-                            npc.statusEffects.addEffect(bleedingEffect);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    update(deltaTime) {
-        super.update(deltaTime); // Update cooldown timer
-
-        if (this.state === 'idle') {
-            // Lerp group to idle position
-            this.mesh.position.lerp(this.idlePosition, 10 * deltaTime);
-            this.mesh.quaternion.slerp(this.qIdle, 10 * deltaTime);
-
-            // Also lerp individual sais back to their idle positions/rotations within the group
-            this.leftSai.position.lerp(this.leftSaiIdlePos, 10 * deltaTime);
-            this.rightSai.position.lerp(this.rightSaiIdlePos, 10 * deltaTime);
-            this.leftSai.quaternion.slerp(new THREE.Quaternion(), 10 * deltaTime);
-            this.rightSai.quaternion.slerp(new THREE.Quaternion(), 10 * deltaTime);
-            return;
-        }
-
-        this.animationProgress += deltaTime;
-        const p = Math.min(this.animationProgress / this.animationDuration, 1.0); // Normalized progress
-
-        switch(this.state) {
-            case 'swinging':
-                this.updateSwingAnimation(p);
-                break;
-            case 'inspecting':
-                this.updateInspectAnimation(p);
-                break;
-        }
-        
-        if (p >= 1.0) {
-            this.state = 'idle';
-        }
-    }
-
-    updateSwingAnimation(p) {
-        const windUpPhaseEnd = 0.25;
-        const impactPhaseEnd = 0.7; // Duration of the actual thrust
-
-        // Group movement (slight overall motion)
-        this.mesh.position.y = this.idlePosition.y + Math.sin(p * Math.PI) * 0.05; // Up and down slightly
-        this.mesh.position.z = this.idlePosition.z + Math.sin(p * Math.PI) * 0.1; // Forward and back slightly
-
-        // Individual Sai animations
-        let leftSaiPos = new THREE.Vector3(), rightSaiPos = new THREE.Vector3();
-        let leftSaiRot = new THREE.Quaternion(), rightSaiRot = new THREE.Quaternion();
-        let easedProgress;
-
-        if (p < windUpPhaseEnd) {
-            // Wind-up phase: pull back and turn
-            easedProgress = 1 - Math.pow(1 - p / windUpPhaseEnd, 3);
-            leftSaiPos.lerpVectors(this.leftSaiIdlePos, new THREE.Vector3(-0.4, 0.1, 0.1), easedProgress);
-            rightSaiPos.lerpVectors(this.rightSaiIdlePos, new THREE.Vector3(0.4, 0.1, 0.1), easedProgress);
-            leftSaiRot.slerpQuaternions(new THREE.Quaternion(), this.leftSaiWindUpRot, easedProgress);
-            rightSaiRot.slerpQuaternions(new THREE.Quaternion(), this.rightSaiWindUpRot, easedProgress);
-        } else if (p < impactPhaseEnd) {
-            // Impact/Thrust phase: thrust forward, focusing on piercing motion
-            easedProgress = (p - windUpPhaseEnd) / (impactPhaseEnd - windUpPhaseEnd);
-            // Strong forward movement (Z-axis)
-            leftSaiPos.lerpVectors(new THREE.Vector3(-0.4, 0.1, 0.1), new THREE.Vector3(-0.15, 0.0, -0.6), easedProgress); // Increased Z thrust
-            rightSaiPos.lerpVectors(new THREE.Vector3(0.4, 0.1, 0.1), new THREE.Vector3(0.15, 0.0, -0.6), easedProgress); // Increased Z thrust
-            
-            // Aiming rotations (yaw inward, slight pitch down)
-            leftSaiRot.slerpQuaternions(this.leftSaiWindUpRot, this.leftSaiImpactRot, easedProgress);
-            rightSaiRot.slerpQuaternions(this.rightSaiWindUpRot, this.rightSaiImpactRot, easedProgress);
-        } else {
-            // Recovery phase: return to idle
-            easedProgress = (p - impactPhaseEnd) / (1.0 - impactPhaseEnd);
-            leftSaiPos.lerpVectors(new THREE.Vector3(-0.15, 0.0, -0.6), this.leftSaiIdlePos, easedProgress);
-            rightSaiPos.lerpVectors(new THREE.Vector3(0.15, 0.0, -0.6), this.rightSaiIdlePos, easedProgress);
-            leftSaiRot.slerpQuaternions(this.leftSaiImpactRot, new THREE.Quaternion(), easedProgress);
-            rightSaiRot.slerpQuaternions(this.rightSaiImpactRot, new THREE.Quaternion(), easedProgress);
-        }
-
-        this.leftSai.position.copy(leftSaiPos);
-        this.rightSai.position.copy(rightSaiPos);
-        this.leftSai.quaternion.copy(leftSaiRot);
-        this.rightSai.quaternion.copy(rightSaiRot);
-    }
-    
-    updateInspectAnimation(p) {
-        const upPhaseEnd = 0.2;
-        const mainInspectEnd = 0.8;
-    
-        let easedProgress;
-        
-        // Group movement
-        if (p < upPhaseEnd) {
-            easedProgress = 1 - Math.pow(1 - p / upPhaseEnd, 3);
-            this.mesh.position.lerpVectors(this.idlePosition, this.inspectUpPos, easedProgress);
-            this.mesh.quaternion.slerpQuaternions(this.qIdle, this.qInspectUp, easedProgress);
-        } else if (p < mainInspectEnd) {
-            easedProgress = (p - upPhaseEnd) / (mainInspectEnd - upPhaseEnd);
-            // Oscillate around inspectUpPos
-            this.mesh.position.copy(this.inspectUpPos);
-            this.mesh.quaternion.slerpQuaternions(this.qInspectUp, this.qInspectUp, easedProgress); // Stay at up rotation
-            
-            // Individual Sais rotate around their own axes
-            this.leftSai.rotation.y = Math.sin(easedProgress * Math.PI * 4) * Math.PI * 0.1;
-            this.rightSai.rotation.y = -Math.sin(easedProgress * Math.PI * 4) * Math.PI * 0.1;
-            
-            this.leftSai.rotation.z = Math.sin(easedProgress * Math.PI * 2) * Math.PI * 0.05;
-            this.rightSai.rotation.z = Math.sin(easedProgress * Math.PI * 2) * Math.PI * 0.05;
-
-        } else {
-            // Return to idle
-            easedProgress = (p - mainInspectEnd) / (1.0 - mainInspectEnd);
-            this.mesh.position.lerpVectors(this.inspectUpPos, this.idlePosition, easedProgress);
-            this.mesh.quaternion.slerpQuaternions(this.qInspectUp, this.qIdle, easedProgress);
-
-            this.leftSai.quaternion.slerp(new THREE.Quaternion(), easedProgress);
-            this.rightSai.quaternion.slerp(new THREE.Quaternion(), easedProgress);
-        }
-    }
-}
---------------------------------------------------
-=== END OF FILE: src/game/weapons/Sai.js ===
-
-
 === FILE: src/game/weapons/Weapon.js ===
 --------------------------------------------------
 /**
@@ -18673,6 +18168,7 @@ export class Weapon {
 
 === FILE: src/game/weapons/WeaponFactory.js ===
 --------------------------------------------------
+// src/game/weapons/WeaponFactory.js
 import { CustomWeapon } from './CustomWeapon.js';
 
 /**
@@ -18689,20 +18185,28 @@ export class WeaponFactory {
      * @returns {Promise<CustomWeapon | null>} A promise that resolves to an instance of the weapon, or null if not found.
      */
     static async create(weaponId) {
+        console.log(`[WeaponFactory] create called for ID: ${weaponId}`);
         if (this.weaponCache.has(weaponId)) {
+            console.log(`[WeaponFactory] Found ${weaponId} in cache.`);
             return new CustomWeapon(this.weaponCache.get(weaponId));
         }
 
         try {
             // Normalize ID to file name convention (e.g., WEAPON_SAI -> weapon-sai.json)
             const fileName = `weapon-${weaponId.split('_')[1].toLowerCase()}.json`;
-            const response = await fetch(`./assets/weapons/${fileName}`);
+            const filePath = `./assets/weapons/${fileName}`;
+            console.log(`[WeaponFactory] Fetching weapon data from: ${filePath}`);
+            
+            const response = await fetch(filePath);
 
             if (!response.ok) {
+                // Log detailed error for easier debugging (e.g., 404 Not Found)
+                console.error(`[WeaponFactory] Fetch failed for ${filePath}. Status: ${response.status} ${response.statusText}`);
                 throw new Error(`Weapon data not found for ${weaponId} at ${response.url}`);
             }
 
             const weaponData = await response.json();
+            console.log(`[WeaponFactory] Successfully fetched and parsed data for ${weaponId}:`, weaponData);
             weaponData.id = weaponId; // Ensure the ID is part of the data object
             
             this.weaponCache.set(weaponId, weaponData);
@@ -18710,7 +18214,7 @@ export class WeaponFactory {
             return new CustomWeapon(weaponData);
 
         } catch (error) {
-            console.error(`WeaponFactory: Failed to create weapon for ID: ${weaponId}`, error);
+            console.error(`[WeaponFactory] CRITICAL: Failed to create weapon for ID: ${weaponId}`, error);
             return null;
         }
     }
@@ -19094,7 +18598,6 @@ export class WeaponFactory {
 
 === FILE: src/game/world/World.js ===
 --------------------------------------------------
-// ~ src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -19111,6 +18614,7 @@ import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
 import { WaterSystem } from '../systems/WaterSystem.js';
 import { PlayerResourceSystem } from '../systems/PlayerResourceSystem.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
+import { NPCAnimationSystem } from '../systems/NPCAnimationSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -19149,6 +18653,7 @@ export class World {
             new OutOfBoundsSystem(),
             new StatusEffectSystem(),
             new AnimationSystem(),
+            new NPCAnimationSystem(this),
         ];
         this.triggerSystem = new TriggerSystem(this);
     }
@@ -19187,7 +18692,6 @@ export class World {
         this.player = await PlayerPrefab.create(
             this,
             this.core.renderer.camera,
-            this.game.viewModelScene,
             config.loadout
         );
         this.add(this.player);
@@ -19312,6 +18816,7 @@ export class World {
 
 === FILE: src/shared/CollisionGroups.js ===
 --------------------------------------------------
+// src/shared/CollisionGroups.js
 // Defines distinct bit Categ for physics objects.
 // This allows fine-grained control over which objects can collide with each other.
 // Each category should be a power of 2.
@@ -19331,6 +18836,7 @@ export const COLLISION_GROUPS = {
 export const RENDERING_LAYERS = {
     DEFAULT: 0,
     NO_REFLECTION: 1,
+    VIEWMODEL: 2,
 };
 --------------------------------------------------
 === END OF FILE: src/shared/CollisionGroups.js ===

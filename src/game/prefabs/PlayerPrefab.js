@@ -1,3 +1,4 @@
+// src/game/prefabs/PlayerPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { Player } from '../entities/Player.js';

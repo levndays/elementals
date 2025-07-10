@@ -19,6 +19,7 @@ import { NPCAnimationSystem } from '../systems/NPCAnimationSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
+import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
 
 /**
  * Represents a single level instance, containing all entities, systems, and game state.
@@ -80,16 +81,18 @@ export class World {
         await this.levelManager.init();
         const { ambientLight, directionalLights } = await this.levelManager.build(levelData);
 
-        // Add lights to scene and track them
+        // Add lights to scene, track them, and enable them for the viewmodel layer
+        ambientLight.layers.enable(RENDERING_LAYERS.VIEWMODEL);
         this.lights.push({ light: ambientLight });
         this.scene.add(ambientLight);
+
         directionalLights.forEach(dLight => {
+            dLight.layers.enable(RENDERING_LAYERS.VIEWMODEL);
             this.lights.push({ light: dLight, target: dLight.target });
             this.scene.add(dLight);
             this.scene.add(dLight.target);
         });
 
-        // FIX: Await the async prefab creation
         this.player = await PlayerPrefab.create(
             this,
             this.core.renderer.camera,
@@ -118,8 +121,6 @@ export class World {
         }
         
         if (entity.mesh) this.scene.add(entity.mesh);
-        // Do NOT add helperMesh in the game world, only in the editor.
-        // if (entity.helperMesh) this.scene.add(entity.helperMesh);
         const body = entity.physics?.body || entity.body;
         if (body) this.physics.addBody(body);
 

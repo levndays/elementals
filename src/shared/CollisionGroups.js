@@ -1,3 +1,4 @@
+// src/shared/CollisionGroups.js
 // Defines distinct bit Categ for physics objects.
 // This allows fine-grained control over which objects can collide with each other.
 // Each category should be a power of 2.
@@ -17,4 +18,5 @@ export const COLLISION_GROUPS = {
 export const RENDERING_LAYERS = {
     DEFAULT: 0,
     NO_REFLECTION: 1,
+    VIEWMODEL: 2,
 };
