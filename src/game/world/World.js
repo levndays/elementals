@@ -1,3 +1,4 @@
+// src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -14,6 +15,7 @@ import { StatusEffectSystem } from '../systems/StatusEffectSystem.js';
 import { WaterSystem } from '../systems/WaterSystem.js';
 import { PlayerResourceSystem } from '../systems/PlayerResourceSystem.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
+import { NPCAnimationSystem } from '../systems/NPCAnimationSystem.js';
 import { Fireball } from '../abilities/Fireball.js';
 import { EnemyProjectile } from '../abilities/EnemyProjectile.js';
 import { FireflyProjectile } from '../abilities/FireflyProjectile.js';
@@ -52,6 +54,7 @@ export class World {
             new OutOfBoundsSystem(),
             new StatusEffectSystem(),
             new AnimationSystem(),
+            new NPCAnimationSystem(this),
         ];
         this.triggerSystem = new TriggerSystem(this);
     }

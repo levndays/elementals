@@ -1,3 +1,4 @@
+// src/game/systems/AISystem.js
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
@@ -30,7 +31,6 @@ export class AISystem {
         for (const npc of world.getNPCs()) {
             if (npc.isDead) continue;
 
-            this._updateAnimations(npc, deltaTime);
             this._updateTimers(npc.ai, deltaTime);
 
             if (npc.ai.isKnockedBack) {
@@ -199,12 +199,7 @@ export class AISystem {
         
         if (this._forward.dot(toTarget) > 0.7) { // Check if target is roughly in front (cone)
             target.takeDamage(config.DAMAGE);
-            // Trigger animation state
-            if (!npc.isAttacking) {
-                npc.isAttacking = true;
-                npc.attackAnimationTimer = 0;
-                npc.whichHand = (npc.whichHand === 'left') ? 'right' : 'left'; // Alternate hands
-            }
+            npc.world.emit('npcMeleeAttack', { npc });
         }
     }
 
@@ -391,27 +386,5 @@ export class AISystem {
         }
 
         return null; // No avoidance needed
-    }
-
-    _updateAnimations(npc, deltaTime) {
-        if (!npc.isAttacking || npc.attackType !== 'melee') return;
-
-        npc.attackAnimationTimer += deltaTime;
-        const progress = Math.min(npc.attackAnimationTimer / npc.attackAnimationDuration, 1.0);
-
-        // A simple "punch" animation: forward then back
-        // The sin curve creates a smooth 0 -> 1 -> 0 motion over the animation duration.
-        const punchProgress = Math.sin(progress * Math.PI);
-
-        const handToAnimate = (npc.whichHand === 'left') ? npc.leftHand : npc.rightHand;
-        if (handToAnimate) {
-            const initialZ = 0.5; // From prefab
-            const punchDistance = 0.8;
-            handToAnimate.position.z = initialZ + punchProgress * punchDistance;
-        }
-
-        if (progress >= 1.0) {
-            npc.isAttacking = false;
-        }
     }
 }

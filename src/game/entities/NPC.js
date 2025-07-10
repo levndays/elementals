@@ -1,3 +1,4 @@
+// src/game/entities/NPC.js
 import * as THREE from 'three';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { AIComponent } from '../components/AIComponent.js';
@@ -27,23 +28,27 @@ export class NPC {
         this.physics = new PhysicsBodyComponent(body);
         this.statusEffects = new StatusEffectComponent();
 
+        // Animation state
+        this.mixer = null;
+        this.animations = new Map(); // name -> AnimationClip
+        this.activeAction = null;
+        this.isAttackingAnimation = false;
+
+        // Ragdoll state
+        this.ragdoll = {
+            bodies: [],
+            constraints: [],
+            bodyBoneMap: new Map(), // Map<CANNON.Body, THREE.Bone>
+        };
+
         // Client-side visual state
-        this.originalEmissive = new THREE.Color(mesh.material.emissive.getHex());
-        // Store original base color as well for status effects that tint the model
-        this.originalColor = new THREE.Color(mesh.material.color.getHex()); 
+        this.originalEmissive = new THREE.Color(0x000000); // Updated in prefab
+        this.originalColor = new THREE.Color(0xffffff); // Updated in prefab
         this.isDead = false;
         
         // Water interaction state
         this.isInWater = false;
         this.currentWaterVolume = null;
-
-        // Melee animation state
-        this.isAttacking = false;
-        this.attackAnimationTimer = 0;
-        this.attackAnimationDuration = 0.4; // seconds
-        this.leftHand = null;
-        this.rightHand = null;
-        this.whichHand = 'left'; // For alternating punches
 
         // Link back to entity for easy access from physics/rendering
         const gameEntityLink = { type: 'NPC', entity: this };
@@ -53,7 +58,7 @@ export class NPC {
         body.userData.entity = this; // Use consistent .entity property for collisions
     }
     
-    takeDamage(amount) {
+    takeDamage(amount, impulse = null, hitPoint = null) {
         if (this.isDead) return;
 
         this.health.currentHealth -= amount;
@@ -61,14 +66,14 @@ export class NPC {
 
         if (this.health.currentHealth <= 0) {
             this.health.currentHealth = 0;
-            this.die();
+            this.die(impulse, hitPoint);
         }
     }
 
-    die() {
+    die(killingImpulse, hitPoint) {
         if (this.isDead) return;
         this.isDead = true;
-        this.world.emit('npcDied', { entity: this });
+        this.world.emit('npcDied', { entity: this, killingImpulse, hitPoint });
     }
 
     dispose() {
@@ -77,20 +82,22 @@ export class NPC {
             this.world.physics.queueForRemoval(this.physics.body);
             this.physics.body = null;
         }
+        if (this.ragdoll.bodies.length > 0) {
+            this.ragdoll.bodies.forEach(body => this.world.physics.queueForRemoval(body));
+            this.ragdoll.constraints.forEach(constraint => this.world.physics.world.removeConstraint(constraint));
+        }
         if (this.mesh) {
-            // Restore original colors before disposing
-            if (this.originalColor && this.mesh.material) {
-                this.mesh.material.color.copy(this.originalColor);
-                this.mesh.material.emissive.copy(this.originalEmissive);
-                this.mesh.material.emissiveIntensity = 1.0;
-            }
-            this.mesh.userData.entity = null;
-            this.mesh.geometry?.dispose();
-            if (this.mesh.material.dispose) {
-                this.mesh.material.dispose();
-            }
             this.world.scene.remove(this.mesh);
+            this.mesh.traverse(child => {
+                if (child.isMesh) {
+                    child.geometry.dispose();
+                    child.material.dispose();
+                }
+            });
             this.mesh = null;
+        }
+        if (this.mixer) {
+            this.mixer.stopAllAction();
         }
     }
 }
