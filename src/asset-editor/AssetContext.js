@@ -56,7 +56,11 @@ export class AssetContext {
                 type: part.geometry.type.replace('Geometry', ''),
                 parent: part.parent !== this.assetRoot ? part.parent.uuid : null,
                 transform: transform,
-                material: { color: '#' + part.material.color.getHexString() }
+                material: {
+                    color: '#' + part.material.color.getHexString(),
+                    metalness: part.material.metalness,
+                    roughness: part.material.roughness,
+                }
             };
             geometry.push(partData);
         });
@@ -89,7 +93,9 @@ export class AssetContext {
                 if (!geoFn) return;
 
                 const material = new THREE.MeshStandardMaterial({
-                    color: new THREE.Color(partData.material.color)
+                    color: new THREE.Color(partData.material.color),
+                    metalness: partData.material.metalness ?? 0.5,
+                    roughness: partData.material.roughness ?? 0.5,
                 });
 
                 const scale = partData.transform.scale || [1, 1, 1];

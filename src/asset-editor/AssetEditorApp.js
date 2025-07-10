@@ -67,8 +67,43 @@ export class AssetEditorApp {
         this.viewModelCameraController = new ViewModelCamera(this);
         
         this.animationManager = new AnimationManager(this);
-
+        
+        document.addEventListener('keydown', (e) => this._onKeyDown(e));
         this.renderer.renderer.setAnimationLoop(() => this.animate());
+    }
+
+    _onKeyDown(event) {
+        if (event.target.tagName === 'INPUT' || this.controls.transformControls.dragging) return;
+    
+        const ctrlOrMeta = event.ctrlKey || event.metaKey;
+        let handled = false;
+    
+        if (ctrlOrMeta) {
+            switch (event.code) {
+                case 'KeyN': this.actions._loadDataWithUndo(null); handled = true; break;
+                case 'KeyO': this.ui.openAsset(); handled = true; break;
+                case 'KeyS': this.ui.saveAsset(); handled = true; break;
+                case 'KeyT': this.enterViewModelTest(); handled = true; break;
+                case 'KeyZ': this.undoManager.undo(); handled = true; break;
+                case 'KeyY': this.undoManager.redo(); handled = true; break;
+            }
+        } else {
+            switch (event.code) {
+                case 'KeyT': this.controls.setMode('translate'); handled = true; break;
+                case 'KeyR': this.controls.setMode('rotate'); handled = true; break;
+                case 'KeyS': this.controls.setMode('scale'); handled = true; break;
+                case 'Delete':
+                case 'Backspace':
+                    if (this.ui.selectedKeyframeInfo) this.actions.deleteSelectedKeyframe();
+                    else this.actions.deleteSelected();
+                    handled = true;
+                    break;
+            }
+        }
+    
+        if (handled) {
+            event.preventDefault();
+        }
     }
 
     enterViewModelTest() {
@@ -92,6 +127,10 @@ export class AssetEditorApp {
         // Move lights and camera into the dedicated viewmodel scene
         this.scene.remove(this.ambientLight, this.dirLight);
         this.viewModelScene.add(this.ambientLight, this.dirLight, this.camera);
+        
+        // Ensure lights are on the same layer as the viewmodel objects
+        this.ambientLight.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        this.dirLight.layers.set(EDITOR_LAYERS.VIEWMODEL);
         
         this.camera.add(asset); // Parent asset to camera
         asset.position.set(0.25, -0.4, -0.8);
@@ -117,6 +156,10 @@ export class AssetEditorApp {
         asset.traverse(child => {
             child.layers.set(EDITOR_LAYERS.DEFAULT);
         });
+        // Reset light layers
+        this.ambientLight.layers.set(EDITOR_LAYERS.DEFAULT);
+        this.dirLight.layers.set(EDITOR_LAYERS.DEFAULT);
+        
         asset.position.set(0, 0, 0);
         asset.quaternion.identity();
 

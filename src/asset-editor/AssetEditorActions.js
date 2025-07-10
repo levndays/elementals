@@ -37,18 +37,71 @@ export class AssetEditorActions {
     addCylinder() { this._addPart(new THREE.CylinderGeometry(0.5, 0.5, 1, 16), 'Cylinder'); }
     addSphere() { this._addPart(new THREE.SphereGeometry(0.5, 16, 16), 'Sphere'); }
 
-    loadExamplePistol() {
+    _loadDataWithUndo(newData) {
         const oldState = this.app.assetContext.serialize();
+        const command = {
+            execute: () => {
+                this.app.assetContext.loadFromData(newData);
+                this.app.ui.updateOutliner();
+                this.app.ui.updateAnimationClips();
+                this.app.deselect();
+            },
+            undo: () => {
+                this.app.assetContext.loadFromData(oldState);
+                this.app.ui.updateOutliner();
+                this.app.ui.updateAnimationClips();
+                this.app.deselect();
+            }
+        };
+        this.app.undoManager.execute(command);
+    }
 
+    loadFile(data) {
+        this._loadDataWithUndo(data);
+    }
+
+    loadExampleDagger() {
+        const daggerData = {
+            "assetName": "Example Dagger",
+            "type": "weapon",
+            "geometry": [
+                { "uuid": "hilt", "name": "Hilt", "type": "Cylinder", "parent": null, "transform": { "position": [0, 0, 0], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.12] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.8 } },
+                { "uuid": "guard", "name": "Guard", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.06], "quaternion": [0,0,0,1], "scale": [0.12, 0.03, 0.03] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } },
+                { "uuid": "blade", "name": "Blade", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.18], "quaternion": [0,0,0,1], "scale": [0.01, 0.05, 0.24] }, "material": { "color": "#cccccc", "metalness": 0.9, "roughness": 0.2 } },
+                { "uuid": "pommel", "name": "Pommel", "type": "Sphere", "parent": "hilt", "transform": { "position": [0, 0, -0.07], "quaternion": [0,0,0,1], "scale": [0.04, 0.04, 0.04] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } }
+            ],
+            "animations": {
+                "fire": {
+                    "name": "fire", "duration": 0.5,
+                    "tracks": [
+                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ 
+                            { "time": 0, "value": [0, 0, 0] }, 
+                            { "time": 0.15, "value": [40, 20, -30] }, 
+                            { "time": 0.5, "value": [0, 0, 0] } 
+                        ] },
+                        { "targetUUID": "AssetRoot", "property": "position", "keyframes": [ 
+                            { "time": 0, "value": [0, 0, 0] }, 
+                            { "time": 0.15, "value": [0, 0, 0.1] }, 
+                            { "time": 0.5, "value": [0, 0, 0] } 
+                        ] }
+                    ]
+                },
+                "inspect": { "name": "inspect", "duration": 2.0, "tracks": [ { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] } ] }
+            }
+        };
+        this._loadDataWithUndo(daggerData);
+    }
+
+    loadExamplePistol() {
         const pistolData = {
             "assetName": "Example Pistol",
             "type": "weapon",
             "geometry": [
-                { "uuid": "body", "name": "Body", "type": "Box", "parent": null, "transform": { "position": [0,0,0], "quaternion": [0,0,0,1], "scale": [0.05, 0.08, 0.18] }, "material": { "color": "#454545" } },
-                { "uuid": "slide", "name": "Slide", "type": "Box", "parent": "body", "transform": { "position": [0,0.05,0], "quaternion": [0,0,0,1], "scale": [0.045, 0.05, 0.2] }, "material": { "color": "#333333" } },
-                { "uuid": "grip", "name": "Grip", "type": "Box", "parent": "body", "transform": { "position": [0,-0.08,-0.05], "quaternion": [-0.08715574274765817, 0, 0, 0.9961946980917455], "scale": [0.04, 0.15, 0.05] }, "material": { "color": "#594534" } },
-                { "uuid": "magazine", "name": "Magazine", "type": "Box", "parent": "grip", "transform": { "position": [0,-0.07,0.01], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.04] }, "material": { "color": "#222222" } },
-                { "uuid": "trigger", "name": "Trigger", "type": "Box", "parent": "body", "transform": { "position": [0,-0.01,-0.03], "quaternion": [0,0,0,1], "scale": [0.01, 0.03, 0.02] }, "material": { "color": "#111111" } }
+                { "uuid": "body", "name": "Body", "type": "Box", "parent": null, "transform": { "position": [0,0,0], "quaternion": [0,0,0,1], "scale": [0.05, 0.08, 0.18] }, "material": { "color": "#454545", "metalness": 0.7, "roughness": 0.5 } },
+                { "uuid": "slide", "name": "Slide", "type": "Box", "parent": "body", "transform": { "position": [0,0.05,0], "quaternion": [0,0,0,1], "scale": [0.045, 0.05, 0.2] }, "material": { "color": "#333333", "metalness": 0.8, "roughness": 0.4 } },
+                { "uuid": "grip", "name": "Grip", "type": "Box", "parent": "body", "transform": { "position": [0,-0.08,-0.05], "quaternion": [-0.08715574274765817, 0, 0, 0.9961946980917455], "scale": [0.04, 0.15, 0.05] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.7 } },
+                { "uuid": "magazine", "name": "Magazine", "type": "Box", "parent": "grip", "transform": { "position": [0,-0.07,0.01], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.04] }, "material": { "color": "#222222", "metalness": 0.9, "roughness": 0.3 } },
+                { "uuid": "trigger", "name": "Trigger", "type": "Box", "parent": "body", "transform": { "position": [0,-0.01,-0.03], "quaternion": [0,0,0,1], "scale": [0.01, 0.03, 0.02] }, "material": { "color": "#111111", "metalness": 0.9, "roughness": 0.2 } }
             ],
             "animations": {
                 "fire": {
@@ -73,23 +126,7 @@ export class AssetEditorActions {
                 }
             }
         };
-
-        const command = {
-            execute: () => {
-                this.app.assetContext.loadFromData(pistolData);
-                this.app.ui.updateOutliner();
-                this.app.ui.updateAnimationClips();
-                this.app.deselect();
-            },
-            undo: () => {
-                this.app.assetContext.loadFromData(oldState);
-                this.app.ui.updateOutliner();
-                this.app.ui.updateAnimationClips();
-                this.app.deselect();
-            }
-        };
-
-        this.app.undoManager.execute(command);
+        this._loadDataWithUndo(pistolData);
     }
     
     updateKeyframeProperty(keyframeInfo, property, newValue) {

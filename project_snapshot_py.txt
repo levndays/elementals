@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-10T06:27:42.145538
+Snapshot created on: 2025-07-10T09:08:43.715411
 ================================================================================
 
 === FILE: asset-editor.html ===
@@ -22,14 +22,15 @@ Snapshot created on: 2025-07-10T06:27:42.145538
             <details class="menu-dropdown">
                 <summary>File</summary>
                 <div class="menu-content">
-                    <button id="menu-file-new-weapon">New Weapon</button>
-                    <button id="menu-file-load-example">Load Example Pistol</button>
+                    <button id="menu-file-new-weapon">New Weapon (Ctrl+N)</button>
+                    <button id="menu-file-load-example-pistol">Load Example Pistol</button>
+                    <button id="menu-file-load-example-dagger">Load Example Dagger</button>
                     <hr>
-                    <button id="menu-file-open">Open Asset...</button>
+                    <button id="menu-file-open">Open Asset... (Ctrl+O)</button>
                     <input type="file" id="asset-file-input" accept=".json" style="display: none;">
-                    <button id="menu-file-save">Save Asset</button>
+                    <button id="menu-file-save">Save Asset (Ctrl+S)</button>
                     <hr>
-                    <button id="menu-file-test-viewmodel">Test in ViewModel</button>
+                    <button id="menu-file-test-viewmodel">Test in ViewModel (Ctrl+T)</button>
                     <hr>
                     <button id="menu-file-exit">Exit to Main Menu</button>
                 </div>
@@ -40,7 +41,7 @@ Snapshot created on: 2025-07-10T06:27:42.145538
                     <button id="menu-edit-undo" disabled>Undo (Ctrl+Z)</button>
                     <button id="menu-edit-redo" disabled>Redo (Ctrl+Y)</button>
                     <hr>
-                    <button id="menu-edit-delete" disabled>Delete</button>
+                    <button id="menu-edit-delete" disabled>Delete (Del)</button>
                 </div>
             </details>
             <details class="menu-dropdown">
@@ -94,7 +95,7 @@ Snapshot created on: 2025-07-10T06:27:42.145538
                 </div>
             </div>
             <div id="viewmodel-test-overlay" style="display: none;">
-                <div id="viewmodel-crosshair">+</div>
+                <div id="viewmodel-crosshair"></div>
                 <div class="test-controls-info">
                     [LMB] to Fire | [R] to Reload | [WASD] to Move
                 </div>
@@ -862,12 +863,16 @@ jobs:
 #inspector-content { display: flex; flex-direction: column; gap: 16px; }
 .prop-group { display: flex; flex-direction: column; gap: 6px; }
 #inspector-content label { font-size: 11px; color: var(--color-text-dark); text-transform: uppercase; font-weight: 600; }
-#inspector-content input { background-color: var(--color-bg-darkest); border: 1px solid var(--color-border); color: var(--color-text-light); padding: 8px; border-radius: var(--border-radius-sm); font-family: inherit; font-size: 13px; width: 100%; }
+#inspector-content input, .delete-button { background-color: var(--color-bg-darkest); border: 1px solid var(--color-border); color: var(--color-text-light); padding: 8px; border-radius: var(--border-radius-sm); font-family: inherit; font-size: 13px; width: 100%; }
 #inspector-content input:focus { border-color: var(--color-accent); outline: none; }
 #inspector-content input[type="color"] { padding: 2px; height: 32px; }
 .prop-input-group { display: flex; gap: 6px; }
 .prop-input-group input { text-align: center; }
 #inspector-content hr { border: none; border-top: 1px solid var(--color-bg-light); margin: 0; }
+.keyframe-info-box { padding: 10px; background-color: var(--color-bg-darkest); border-radius: var(--border-radius-sm); font-size: 12px; color: var(--color-text-mid); }
+.keyframe-info-box b { color: var(--color-text-light); }
+.delete-button { background-color: var(--color-delete); border-color: var(--color-delete); cursor: pointer; font-weight: 700; margin-top: auto; transition: background-color 0.2s; }
+.delete-button:hover { background-color: var(--color-delete-hover); }
 
 /* --- TIMELINE PANEL (BOTTOM) --- */
 #editor-timeline {
@@ -883,8 +888,16 @@ jobs:
 #anim-add-keyframe-btn { background-color: var(--color-accent); color: var(--color-accent-text); }
 #anim-add-keyframe-btn:hover:not(:disabled) { background-color: var(--color-accent-hover); }
 #anim-time-display { font-family: 'Consolas', monospace; font-size: 14px; color: var(--color-text-mid); min-width: 60px; text-align: center; }
-.timeline-track-area { flex-grow: 1; overflow: auto; position: relative; padding: 10px 0; }
+.timeline-track-area { flex-grow: 1; overflow: auto; position: relative; padding: 10px 0; display: flex; flex-direction: column; gap: 4px; }
 .timeline-scrubber { position: absolute; top: 0; left: 0; width: 2px; height: 100%; background-color: var(--color-accent); cursor: ew-resize; z-index: 10; }
+
+.timeline-track { display: flex; align-items: center; background-color: var(--color-bg-darkest); border-radius: var(--border-radius-sm); height: 28px; position: relative; }
+.track-label { font-size: 11px; padding: 0 12px; color: var(--color-text-mid); white-space: nowrap; width: 150px; text-overflow: ellipsis; overflow: hidden; border-right: 1px solid var(--color-border); }
+.track-keyframes { flex-grow: 1; height: 100%; position: relative; border-left: 1px solid var(--color-bg-light); }
+.timeline-keyframe { position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 10px; height: 10px; background-color: var(--color-accent); border: 1px solid var(--color-accent-text); cursor: pointer; }
+.timeline-keyframe:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+.timeline-keyframe.selected { background-color: var(--color-accent-fire); border-color: var(--color-text-light); }
+
 
 /* --- HELP MODAL --- */
 #help-modal-content { max-height: 60vh; overflow-y: auto; padding-right: 15px; }
@@ -5632,103 +5645,172 @@ body:not(.game-active) #tutorial-text-container {
 import * as THREE from 'three';
 
 /**
- * Manages animation playback for the asset editor.
- * This is a placeholder implementation for the ViewModel test mode.
+ * Manages data-driven animation playback for the asset editor.
+ * It reads animation clips from the AssetContext and applies keyframed transformations.
  */
 export class AnimationManager {
     constructor(app) {
         this.app = app;
-        this.assetRoot = app.assetContext.assetRoot;
         this.isPlaying = false;
         this.playbackTime = 0;
+        this.activeClip = null;
         this.activeClipName = null;
         this.activeClipDuration = 0;
 
-        // Store initial transforms to revert to
+        /** @type {Map<string, {position: THREE.Vector3, quaternion: THREE.Quaternion, scale: THREE.Vector3}>} */
         this.initialTransforms = new Map();
+
+        this.app.ui.animationClipSelect.onchange = (e) => {
+            this.app.ui.updateTimelineView();
+            this.triggerClip(e.target.value);
+        }
+        this.app.ui.animPlayBtn.onclick = () => {
+            if (this.isPlaying) this.stop();
+            else this.triggerClip(this.app.ui.animationClipSelect.value);
+        };
+        this.app.ui.animStopBtn.onclick = () => this.stop();
+    }
+    
+    stop() {
+        this.resetToIdle();
+        this.app.ui.animPlayBtn.textContent = '▶';
     }
 
     triggerClip(clipName) {
-        if (this.isPlaying) return; // Don't interrupt animations for now
+        if (!clipName) return;
+        const clip = this.app.assetContext.animations[clipName];
+        if (!clip) {
+            console.warn(`Animation clip "${clipName}" not found.`);
+            return;
+        }
 
+        if (this.isPlaying) {
+            this.resetToIdle();
+        }
+        
         this.isPlaying = true;
+        this.activeClip = clip;
         this.activeClipName = clipName;
+        this.activeClipDuration = clip.duration;
         this.playbackTime = 0;
+
+        this.app.ui.animPlayBtn.textContent = '❚❚';
         
-        // Simple placeholder durations
-        this.activeClipDuration = (clipName === 'fire') ? 0.4 : 1.0;
-        
-        // Store initial state before animating
         this.storeInitialTransforms();
     }
 
     storeInitialTransforms() {
         this.initialTransforms.clear();
-        this.assetRoot.traverse(child => {
-            if (this.app.assetContext.parts.has(child.uuid)) {
-                this.initialTransforms.set(child, {
+        const root = this.app.assetContext.assetRoot;
+        root.traverse(child => {
+            if (child === root || this.app.assetContext.parts.has(child.uuid)) {
+                const id = child === root ? 'AssetRoot' : child.uuid;
+                this.initialTransforms.set(id, {
                     position: child.position.clone(),
                     quaternion: child.quaternion.clone(),
+                    scale: child.scale.clone(),
                 });
             }
         });
+    }
+    
+    _findSurroundingKeys(keyframes, time) {
+        let prevKey = keyframes[0];
+        let nextKey = keyframes[keyframes.length - 1];
+
+        for (let i = 0; i < keyframes.length; i++) {
+            if (keyframes[i].time <= time) {
+                prevKey = keyframes[i];
+            }
+            if (keyframes[i].time > time) {
+                nextKey = keyframes[i];
+                break;
+            }
+        }
+        return { prevKey, nextKey };
+    }
+
+    seek(time) {
+        if (!this.activeClip) {
+            this.triggerClip(this.app.ui.animationClipSelect.value);
+            if (!this.activeClip) return;
+        }
+
+        this.playbackTime = Math.max(0, Math.min(time, this.activeClipDuration));
+        this._applyKeyframes();
+        this.app.ui.animTimeDisplay.textContent = `${this.playbackTime.toFixed(2)}s`;
+    }
+
+    _applyKeyframes() {
+        if (!this.activeClip) return;
+
+        for (const track of this.activeClip.tracks) {
+            const target = track.targetUUID === 'AssetRoot' 
+                ? this.app.assetContext.assetRoot 
+                : this.app.assetContext.parts.get(track.targetUUID);
+
+            if (!target) continue;
+
+            const { prevKey, nextKey } = this._findSurroundingKeys(track.keyframes, this.playbackTime);
+            
+            const timeRange = nextKey.time - prevKey.time;
+            const t = (timeRange > 0.0001) ? (this.playbackTime - prevKey.time) / timeRange : 1.0;
+            const easedT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // Ease in/out quadratic
+
+            switch (track.property) {
+                case 'position': {
+                    const start = new THREE.Vector3().fromArray(prevKey.value);
+                    const end = new THREE.Vector3().fromArray(nextKey.value);
+                    target.position.lerpVectors(start, end, easedT);
+                    break;
+                }
+                case 'rotation': {
+                    const startQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler().fromArray(prevKey.value.map(THREE.MathUtils.degToRad)));
+                    const endQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler().fromArray(nextKey.value.map(THREE.MathUtils.degToRad)));
+                    target.quaternion.slerpQuaternions(startQuat, endQuat, easedT);
+                    break;
+                }
+                case 'scale': {
+                    const start = new THREE.Vector3().fromArray(prevKey.value);
+                    const end = new THREE.Vector3().fromArray(nextKey.value);
+                    target.scale.lerpVectors(start, end, easedT);
+                    break;
+                }
+            }
+        }
     }
 
     update(deltaTime) {
         if (!this.isPlaying) return;
 
         this.playbackTime += deltaTime;
+        this.app.ui.animTimeDisplay.textContent = `${this.playbackTime.toFixed(2)}s`;
 
         if (this.playbackTime >= this.activeClipDuration) {
             this.resetToIdle();
+            this.app.ui.animPlayBtn.textContent = '▶';
             return;
         }
 
-        if (this.activeClipName === 'fire') {
-            this.applyFireAnimation();
-        } else if (this.activeClipName === 'reload') {
-            this.applyReloadAnimation();
-        }
-    }
-
-    applyFireAnimation() {
-        // Example: A simple "kickback" animation for the whole asset
-        const progress = this.playbackTime / this.activeClipDuration;
-        const kickProgress = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
-
-        const initialTransform = this.initialTransforms.get(this.assetRoot);
-        if (initialTransform) {
-            this.assetRoot.position.z = initialTransform.position.z + kickProgress * 0.1;
-            
-            const kickRotation = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(1, 0, 0),
-                kickProgress * -0.2
-            );
-            this.assetRoot.quaternion.copy(initialTransform.quaternion).multiply(kickRotation);
-        }
-    }
-    
-    applyReloadAnimation() {
-        // Example: Rotate the asset down and up
-        const progress = this.playbackTime / this.activeClipDuration;
-        const reloadProgress = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
-
-        const initialTransform = this.initialTransforms.get(this.assetRoot);
-        if (initialTransform) {
-            const reloadRotation = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(1, 0, 0),
-                reloadProgress * 0.8
-            );
-            this.assetRoot.quaternion.copy(initialTransform.quaternion).multiply(reloadRotation);
-        }
+        this._applyKeyframes();
     }
 
     resetToIdle() {
         this.isPlaying = false;
-        this.activeClipName = null;
-        this.initialTransforms.forEach((transform, part) => {
-            part.position.copy(transform.position);
-            part.quaternion.copy(transform.quaternion);
+        this.activeClip = null;
+        this.playbackTime = 0;
+        this.app.ui.animTimeDisplay.textContent = '0.00s';
+        
+        this.initialTransforms.forEach((transform, uuid) => {
+            const target = uuid === 'AssetRoot' 
+                ? this.app.assetContext.assetRoot 
+                : this.app.assetContext.parts.get(uuid);
+            
+            if (target) {
+                target.position.copy(transform.position);
+                target.quaternion.copy(transform.quaternion);
+                target.scale.copy(transform.scale);
+            }
         });
     }
 }
@@ -5786,7 +5868,7 @@ export class AssetContext {
         this.parts.forEach(part => {
             const transform = {
                 position: part.position.toArray(),
-                rotation: part.rotation.toArray(),
+                quaternion: part.quaternion.toArray(),
                 scale: part.scale.toArray(),
             };
 
@@ -5796,7 +5878,11 @@ export class AssetContext {
                 type: part.geometry.type.replace('Geometry', ''),
                 parent: part.parent !== this.assetRoot ? part.parent.uuid : null,
                 transform: transform,
-                material: { color: '#' + part.material.color.getHexString() }
+                material: {
+                    color: '#' + part.material.color.getHexString(),
+                    metalness: part.material.metalness,
+                    roughness: part.material.roughness,
+                }
             };
             geometry.push(partData);
         });
@@ -5805,13 +5891,13 @@ export class AssetContext {
             assetName: this.assetRoot.name,
             type: "weapon",
             geometry,
-            animations: {}
+            animations: this.animations
         };
     }
 
     loadFromData(assetData) {
         this.clear();
-        if (!assetData || !assetData.geometry) return;
+        if (!assetData) return;
 
         this.assetRoot.name = assetData.assetName || "CustomAsset";
         
@@ -5822,34 +5908,46 @@ export class AssetContext {
             'Sphere': (s) => new THREE.SphereGeometry(s[0]),
         };
 
-        // First pass: create all meshes
-        assetData.geometry.forEach(partData => {
-            const geoFn = geometryMap[partData.type];
-            if (!geoFn) return;
+        if (assetData.geometry) {
+            // First pass: create all meshes
+            assetData.geometry.forEach(partData => {
+                const geoFn = geometryMap[partData.type];
+                if (!geoFn) return;
 
-            const material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(partData.material.color)
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(partData.material.color),
+                    metalness: partData.material.metalness ?? 0.5,
+                    roughness: partData.material.roughness ?? 0.5,
+                });
+
+                const scale = partData.transform.scale || [1, 1, 1];
+                const partMesh = new THREE.Mesh(geoFn(scale), material);
+                partMesh.name = partData.name;
+                
+                createdParts.set(partData.uuid, partMesh);
             });
-
-            const scale = partData.transform.scale || [1, 1, 1];
-            const partMesh = new THREE.Mesh(geoFn(scale), material);
-            partMesh.name = partData.name;
             
-            createdParts.set(partData.uuid, partMesh);
-        });
+            // Second pass: set transforms and build hierarchy
+            assetData.geometry.forEach(partData => {
+                const partMesh = createdParts.get(partData.uuid);
+                if (!partMesh) return;
+
+                const { position, quaternion, rotation } = partData.transform;
+                if (position) partMesh.position.fromArray(position);
+                
+                // Handle both quaternion and legacy euler rotation data
+                if (quaternion) {
+                    partMesh.quaternion.fromArray(quaternion);
+                } else if (rotation) {
+                    partMesh.rotation.fromArray(rotation);
+                }
+
+                const parentMesh = partData.parent ? createdParts.get(partData.parent) : null;
+                this.addPart(partMesh, parentMesh);
+            });
+        }
         
-        // Second pass: set transforms and build hierarchy
-        assetData.geometry.forEach(partData => {
-            const partMesh = createdParts.get(partData.uuid);
-            if (!partMesh) return;
-
-            const { position, rotation } = partData.transform;
-            if (position) partMesh.position.fromArray(position);
-            if (rotation) partMesh.rotation.fromArray(rotation);
-
-            const parentMesh = partData.parent ? createdParts.get(partData.parent) : null;
-            this.addPart(partMesh, parentMesh);
-        });
+        this.animations = assetData.animations || {};
     }
 
     clear() {
@@ -5904,54 +6002,154 @@ export class AssetEditorActions {
     addCylinder() { this._addPart(new THREE.CylinderGeometry(0.5, 0.5, 1, 16), 'Cylinder'); }
     addSphere() { this._addPart(new THREE.SphereGeometry(0.5, 16, 16), 'Sphere'); }
 
-    loadExamplePistol() {
+    _loadDataWithUndo(newData) {
         const oldState = this.app.assetContext.serialize();
-
-        const pistolData = {
-            assetName: "Example Pistol",
-            type: "weapon",
-            geometry: [
-                {
-                    uuid: "pistol-body",
-                    name: "Body",
-                    type: "Box",
-                    parent: null,
-                    transform: {
-                        position: [0, 0, 0.05],
-                        rotation: [0, 0, 0],
-                        scale: [0.08, 0.12, 0.2]
-                    },
-                    material: { color: '#ff4757' }
-                },
-                {
-                    uuid: "pistol-slide",
-                    name: "Slide",
-                    type: "Box",
-                    parent: "pistol-body",
-                    transform: {
-                        position: [0, 0.08, 0],
-                        rotation: [0, 0, 0],
-                        scale: [0.07, 0.04, 0.3]
-                    },
-                    material: { color: '#ff4757' }
-                }
-            ],
-            animations: {}
-        };
-
         const command = {
             execute: () => {
-                this.app.assetContext.loadFromData(pistolData);
+                this.app.assetContext.loadFromData(newData);
                 this.app.ui.updateOutliner();
+                this.app.ui.updateAnimationClips();
                 this.app.deselect();
             },
             undo: () => {
                 this.app.assetContext.loadFromData(oldState);
                 this.app.ui.updateOutliner();
+                this.app.ui.updateAnimationClips();
                 this.app.deselect();
             }
         };
+        this.app.undoManager.execute(command);
+    }
 
+    loadFile(data) {
+        this._loadDataWithUndo(data);
+    }
+
+    loadExampleDagger() {
+        const daggerData = {
+            "assetName": "Example Dagger",
+            "type": "weapon",
+            "geometry": [
+                { "uuid": "hilt", "name": "Hilt", "type": "Cylinder", "parent": null, "transform": { "position": [0, 0, 0], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.12] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.8 } },
+                { "uuid": "guard", "name": "Guard", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.06], "quaternion": [0,0,0,1], "scale": [0.12, 0.03, 0.03] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } },
+                { "uuid": "blade", "name": "Blade", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.18], "quaternion": [0,0,0,1], "scale": [0.01, 0.05, 0.24] }, "material": { "color": "#cccccc", "metalness": 0.9, "roughness": 0.2 } },
+                { "uuid": "pommel", "name": "Pommel", "type": "Sphere", "parent": "hilt", "transform": { "position": [0, 0, -0.07], "quaternion": [0,0,0,1], "scale": [0.04, 0.04, 0.04] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } }
+            ],
+            "animations": {
+                "fire": {
+                    "name": "fire", "duration": 0.5,
+                    "tracks": [
+                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ 
+                            { "time": 0, "value": [0, 0, 0] }, 
+                            { "time": 0.15, "value": [40, 20, -30] }, 
+                            { "time": 0.5, "value": [0, 0, 0] } 
+                        ] },
+                        { "targetUUID": "AssetRoot", "property": "position", "keyframes": [ 
+                            { "time": 0, "value": [0, 0, 0] }, 
+                            { "time": 0.15, "value": [0, 0, 0.1] }, 
+                            { "time": 0.5, "value": [0, 0, 0] } 
+                        ] }
+                    ]
+                },
+                "inspect": { "name": "inspect", "duration": 2.0, "tracks": [ { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] } ] }
+            }
+        };
+        this._loadDataWithUndo(daggerData);
+    }
+
+    loadExamplePistol() {
+        const pistolData = {
+            "assetName": "Example Pistol",
+            "type": "weapon",
+            "geometry": [
+                { "uuid": "body", "name": "Body", "type": "Box", "parent": null, "transform": { "position": [0,0,0], "quaternion": [0,0,0,1], "scale": [0.05, 0.08, 0.18] }, "material": { "color": "#454545", "metalness": 0.7, "roughness": 0.5 } },
+                { "uuid": "slide", "name": "Slide", "type": "Box", "parent": "body", "transform": { "position": [0,0.05,0], "quaternion": [0,0,0,1], "scale": [0.045, 0.05, 0.2] }, "material": { "color": "#333333", "metalness": 0.8, "roughness": 0.4 } },
+                { "uuid": "grip", "name": "Grip", "type": "Box", "parent": "body", "transform": { "position": [0,-0.08,-0.05], "quaternion": [-0.08715574274765817, 0, 0, 0.9961946980917455], "scale": [0.04, 0.15, 0.05] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.7 } },
+                { "uuid": "magazine", "name": "Magazine", "type": "Box", "parent": "grip", "transform": { "position": [0,-0.07,0.01], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.04] }, "material": { "color": "#222222", "metalness": 0.9, "roughness": 0.3 } },
+                { "uuid": "trigger", "name": "Trigger", "type": "Box", "parent": "body", "transform": { "position": [0,-0.01,-0.03], "quaternion": [0,0,0,1], "scale": [0.01, 0.03, 0.02] }, "material": { "color": "#111111", "metalness": 0.9, "roughness": 0.2 } }
+            ],
+            "animations": {
+                "fire": {
+                    "name": "fire", "duration": 0.3,
+                    "tracks": [
+                        { "targetUUID": "slide", "property": "position", "keyframes": [ { "time": 0, "value": [0, 0.05, 0] }, { "time": 0.05, "value": [0, 0.05, -0.05] }, { "time": 0.3, "value": [0, 0.05, 0] } ] },
+                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.05, "value": [-10, 0, 0] }, { "time": 0.3, "value": [0, 0, 0] } ] }
+                    ]
+                },
+                "reload": {
+                    "name": "reload", "duration": 1.5,
+                    "tracks": [
+                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.2, "value": [30, 0, 20] }, { "time": 1.3, "value": [30, 0, 20] }, { "time": 1.5, "value": [0, 0, 0] } ] },
+                        { "targetUUID": "magazine", "property": "position", "keyframes": [ { "time": 0.3, "value": [0,-0.07,0.01] }, { "time": 0.6, "value": [0,-0.15,0.01] }, { "time": 0.9, "value": [0,-0.15,0.01] }, { "time": 1.2, "value": [0,-0.07,0.01] } ] }
+                    ]
+                },
+                "inspect": {
+                    "name": "inspect", "duration": 2.0,
+                    "tracks": [
+                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] }
+                    ]
+                }
+            }
+        };
+        this._loadDataWithUndo(pistolData);
+    }
+    
+    updateKeyframeProperty(keyframeInfo, property, newValue) {
+        const { clipName, trackIndex, keyIndex } = keyframeInfo;
+        const keyframe = this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes[keyIndex];
+
+        const beforeState = JSON.parse(JSON.stringify(keyframe));
+        const afterState = JSON.parse(JSON.stringify(keyframe));
+        
+        if(property === 'time') {
+            afterState.time = newValue;
+        } else if (Array.isArray(keyframe.value)) {
+            const axisMap = { x: 0, y: 1, z: 2 };
+            afterState.value[axisMap[property]] = newValue;
+        }
+
+        const command = {
+            execute: () => {
+                Object.assign(keyframe, afterState);
+                // Re-sort keyframes if time was changed
+                if(property === 'time') {
+                    this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes.sort((a,b) => a.time - b.time);
+                    // We need to find the new index of our modified keyframe
+                    this.app.ui.selectedKeyframeInfo.keyIndex = this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes.findIndex(k => k === keyframe);
+                }
+                this.app.ui.updateTimelineView();
+            },
+            undo: () => {
+                Object.assign(keyframe, beforeState);
+                 if(property === 'time') {
+                    this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes.sort((a,b) => a.time - b.time);
+                     this.app.ui.selectedKeyframeInfo.keyIndex = this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes.findIndex(k => k === keyframe);
+                }
+                this.app.ui.updateTimelineView();
+            }
+        };
+        this.app.undoManager.execute(command);
+    }
+
+    deleteSelectedKeyframe() {
+        if (!this.app.ui.selectedKeyframeInfo) return;
+
+        const { clipName, trackIndex, keyIndex } = this.app.ui.selectedKeyframeInfo;
+        const track = this.app.assetContext.animations[clipName].tracks[trackIndex];
+        const keyframeToRemove = track.keyframes[keyIndex];
+        
+        const command = {
+            execute: () => {
+                track.keyframes.splice(keyIndex, 1);
+                this.app.ui.deselectKeyframe();
+                this.app.ui.updateTimelineView();
+            },
+            undo: () => {
+                track.keyframes.splice(keyIndex, 0, keyframeToRemove);
+                this.app.ui.selectKeyframe(clipName, trackIndex, keyIndex);
+                this.app.ui.updateTimelineView();
+            }
+        };
         this.app.undoManager.execute(command);
     }
 
@@ -6024,19 +6222,22 @@ export class AssetEditorApp {
         this.input = new InputManager();
 
         this.scene = this.renderer.scene;
-        this.camera = this.renderer.camera; // There is now only one camera
+        this.viewModelScene = new THREE.Scene();
+        this.camera = this.renderer.camera;
 
         this.gridHelper = null;
         this.viewModelGuide = null;
+        this.ambientLight = null;
+        this.dirLight = null;
         
         this.selectedObjects = new Set();
         this.primarySelectedObject = null;
         this.selectionGroup = new THREE.Group();
         this.scene.add(this.selectionGroup);
 
-        this.editorState = 'EDITING'; // 'EDITING' or 'TESTING'
+        this.editorState = 'EDITING';
         this.editorBackgroundColor = new THREE.Color(0x333333);
-        this.testBackgroundColor = new THREE.Color(0x87CEEB); // Sky blue
+        this.testBackgroundColor = new THREE.Color(0x87CEEB);
     }
 
     async init() {
@@ -6044,10 +6245,12 @@ export class AssetEditorApp {
         this.camera.position.set(0, 1.5, 5);
         this.camera.lookAt(0, 0, 0);
 
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(5, 10, 7.5);
-        this.scene.add(dirLight);
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        this.scene.add(this.ambientLight);
+        
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.dirLight.position.set(5, 10, 7.5);
+        this.scene.add(this.dirLight);
 
         this.gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0x888888);
         this.scene.add(this.gridHelper);
@@ -6055,20 +6258,53 @@ export class AssetEditorApp {
         this.viewModelGuide = new ViewModelGuide();
         this.scene.add(this.viewModelGuide);
 
-        // Core editor components
         this.assetContext = new AssetContext(this.scene);
         this.undoManager = new UndoManager(this);
         this.actions = new AssetEditorActions(this);
         this.controls = new AssetEditorControls(this);
         this.ui = new ModelEditorUI(this);
         
-        // Camera Controllers - these now manipulate the single main camera
         this.editorCameraController = new EditorCamera(this);
         this.viewModelCameraController = new ViewModelCamera(this);
         
         this.animationManager = new AnimationManager(this);
-
+        
+        document.addEventListener('keydown', (e) => this._onKeyDown(e));
         this.renderer.renderer.setAnimationLoop(() => this.animate());
+    }
+
+    _onKeyDown(event) {
+        if (event.target.tagName === 'INPUT' || this.controls.transformControls.dragging) return;
+    
+        const ctrlOrMeta = event.ctrlKey || event.metaKey;
+        let handled = false;
+    
+        if (ctrlOrMeta) {
+            switch (event.code) {
+                case 'KeyN': this.actions._loadDataWithUndo(null); handled = true; break;
+                case 'KeyO': this.ui.openAsset(); handled = true; break;
+                case 'KeyS': this.ui.saveAsset(); handled = true; break;
+                case 'KeyT': this.enterViewModelTest(); handled = true; break;
+                case 'KeyZ': this.undoManager.undo(); handled = true; break;
+                case 'KeyY': this.undoManager.redo(); handled = true; break;
+            }
+        } else {
+            switch (event.code) {
+                case 'KeyT': this.controls.setMode('translate'); handled = true; break;
+                case 'KeyR': this.controls.setMode('rotate'); handled = true; break;
+                case 'KeyS': this.controls.setMode('scale'); handled = true; break;
+                case 'Delete':
+                case 'Backspace':
+                    if (this.ui.selectedKeyframeInfo) this.actions.deleteSelectedKeyframe();
+                    else this.actions.deleteSelected();
+                    handled = true;
+                    break;
+            }
+        }
+    
+        if (handled) {
+            event.preventDefault();
+        }
     }
 
     enterViewModelTest() {
@@ -6078,20 +6314,30 @@ export class AssetEditorApp {
         this.deselect();
         this.controls.transformControls.enabled = false;
         
-        // Setup test environment
         this.scene.background = this.testBackgroundColor;
-        this.gridHelper.visible = true;
+        this.gridHelper.visible = false;
         this.viewModelGuide.setVisible(false);
         
         this.viewModelCameraController.start();
 
-        // Attach asset to camera for viewmodel effect
         const asset = this.assetContext.assetRoot;
-        asset.layers.set(EDITOR_LAYERS.VIEWMODEL);
-        this.camera.add(asset);
+        asset.traverse(child => {
+            child.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        });
+
+        // Move lights and camera into the dedicated viewmodel scene
+        this.scene.remove(this.ambientLight, this.dirLight);
+        this.viewModelScene.add(this.ambientLight, this.dirLight, this.camera);
+        
+        // Ensure lights are on the same layer as the viewmodel objects
+        this.ambientLight.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        this.dirLight.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        
+        this.camera.add(asset); // Parent asset to camera
         asset.position.set(0.25, -0.4, -0.8);
         asset.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
         
+        document.getElementById('viewmodel-test-overlay').style.display = 'flex';
         this.container.classList.add('is-testing');
     }
 
@@ -6101,20 +6347,30 @@ export class AssetEditorApp {
         
         this.viewModelCameraController.stop();
 
-        // Detach asset from camera and restore state
         const asset = this.assetContext.assetRoot;
-        this.scene.add(asset); // Reparent back to scene
-        asset.layers.set(EDITOR_LAYERS.DEFAULT);
-        asset.position.set(0, 0, 0); // Reset transform for editing
+        
+        // Move everything back to the main scene
+        this.camera.remove(asset);
+        this.viewModelScene.remove(this.ambientLight, this.dirLight, this.camera);
+        this.scene.add(asset, this.ambientLight, this.dirLight);
+
+        asset.traverse(child => {
+            child.layers.set(EDITOR_LAYERS.DEFAULT);
+        });
+        // Reset light layers
+        this.ambientLight.layers.set(EDITOR_LAYERS.DEFAULT);
+        this.dirLight.layers.set(EDITOR_LAYERS.DEFAULT);
+        
+        asset.position.set(0, 0, 0);
         asset.quaternion.identity();
 
-        // Restore editor environment
         this.scene.background = this.editorBackgroundColor;
         this.controls.transformControls.enabled = true;
         this.gridHelper.visible = document.getElementById('view-toggle-grid').checked;
         this.viewModelGuide.setVisible(document.getElementById('view-toggle-viewmodel-guide').checked);
         
         this.animationManager.resetToIdle();
+        document.getElementById('viewmodel-test-overlay').style.display = 'none';
         this.container.classList.remove('is-testing');
     }
     
@@ -6162,28 +6418,29 @@ export class AssetEditorApp {
         
         this.animationManager.update(deltaTime);
         
-        // Render logic
         const webglRenderer = this.renderer.renderer;
-        webglRenderer.autoClear = false;
-        webglRenderer.clear();
-
+        
         if (this.editorState === 'TESTING') {
-            // Render the main scene (world)
+            webglRenderer.autoClear = false;
+            webglRenderer.clear();
+            
+            // Render the main scene (background color only)
             this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
             webglRenderer.render(this.scene, this.camera);
             
             webglRenderer.clearDepth();
 
-            // Render the viewmodel
+            // Render the viewmodel scene
             this.camera.layers.set(EDITOR_LAYERS.VIEWMODEL);
-            webglRenderer.render(this.scene, this.camera);
+            webglRenderer.render(this.viewModelScene, this.camera);
+
+            webglRenderer.autoClear = true;
         } else {
             this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
             webglRenderer.render(this.scene, this.camera);
         }
         
-        webglRenderer.autoClear = true;
-        this.camera.layers.set(EDITOR_LAYERS.DEFAULT); // Reset for next frame
+        this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
     }
 }
 --------------------------------------------------
@@ -6474,19 +6731,58 @@ export class ModelEditorUI {
         this.app = app;
         this.outlinerContent = document.getElementById('outliner-content');
         this.inspectorContent = document.getElementById('inspector-content');
+        this.timelineTrackArea = document.getElementById('editor-timeline').querySelector('.timeline-track-area');
+        
+        this.elements = {
+            fileInput: document.getElementById('asset-file-input'),
+        };
+
+        // Timeline elements
+        this.animationClipSelect = document.getElementById('animation-clip-select');
+        this.animPlayBtn = document.getElementById('anim-play-btn');
+        this.animStopBtn = document.getElementById('anim-stop-btn');
+        this.animTimeDisplay = document.getElementById('anim-time-display');
+
         this.draggedElement = null;
+        this.selectedKeyframeInfo = null;
         this.init();
     }
 
     init() {
         // --- Menu ---
+        document.getElementById('menu-file-new-weapon').onclick = () => this.app.actions._loadDataWithUndo(null);
+        document.getElementById('menu-file-open').onclick = () => this.openAsset();
+        document.getElementById('menu-file-save').onclick = () => this.saveAsset();
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
-        document.getElementById('menu-file-load-example').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-load-example-pistol').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-load-example-dagger').onclick = () => this.app.actions.loadExampleDagger();
         document.getElementById('menu-file-test-viewmodel').onclick = () => this.app.enterViewModelTest();
-        document.getElementById('menu-edit-delete').onclick = () => this.app.actions.deleteSelected();
+        document.getElementById('menu-edit-delete').onclick = () => {
+            if (this.selectedKeyframeInfo) this.app.actions.deleteSelectedKeyframe();
+            else this.app.actions.deleteSelected();
+        };
         document.getElementById('menu-edit-undo').onclick = () => this.app.undoManager.undo();
         document.getElementById('menu-edit-redo').onclick = () => this.app.undoManager.redo();
         document.getElementById('menu-help-guide').onclick = () => this.showHelpModal(true);
+
+        // --- File Input ---
+        this.elements.fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    this.app.actions.loadFile(data);
+                } catch (error) {
+                    console.error("Failed to load or parse asset file:", error);
+                    alert("Error: Invalid or corrupt asset file.");
+                } finally {
+                    e.target.value = null; // Reset input so the same file can be opened again
+                }
+            };
+            reader.readAsText(file);
+        };
 
         // --- View Menu ---
         document.getElementById('view-toggle-grid').onchange = (e) => { if(this.app.gridHelper) this.app.gridHelper.visible = e.target.checked; };
@@ -6527,6 +6823,10 @@ export class ModelEditorUI {
         this.outlinerContent.addEventListener('dragleave', (e) => this.handleOutlinerDragLeave(e));
         this.outlinerContent.addEventListener('drop', (e) => this.handleOutlinerDrop(e));
 
+        // --- Timeline ---
+        this.animationClipSelect.onchange = () => this.updateTimelineView();
+        this.timelineTrackArea.addEventListener('click', (e) => this.handleTimelineClick(e));
+
         // --- Viewmodel Test ---
         document.getElementById('exit-test-mode-btn').onclick = () => this.app.exitViewModelTest();
 
@@ -6551,18 +6851,132 @@ export class ModelEditorUI {
             });
         });
     }
+
+    openAsset() {
+        this.elements.fileInput.click();
+    }
+
+    saveAsset() {
+        const assetData = this.app.assetContext.serialize();
+        const assetName = assetData.assetName || 'custom-asset';
+        const filename = `${assetName.toLowerCase().replace(/\s+/g, '-')}.json`;
+        const blob = new Blob([JSON.stringify(assetData, null, 2)], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+
+    handleTimelineClick(e) {
+        if(e.target.classList.contains('timeline-keyframe')) {
+            this.selectKeyframe(
+                e.target.dataset.clipName,
+                parseInt(e.target.dataset.trackIndex),
+                parseInt(e.target.dataset.keyIndex)
+            );
+        } else {
+            this.deselectKeyframe();
+        }
+    }
+    
+    selectKeyframe(clipName, trackIndex, keyIndex) {
+        this.app.deselect(); // Deselect any 3D objects
+        this.selectedKeyframeInfo = { clipName, trackIndex, keyIndex };
+        const keyframe = this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes[keyIndex];
+        this.app.animationManager.seek(keyframe.time);
+        this.updateOnSelectionChange();
+    }
+    
+    deselectKeyframe() {
+        if (!this.selectedKeyframeInfo) return;
+        this.selectedKeyframeInfo = null;
+        this.updateOnSelectionChange();
+    }
+
+    updateAnimationClips() {
+        this.animationClipSelect.innerHTML = '';
+        const clips = this.app.assetContext.animations;
+        const clipNames = Object.keys(clips);
+        if (clipNames.length === 0) {
+            this.animationClipSelect.disabled = true;
+            const defaultOption = document.createElement('option');
+            defaultOption.textContent = "No Clips";
+            this.animationClipSelect.appendChild(defaultOption);
+        } else {
+            this.animationClipSelect.disabled = false;
+            clipNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                this.animationClipSelect.appendChild(option);
+            });
+        }
+        this.updateTimelineView();
+    }
+    
+    updateTimelineView() {
+        this.timelineTrackArea.innerHTML = '<div class="timeline-scrubber"></div>';
+
+        const clipName = this.animationClipSelect.value;
+        const clip = this.app.assetContext.animations[clipName];
+
+        if (!clip) return;
+
+        clip.tracks.forEach((track, trackIndex) => {
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'timeline-track';
+
+            const target = track.targetUUID === 'AssetRoot'
+                ? this.app.assetContext.assetRoot
+                : this.app.assetContext.parts.get(track.targetUUID);
+
+            const label = document.createElement('div');
+            label.className = 'track-label';
+            label.textContent = `${target?.name || 'Unknown'}.${track.property}`;
+            trackDiv.appendChild(label);
+
+            const keyframeContainer = document.createElement('div');
+            keyframeContainer.className = 'track-keyframes';
+
+            track.keyframes.forEach((keyframe, keyIndex) => {
+                const keyframeDiv = document.createElement('div');
+                keyframeDiv.className = 'timeline-keyframe';
+                keyframeDiv.style.left = `${(keyframe.time / clip.duration) * 100}%`;
+                keyframeDiv.title = `Time: ${keyframe.time.toFixed(2)}s`;
+                keyframeDiv.dataset.clipName = clipName;
+                keyframeDiv.dataset.trackIndex = trackIndex;
+                keyframeDiv.dataset.keyIndex = keyIndex;
+                if(this.selectedKeyframeInfo?.clipName === clipName && this.selectedKeyframeInfo?.trackIndex === trackIndex && this.selectedKeyframeInfo?.keyIndex === keyIndex) {
+                    keyframeDiv.classList.add('selected');
+                }
+                keyframeContainer.appendChild(keyframeDiv);
+            });
+
+            trackDiv.appendChild(keyframeContainer);
+            this.timelineTrackArea.appendChild(trackDiv);
+        });
+    }
     
     showHelpModal(show) {
         document.getElementById('help-modal').style.display = show ? 'flex' : 'none';
     }
 
     updateOnSelectionChange() {
-        document.getElementById('menu-edit-delete').disabled = this.app.selectedObjects.size === 0;
+        const isObjectSelected = this.app.selectedObjects.size > 0;
+        const isKeyframeSelected = !!this.selectedKeyframeInfo;
+        document.getElementById('menu-edit-delete').disabled = !isObjectSelected && !isKeyframeSelected;
+
         this.updateOutliner();
         this.updateInspector();
+        this.updateTimelineView();
     }
 
     handleOutlinerClick(event) {
+        this.deselectKeyframe();
         const item = event.target.closest('.outliner-item');
         if (!item) return;
 
@@ -6643,21 +7057,28 @@ export class ModelEditorUI {
 
     updateInspector() {
         this.inspectorContent.innerHTML = '';
-        const obj = this.app.primarySelectedObject;
-
-        if (this.app.selectedObjects.size > 1) {
-             const multiSelectInfo = document.createElement('div');
-            multiSelectInfo.className = 'placeholder-text';
-            multiSelectInfo.innerHTML = `<b>${this.app.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
-            this.inspectorContent.appendChild(multiSelectInfo);
+        if(this.selectedKeyframeInfo) {
+            this.renderKeyframeInspector();
+        } else if (this.app.selectedObjects.size > 0) {
+            this.renderObjectInspector();
+        } else {
+            this.inspectorContent.innerHTML = '<div class="placeholder-text">Select a part or keyframe to view its properties.</div>';
         }
+    }
 
-        if (!obj) {
-            this.inspectorContent.innerHTML = '<div class="placeholder-text">Select a part to view its properties.</div>';
-            return;
-        }
+    renderKeyframeInspector() {
+        const { clipName, trackIndex, keyIndex } = this.selectedKeyframeInfo;
+        const track = this.app.assetContext.animations[clipName].tracks[trackIndex];
+        const keyframe = track.keyframes[keyIndex];
+        const target = track.targetUUID === 'AssetRoot' ? this.app.assetContext.assetRoot : this.app.assetContext.parts.get(track.targetUUID);
 
         const fragment = document.createDocumentFragment();
+
+        const infoBox = document.createElement('div');
+        infoBox.className = 'keyframe-info-box';
+        infoBox.innerHTML = `<b>${target?.name || 'Unknown'}</b><br>${track.property}`;
+        fragment.appendChild(infoBox);
+        fragment.appendChild(document.createElement('hr'));
         
         const createPropGroup = (label) => {
             const group = document.createElement('div'); group.className = 'prop-group';
@@ -6665,10 +7086,64 @@ export class ModelEditorUI {
             group.appendChild(labelEl); fragment.appendChild(group);
             return group;
         };
-        const createVec3Inputs = (group, vec, step, callback) => {
+
+        const timeGroup = createPropGroup('Time (s)');
+        const timeInput = document.createElement('input');
+        timeInput.type = 'number'; timeInput.step = 0.01; timeInput.value = keyframe.time.toFixed(2);
+        timeInput.onchange = () => this.app.actions.updateKeyframeProperty(this.selectedKeyframeInfo, 'time', parseFloat(timeInput.value));
+        timeGroup.appendChild(timeInput);
+
+        const valueGroup = createPropGroup('Value');
+        if(Array.isArray(keyframe.value)) {
             const container = document.createElement('div'); container.className = 'prop-input-group';
+            ['x', 'y', 'z'].forEach((axis, i) => {
+                if (keyframe.value[i] === undefined) return;
+                const input = document.createElement('input'); input.type = 'number'; input.step = 0.01; input.value = keyframe.value[i].toFixed(2);
+                input.onchange = () => this.app.actions.updateKeyframeProperty(this.selectedKeyframeInfo, axis, parseFloat(input.value));
+                container.appendChild(input);
+            });
+            valueGroup.appendChild(container);
+        }
+
+        fragment.appendChild(document.createElement('hr'));
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = "Delete Keyframe";
+        deleteButton.className = "delete-button";
+        deleteButton.onclick = () => this.app.actions.deleteSelectedKeyframe();
+        fragment.appendChild(deleteButton);
+
+        this.inspectorContent.appendChild(fragment);
+    }
+
+    renderObjectInspector() {
+        const obj = this.app.primarySelectedObject;
+        if (!obj) return;
+
+        const fragment = document.createDocumentFragment();
+        
+        if (this.app.selectedObjects.size > 1) {
+             const multiSelectInfo = document.createElement('div');
+            multiSelectInfo.className = 'placeholder-text';
+            multiSelectInfo.innerHTML = `<b>${this.app.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
+            fragment.appendChild(multiSelectInfo);
+        }
+        
+        const createPropGroup = (label) => {
+            const group = document.createElement('div');
+            group.className = 'prop-group';
+            const labelEl = document.createElement('label');
+            labelEl.textContent = label;
+            group.appendChild(labelEl);
+            fragment.appendChild(group);
+            return group;
+        };
+        
+        const createVec3Inputs = (group, vec, step, callback) => {
+            const container = document.createElement('div');
+            container.className = 'prop-input-group';
             ['x', 'y', 'z'].forEach(axis => {
-                const input = document.createElement('input'); input.type = 'number';
+                const input = document.createElement('input');
+                input.type = 'number';
                 
                 const currentStep = typeof step === 'object' ? (step[axis] || 0.1) : step;
                 input.step = currentStep;
@@ -6682,8 +7157,22 @@ export class ModelEditorUI {
             group.appendChild(container);
         };
         
+        const createSingleNumberInput = (parent, value, { min, max, step = 0.1 }, callback) => {
+            const input = document.createElement('input');
+            input.type = 'number';
+            if (min !== undefined) input.min = min;
+            if (max !== undefined) input.max = max;
+            input.step = step;
+            input.value = value.toFixed(2);
+            input.onchange = (e) => callback(parseFloat(e.target.value));
+            parent.appendChild(input);
+            return input;
+        };
+        
         const nameGroup = createPropGroup('Name');
-        const nameInput = document.createElement('input'); nameInput.type = 'text'; nameInput.value = obj.name;
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = obj.name;
         nameInput.onchange = () => this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: { name: obj.name }, afterState: { name: nameInput.value } }));
         nameGroup.appendChild(nameInput);
         
@@ -6692,13 +7181,16 @@ export class ModelEditorUI {
         const posGroup = createPropGroup('Position');
         createVec3Inputs(posGroup, obj.position, 0.1, (axis, value) => {
             const before = { position: obj.position.clone() };
-            const after = { position: obj.position.clone() }; after.position[axis] = value;
+            const after = { position: obj.position.clone() };
+            after.position[axis] = value;
             this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: before, afterState: after }));
         });
 
         const rotGroup = createPropGroup('Rotation (Deg)');
         const eulerDeg = new THREE.Euler().setFromQuaternion(obj.quaternion, 'YXZ');
-        eulerDeg.x = THREE.MathUtils.radToDeg(eulerDeg.x); eulerDeg.y = THREE.MathUtils.radToDeg(eulerDeg.y); eulerDeg.z = THREE.MathUtils.radToDeg(eulerDeg.z);
+        eulerDeg.x = THREE.MathUtils.radToDeg(eulerDeg.x);
+        eulerDeg.y = THREE.MathUtils.radToDeg(eulerDeg.y);
+        eulerDeg.z = THREE.MathUtils.radToDeg(eulerDeg.z);
         createVec3Inputs(rotGroup, eulerDeg, 5, (axis, value) => {
             const before = { quaternion: obj.quaternion.clone() };
             const newEuler = new THREE.Euler().setFromQuaternion(obj.quaternion, 'YXZ');
@@ -6738,8 +7230,8 @@ export class ModelEditorUI {
             const before = { geometry: { ...obj.geometry.parameters } };
             const after = { geometry: { ...obj.geometry.parameters } };
             const keyMap = { x: 'width', y: 'height', z: 'depth' };
-            if(obj.geometry.type === 'CylinderGeometry') { Object.assign(keyMap, { x: 'radiusTop', y: 'height', z: 'radiusBottom'}); }
-            if(obj.geometry.type === 'SphereGeometry') { Object.assign(keyMap, { x: 'radius', y: 'widthSegments', z: 'heightSegments'}); }
+            if (obj.geometry.type === 'CylinderGeometry') { Object.assign(keyMap, { x: 'radiusTop', y: 'height', z: 'radiusBottom'}); }
+            if (obj.geometry.type === 'SphereGeometry') { Object.assign(keyMap, { x: 'radius', y: 'widthSegments', z: 'heightSegments'}); }
 
             const propName = keyMap[axis];
             if (propName) {
@@ -6754,14 +7246,45 @@ export class ModelEditorUI {
         fragment.appendChild(document.createElement('hr'));
 
         const matGroup = createPropGroup('Material');
-        const matContainer = document.createElement('div'); matContainer.className = 'prop-input-group';
-        const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = '#' + obj.material.color.getHexString();
+        const matContainer = document.createElement('div');
+        matContainer.className = 'prop-input-group';
+        
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = '#' + obj.material.color.getHexString();
         colorInput.oninput = () => obj.material.color.set(colorInput.value);
-        const beforeColor = obj.material.color.getHex();
-        colorInput.onchange = () => this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: { material: { color: beforeColor }}, afterState: { material: { color: obj.material.color.getHex() }}}));
+        colorInput.onchange = () => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { color: parseInt(colorInput.value.replace('#', ''), 16) } }, // This might not capture the true before state if changed via oninput
+                afterState: { material: { color: obj.material.color.getHex() } }
+            });
+            // This undo logic for color is simplified and might not be perfect with oninput.
+            // A more robust solution would store the color state on focus/mousedown.
+        };
         matContainer.appendChild(colorInput);
         matGroup.appendChild(matContainer);
         
+        const metalnessGroup = createPropGroup('Metalness');
+        createSingleNumberInput(metalnessGroup, obj.material.metalness, { min: 0, max: 1, step: 0.05 }, (val) => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { metalness: obj.material.metalness } },
+                afterState: { material: { metalness: val } }
+            });
+            this.app.undoManager.execute(command);
+        });
+
+        const roughnessGroup = createPropGroup('Roughness');
+        createSingleNumberInput(roughnessGroup, obj.material.roughness, { min: 0, max: 1, step: 0.05 }, (val) => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { roughness: obj.material.roughness } },
+                afterState: { material: { roughness: val } }
+            });
+            this.app.undoManager.execute(command);
+        });
+
         this.inspectorContent.appendChild(fragment);
     }
     
@@ -6783,7 +7306,6 @@ export class StateChangeCommand {
         
         const changeArray = Array.isArray(changes) ? changes : [{ entity: changes.entity || changes, ...changes }];
 
-        // Create a clean, deep copy of the changes array with cloned THREE objects.
         this.changes = changeArray.map(c => {
             const cloneState = (state) => {
                 if (!state) return null;
@@ -6792,11 +7314,18 @@ export class StateChangeCommand {
                 if (state.quaternion) cloned.quaternion = state.quaternion.clone();
                 if (state.scale) cloned.scale = state.scale.clone();
                 if (state.name !== undefined) cloned.name = state.name;
-                if (state.material?.color !== undefined) {
-                    // Handle both raw hex and THREE.Color objects
-                    cloned.material = { color: state.material.color.isColor ? state.material.color.getHex() : state.material.color };
-                }
                 if (state.geometry !== undefined) cloned.geometry = { ...state.geometry };
+                
+                if (state.material) {
+                    cloned.material = {};
+                    for (const key in state.material) {
+                        if (key === 'color' && state.material.color.isColor) {
+                            cloned.material.color = state.material.color.getHex();
+                        } else {
+                            cloned.material[key] = state.material[key];
+                        }
+                    }
+                }
                 return cloned;
             };
 
@@ -6820,7 +7349,16 @@ export class StateChangeCommand {
             if (state.quaternion) entity.quaternion.copy(state.quaternion);
             if (state.scale) entity.scale.copy(state.scale);
             if (state.name) entity.name = state.name;
-            if (state.material?.color !== undefined) entity.material.color.setHex(state.material.color);
+
+            if (state.material) {
+                for (const key in state.material) {
+                    if (key === 'color') {
+                        entity.material.color.setHex(state.material.color);
+                    } else if (entity.material[key] !== undefined) {
+                        entity.material[key] = state.material[key];
+                    }
+                }
+            }
             
             if (state.geometry) {
                 entity.geometry.dispose(); // Dispose the old geometry

@@ -1,4 +1,4 @@
-// ~ src/game/Game.js
+// src/game/Game.js
 import * as THREE from 'three';
 import { World } from './world/World.js';
 import { PlayerController } from '../client/entities/PlayerController.js';
@@ -101,7 +101,7 @@ export class Game {
             this.core.renderer.setupPostProcessing(
                 this.world.scene,
                 this.core.renderer.camera,
-                this.game.viewModelScene
+                this.viewModelScene
             );
 
             this.playerController.attach(this.world.player);

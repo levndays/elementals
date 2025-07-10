@@ -6,7 +6,6 @@ export class StateChangeCommand {
         
         const changeArray = Array.isArray(changes) ? changes : [{ entity: changes.entity || changes, ...changes }];
 
-        // Create a clean, deep copy of the changes array with cloned THREE objects.
         this.changes = changeArray.map(c => {
             const cloneState = (state) => {
                 if (!state) return null;
@@ -15,11 +14,18 @@ export class StateChangeCommand {
                 if (state.quaternion) cloned.quaternion = state.quaternion.clone();
                 if (state.scale) cloned.scale = state.scale.clone();
                 if (state.name !== undefined) cloned.name = state.name;
-                if (state.material?.color !== undefined) {
-                    // Handle both raw hex and THREE.Color objects
-                    cloned.material = { color: state.material.color.isColor ? state.material.color.getHex() : state.material.color };
-                }
                 if (state.geometry !== undefined) cloned.geometry = { ...state.geometry };
+                
+                if (state.material) {
+                    cloned.material = {};
+                    for (const key in state.material) {
+                        if (key === 'color' && state.material.color.isColor) {
+                            cloned.material.color = state.material.color.getHex();
+                        } else {
+                            cloned.material[key] = state.material[key];
+                        }
+                    }
+                }
                 return cloned;
             };
 
@@ -43,7 +49,16 @@ export class StateChangeCommand {
             if (state.quaternion) entity.quaternion.copy(state.quaternion);
             if (state.scale) entity.scale.copy(state.scale);
             if (state.name) entity.name = state.name;
-            if (state.material?.color !== undefined) entity.material.color.setHex(state.material.color);
+
+            if (state.material) {
+                for (const key in state.material) {
+                    if (key === 'color') {
+                        entity.material.color.setHex(state.material.color);
+                    } else if (entity.material[key] !== undefined) {
+                        entity.material[key] = state.material[key];
+                    }
+                }
+            }
             
             if (state.geometry) {
                 entity.geometry.dispose(); // Dispose the old geometry

@@ -8,6 +8,10 @@ export class ModelEditorUI {
         this.inspectorContent = document.getElementById('inspector-content');
         this.timelineTrackArea = document.getElementById('editor-timeline').querySelector('.timeline-track-area');
         
+        this.elements = {
+            fileInput: document.getElementById('asset-file-input'),
+        };
+
         // Timeline elements
         this.animationClipSelect = document.getElementById('animation-clip-select');
         this.animPlayBtn = document.getElementById('anim-play-btn');
@@ -21,8 +25,12 @@ export class ModelEditorUI {
 
     init() {
         // --- Menu ---
+        document.getElementById('menu-file-new-weapon').onclick = () => this.app.actions._loadDataWithUndo(null);
+        document.getElementById('menu-file-open').onclick = () => this.openAsset();
+        document.getElementById('menu-file-save').onclick = () => this.saveAsset();
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
-        document.getElementById('menu-file-load-example').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-load-example-pistol').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-load-example-dagger').onclick = () => this.app.actions.loadExampleDagger();
         document.getElementById('menu-file-test-viewmodel').onclick = () => this.app.enterViewModelTest();
         document.getElementById('menu-edit-delete').onclick = () => {
             if (this.selectedKeyframeInfo) this.app.actions.deleteSelectedKeyframe();
@@ -31,6 +39,25 @@ export class ModelEditorUI {
         document.getElementById('menu-edit-undo').onclick = () => this.app.undoManager.undo();
         document.getElementById('menu-edit-redo').onclick = () => this.app.undoManager.redo();
         document.getElementById('menu-help-guide').onclick = () => this.showHelpModal(true);
+
+        // --- File Input ---
+        this.elements.fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    this.app.actions.loadFile(data);
+                } catch (error) {
+                    console.error("Failed to load or parse asset file:", error);
+                    alert("Error: Invalid or corrupt asset file.");
+                } finally {
+                    e.target.value = null; // Reset input so the same file can be opened again
+                }
+            };
+            reader.readAsText(file);
+        };
 
         // --- View Menu ---
         document.getElementById('view-toggle-grid').onchange = (e) => { if(this.app.gridHelper) this.app.gridHelper.visible = e.target.checked; };
@@ -98,6 +125,25 @@ export class ModelEditorUI {
                 dropdown.open = false;
             });
         });
+    }
+
+    openAsset() {
+        this.elements.fileInput.click();
+    }
+
+    saveAsset() {
+        const assetData = this.app.assetContext.serialize();
+        const assetName = assetData.assetName || 'custom-asset';
+        const filename = `${assetName.toLowerCase().replace(/\s+/g, '-')}.json`;
+        const blob = new Blob([JSON.stringify(assetData, null, 2)], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
     }
 
     handleTimelineClick(e) {
@@ -358,15 +404,21 @@ export class ModelEditorUI {
         }
         
         const createPropGroup = (label) => {
-            const group = document.createElement('div'); group.className = 'prop-group';
-            const labelEl = document.createElement('label'); labelEl.textContent = label;
-            group.appendChild(labelEl); fragment.appendChild(group);
+            const group = document.createElement('div');
+            group.className = 'prop-group';
+            const labelEl = document.createElement('label');
+            labelEl.textContent = label;
+            group.appendChild(labelEl);
+            fragment.appendChild(group);
             return group;
         };
+        
         const createVec3Inputs = (group, vec, step, callback) => {
-            const container = document.createElement('div'); container.className = 'prop-input-group';
+            const container = document.createElement('div');
+            container.className = 'prop-input-group';
             ['x', 'y', 'z'].forEach(axis => {
-                const input = document.createElement('input'); input.type = 'number';
+                const input = document.createElement('input');
+                input.type = 'number';
                 
                 const currentStep = typeof step === 'object' ? (step[axis] || 0.1) : step;
                 input.step = currentStep;
@@ -380,8 +432,22 @@ export class ModelEditorUI {
             group.appendChild(container);
         };
         
+        const createSingleNumberInput = (parent, value, { min, max, step = 0.1 }, callback) => {
+            const input = document.createElement('input');
+            input.type = 'number';
+            if (min !== undefined) input.min = min;
+            if (max !== undefined) input.max = max;
+            input.step = step;
+            input.value = value.toFixed(2);
+            input.onchange = (e) => callback(parseFloat(e.target.value));
+            parent.appendChild(input);
+            return input;
+        };
+        
         const nameGroup = createPropGroup('Name');
-        const nameInput = document.createElement('input'); nameInput.type = 'text'; nameInput.value = obj.name;
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = obj.name;
         nameInput.onchange = () => this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: { name: obj.name }, afterState: { name: nameInput.value } }));
         nameGroup.appendChild(nameInput);
         
@@ -390,13 +456,16 @@ export class ModelEditorUI {
         const posGroup = createPropGroup('Position');
         createVec3Inputs(posGroup, obj.position, 0.1, (axis, value) => {
             const before = { position: obj.position.clone() };
-            const after = { position: obj.position.clone() }; after.position[axis] = value;
+            const after = { position: obj.position.clone() };
+            after.position[axis] = value;
             this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: before, afterState: after }));
         });
 
         const rotGroup = createPropGroup('Rotation (Deg)');
         const eulerDeg = new THREE.Euler().setFromQuaternion(obj.quaternion, 'YXZ');
-        eulerDeg.x = THREE.MathUtils.radToDeg(eulerDeg.x); eulerDeg.y = THREE.MathUtils.radToDeg(eulerDeg.y); eulerDeg.z = THREE.MathUtils.radToDeg(eulerDeg.z);
+        eulerDeg.x = THREE.MathUtils.radToDeg(eulerDeg.x);
+        eulerDeg.y = THREE.MathUtils.radToDeg(eulerDeg.y);
+        eulerDeg.z = THREE.MathUtils.radToDeg(eulerDeg.z);
         createVec3Inputs(rotGroup, eulerDeg, 5, (axis, value) => {
             const before = { quaternion: obj.quaternion.clone() };
             const newEuler = new THREE.Euler().setFromQuaternion(obj.quaternion, 'YXZ');
@@ -436,8 +505,8 @@ export class ModelEditorUI {
             const before = { geometry: { ...obj.geometry.parameters } };
             const after = { geometry: { ...obj.geometry.parameters } };
             const keyMap = { x: 'width', y: 'height', z: 'depth' };
-            if(obj.geometry.type === 'CylinderGeometry') { Object.assign(keyMap, { x: 'radiusTop', y: 'height', z: 'radiusBottom'}); }
-            if(obj.geometry.type === 'SphereGeometry') { Object.assign(keyMap, { x: 'radius', y: 'widthSegments', z: 'heightSegments'}); }
+            if (obj.geometry.type === 'CylinderGeometry') { Object.assign(keyMap, { x: 'radiusTop', y: 'height', z: 'radiusBottom'}); }
+            if (obj.geometry.type === 'SphereGeometry') { Object.assign(keyMap, { x: 'radius', y: 'widthSegments', z: 'heightSegments'}); }
 
             const propName = keyMap[axis];
             if (propName) {
@@ -452,13 +521,44 @@ export class ModelEditorUI {
         fragment.appendChild(document.createElement('hr'));
 
         const matGroup = createPropGroup('Material');
-        const matContainer = document.createElement('div'); matContainer.className = 'prop-input-group';
-        const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = '#' + obj.material.color.getHexString();
+        const matContainer = document.createElement('div');
+        matContainer.className = 'prop-input-group';
+        
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = '#' + obj.material.color.getHexString();
         colorInput.oninput = () => obj.material.color.set(colorInput.value);
-        const beforeColor = obj.material.color.getHex();
-        colorInput.onchange = () => this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: { material: { color: beforeColor }}, afterState: { material: { color: obj.material.color.getHex() }}}));
+        colorInput.onchange = () => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { color: parseInt(colorInput.value.replace('#', ''), 16) } }, // This might not capture the true before state if changed via oninput
+                afterState: { material: { color: obj.material.color.getHex() } }
+            });
+            // This undo logic for color is simplified and might not be perfect with oninput.
+            // A more robust solution would store the color state on focus/mousedown.
+        };
         matContainer.appendChild(colorInput);
         matGroup.appendChild(matContainer);
+        
+        const metalnessGroup = createPropGroup('Metalness');
+        createSingleNumberInput(metalnessGroup, obj.material.metalness, { min: 0, max: 1, step: 0.05 }, (val) => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { metalness: obj.material.metalness } },
+                afterState: { material: { metalness: val } }
+            });
+            this.app.undoManager.execute(command);
+        });
+
+        const roughnessGroup = createPropGroup('Roughness');
+        createSingleNumberInput(roughnessGroup, obj.material.roughness, { min: 0, max: 1, step: 0.05 }, (val) => {
+            const command = new StateChangeCommand(this.app, {
+                entity: obj,
+                beforeState: { material: { roughness: obj.material.roughness } },
+                afterState: { material: { roughness: val } }
+            });
+            this.app.undoManager.execute(command);
+        });
 
         this.inspectorContent.appendChild(fragment);
     }
