@@ -45,24 +45,12 @@ export class Game {
 
     handleUrlParameters(params) {
         const loadFromEditor = params.get('loadFromEditor') === 'true';
-        const loadAssetForTest = params.get('loadAssetForTest') === 'true';
         const debugMode = params.get('debug') === 'true';
         const showLevelSelect = params.get('showLevelSelect') === 'true';
 
         if (debugMode) this.toggleDebugMode();
 
-        if (loadAssetForTest) {
-            const editorAssetData = localStorage.getItem('editorAssetData');
-            if (editorAssetData) {
-                try {
-                    const assetData = JSON.parse(editorAssetData);
-                    this.startLevel({ url: './levels/level-stadium.json', testAsset: assetData });
-                } catch (e) {
-                    console.error("Failed to parse asset data from editor:", e);
-                    this.returnToMenu();
-                }
-            }
-        } else if (loadFromEditor) {
+        if (loadFromEditor) {
             const editorLevelData = localStorage.getItem('editorLevelData');
             if (editorLevelData) {
                 try {
@@ -109,10 +97,6 @@ export class Game {
 
         try {
             await this.world.loadLevel(config);
-
-            if (config.testAsset) {
-                this.world.player.useCustomWeapon(config.testAsset);
-            }
 
             this.core.renderer.setupPostProcessing(
                 this.world.scene,

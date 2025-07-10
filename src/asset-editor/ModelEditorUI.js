@@ -6,17 +6,35 @@ export class ModelEditorUI {
         this.app = app;
         this.outlinerContent = document.getElementById('outliner-content');
         this.inspectorContent = document.getElementById('inspector-content');
+        this.timelineTrackArea = document.getElementById('editor-timeline').querySelector('.timeline-track-area');
+        
+        // Timeline elements
+        this.animationClipSelect = document.getElementById('animation-clip-select');
+        this.animPlayBtn = document.getElementById('anim-play-btn');
+        this.animStopBtn = document.getElementById('anim-stop-btn');
+        this.animTimeDisplay = document.getElementById('anim-time-display');
+
         this.draggedElement = null;
+        this.selectedKeyframeInfo = null;
         this.init();
     }
 
     init() {
         // --- Menu ---
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
-        document.getElementById('menu-file-test').onclick = () => this.onTestAsset();
-        document.getElementById('menu-edit-delete').onclick = () => this.app.actions.deleteSelected();
+        document.getElementById('menu-file-load-example').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-test-viewmodel').onclick = () => this.app.enterViewModelTest();
+        document.getElementById('menu-edit-delete').onclick = () => {
+            if (this.selectedKeyframeInfo) this.app.actions.deleteSelectedKeyframe();
+            else this.app.actions.deleteSelected();
+        };
         document.getElementById('menu-edit-undo').onclick = () => this.app.undoManager.undo();
         document.getElementById('menu-edit-redo').onclick = () => this.app.undoManager.redo();
+        document.getElementById('menu-help-guide').onclick = () => this.showHelpModal(true);
+
+        // --- View Menu ---
+        document.getElementById('view-toggle-grid').onchange = (e) => { if(this.app.gridHelper) this.app.gridHelper.visible = e.target.checked; };
+        document.getElementById('view-toggle-viewmodel-guide').onchange = (e) => { if(this.app.viewModelGuide) this.app.viewModelGuide.setVisible(e.target.checked); };
 
         // --- Toolbar ---
         document.getElementById('tool-translate').onclick = () => this.app.controls.setMode('translate');
@@ -31,7 +49,6 @@ export class ModelEditorUI {
         rotSnapInput.onchange = (e) => this.app.controls.setRotationSnap(parseFloat(e.target.value));
         document.querySelector('label[for="snap-toggle"]').onclick = () => snapToggle.click();
         
-        // Set initial UI values from controls state
         snapToggle.checked = this.app.controls.isSnapEnabled;
         transSnapInput.value = this.app.controls.translationSnapValue;
         rotSnapInput.value = this.app.controls.rotationSnapValue;
@@ -53,15 +70,142 @@ export class ModelEditorUI {
         this.outlinerContent.addEventListener('dragover', (e) => this.handleOutlinerDragOver(e));
         this.outlinerContent.addEventListener('dragleave', (e) => this.handleOutlinerDragLeave(e));
         this.outlinerContent.addEventListener('drop', (e) => this.handleOutlinerDrop(e));
+
+        // --- Timeline ---
+        this.animationClipSelect.onchange = () => this.updateTimelineView();
+        this.timelineTrackArea.addEventListener('click', (e) => this.handleTimelineClick(e));
+
+        // --- Viewmodel Test ---
+        document.getElementById('exit-test-mode-btn').onclick = () => this.app.exitViewModelTest();
+
+        // --- Help Modal ---
+        const helpModal = document.getElementById('help-modal');
+        helpModal.querySelector('.modal-close-btn').onclick = () => this.showHelpModal(false);
+        helpModal.onclick = (e) => { if (e.target === e.currentTarget) this.showHelpModal(false); };
+
+        // --- Top Menu Hover Logic to close other menus ---
+        const menuDropdowns = document.querySelectorAll('#editor-menu-bar .menu-dropdown');
+        menuDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('pointerenter', () => {
+                const openDropdown = document.querySelector('#editor-menu-bar .menu-dropdown[open]');
+                if (openDropdown && openDropdown !== dropdown) {
+                    openDropdown.open = false;
+                }
+                dropdown.open = true;
+            });
+
+            dropdown.addEventListener('mouseleave', () => {
+                dropdown.open = false;
+            });
+        });
+    }
+
+    handleTimelineClick(e) {
+        if(e.target.classList.contains('timeline-keyframe')) {
+            this.selectKeyframe(
+                e.target.dataset.clipName,
+                parseInt(e.target.dataset.trackIndex),
+                parseInt(e.target.dataset.keyIndex)
+            );
+        } else {
+            this.deselectKeyframe();
+        }
     }
     
+    selectKeyframe(clipName, trackIndex, keyIndex) {
+        this.app.deselect(); // Deselect any 3D objects
+        this.selectedKeyframeInfo = { clipName, trackIndex, keyIndex };
+        const keyframe = this.app.assetContext.animations[clipName].tracks[trackIndex].keyframes[keyIndex];
+        this.app.animationManager.seek(keyframe.time);
+        this.updateOnSelectionChange();
+    }
+    
+    deselectKeyframe() {
+        if (!this.selectedKeyframeInfo) return;
+        this.selectedKeyframeInfo = null;
+        this.updateOnSelectionChange();
+    }
+
+    updateAnimationClips() {
+        this.animationClipSelect.innerHTML = '';
+        const clips = this.app.assetContext.animations;
+        const clipNames = Object.keys(clips);
+        if (clipNames.length === 0) {
+            this.animationClipSelect.disabled = true;
+            const defaultOption = document.createElement('option');
+            defaultOption.textContent = "No Clips";
+            this.animationClipSelect.appendChild(defaultOption);
+        } else {
+            this.animationClipSelect.disabled = false;
+            clipNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                this.animationClipSelect.appendChild(option);
+            });
+        }
+        this.updateTimelineView();
+    }
+    
+    updateTimelineView() {
+        this.timelineTrackArea.innerHTML = '<div class="timeline-scrubber"></div>';
+
+        const clipName = this.animationClipSelect.value;
+        const clip = this.app.assetContext.animations[clipName];
+
+        if (!clip) return;
+
+        clip.tracks.forEach((track, trackIndex) => {
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'timeline-track';
+
+            const target = track.targetUUID === 'AssetRoot'
+                ? this.app.assetContext.assetRoot
+                : this.app.assetContext.parts.get(track.targetUUID);
+
+            const label = document.createElement('div');
+            label.className = 'track-label';
+            label.textContent = `${target?.name || 'Unknown'}.${track.property}`;
+            trackDiv.appendChild(label);
+
+            const keyframeContainer = document.createElement('div');
+            keyframeContainer.className = 'track-keyframes';
+
+            track.keyframes.forEach((keyframe, keyIndex) => {
+                const keyframeDiv = document.createElement('div');
+                keyframeDiv.className = 'timeline-keyframe';
+                keyframeDiv.style.left = `${(keyframe.time / clip.duration) * 100}%`;
+                keyframeDiv.title = `Time: ${keyframe.time.toFixed(2)}s`;
+                keyframeDiv.dataset.clipName = clipName;
+                keyframeDiv.dataset.trackIndex = trackIndex;
+                keyframeDiv.dataset.keyIndex = keyIndex;
+                if(this.selectedKeyframeInfo?.clipName === clipName && this.selectedKeyframeInfo?.trackIndex === trackIndex && this.selectedKeyframeInfo?.keyIndex === keyIndex) {
+                    keyframeDiv.classList.add('selected');
+                }
+                keyframeContainer.appendChild(keyframeDiv);
+            });
+
+            trackDiv.appendChild(keyframeContainer);
+            this.timelineTrackArea.appendChild(trackDiv);
+        });
+    }
+    
+    showHelpModal(show) {
+        document.getElementById('help-modal').style.display = show ? 'flex' : 'none';
+    }
+
     updateOnSelectionChange() {
-        document.getElementById('menu-edit-delete').disabled = this.app.selectedObjects.size === 0;
+        const isObjectSelected = this.app.selectedObjects.size > 0;
+        const isKeyframeSelected = !!this.selectedKeyframeInfo;
+        document.getElementById('menu-edit-delete').disabled = !isObjectSelected && !isKeyframeSelected;
+
         this.updateOutliner();
         this.updateInspector();
+        this.updateTimelineView();
     }
 
     handleOutlinerClick(event) {
+        this.deselectKeyframe();
         const item = event.target.closest('.outliner-item');
         if (!item) return;
 
@@ -142,21 +286,76 @@ export class ModelEditorUI {
 
     updateInspector() {
         this.inspectorContent.innerHTML = '';
-        const obj = this.app.primarySelectedObject;
+        if(this.selectedKeyframeInfo) {
+            this.renderKeyframeInspector();
+        } else if (this.app.selectedObjects.size > 0) {
+            this.renderObjectInspector();
+        } else {
+            this.inspectorContent.innerHTML = '<div class="placeholder-text">Select a part or keyframe to view its properties.</div>';
+        }
+    }
 
+    renderKeyframeInspector() {
+        const { clipName, trackIndex, keyIndex } = this.selectedKeyframeInfo;
+        const track = this.app.assetContext.animations[clipName].tracks[trackIndex];
+        const keyframe = track.keyframes[keyIndex];
+        const target = track.targetUUID === 'AssetRoot' ? this.app.assetContext.assetRoot : this.app.assetContext.parts.get(track.targetUUID);
+
+        const fragment = document.createDocumentFragment();
+
+        const infoBox = document.createElement('div');
+        infoBox.className = 'keyframe-info-box';
+        infoBox.innerHTML = `<b>${target?.name || 'Unknown'}</b><br>${track.property}`;
+        fragment.appendChild(infoBox);
+        fragment.appendChild(document.createElement('hr'));
+        
+        const createPropGroup = (label) => {
+            const group = document.createElement('div'); group.className = 'prop-group';
+            const labelEl = document.createElement('label'); labelEl.textContent = label;
+            group.appendChild(labelEl); fragment.appendChild(group);
+            return group;
+        };
+
+        const timeGroup = createPropGroup('Time (s)');
+        const timeInput = document.createElement('input');
+        timeInput.type = 'number'; timeInput.step = 0.01; timeInput.value = keyframe.time.toFixed(2);
+        timeInput.onchange = () => this.app.actions.updateKeyframeProperty(this.selectedKeyframeInfo, 'time', parseFloat(timeInput.value));
+        timeGroup.appendChild(timeInput);
+
+        const valueGroup = createPropGroup('Value');
+        if(Array.isArray(keyframe.value)) {
+            const container = document.createElement('div'); container.className = 'prop-input-group';
+            ['x', 'y', 'z'].forEach((axis, i) => {
+                if (keyframe.value[i] === undefined) return;
+                const input = document.createElement('input'); input.type = 'number'; input.step = 0.01; input.value = keyframe.value[i].toFixed(2);
+                input.onchange = () => this.app.actions.updateKeyframeProperty(this.selectedKeyframeInfo, axis, parseFloat(input.value));
+                container.appendChild(input);
+            });
+            valueGroup.appendChild(container);
+        }
+
+        fragment.appendChild(document.createElement('hr'));
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = "Delete Keyframe";
+        deleteButton.className = "delete-button";
+        deleteButton.onclick = () => this.app.actions.deleteSelectedKeyframe();
+        fragment.appendChild(deleteButton);
+
+        this.inspectorContent.appendChild(fragment);
+    }
+
+    renderObjectInspector() {
+        const obj = this.app.primarySelectedObject;
+        if (!obj) return;
+
+        const fragment = document.createDocumentFragment();
+        
         if (this.app.selectedObjects.size > 1) {
              const multiSelectInfo = document.createElement('div');
             multiSelectInfo.className = 'placeholder-text';
             multiSelectInfo.innerHTML = `<b>${this.app.selectedObjects.size} objects selected.</b><br>Properties shown for primary selection.`;
-            this.inspectorContent.appendChild(multiSelectInfo);
+            fragment.appendChild(multiSelectInfo);
         }
-
-        if (!obj) {
-            this.inspectorContent.innerHTML = '<div class="placeholder-text">Select a part to view its properties.</div>';
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
         
         const createPropGroup = (label) => {
             const group = document.createElement('div'); group.className = 'prop-group';
@@ -260,19 +459,11 @@ export class ModelEditorUI {
         colorInput.onchange = () => this.app.undoManager.execute(new StateChangeCommand(this.app, { entity: obj, beforeState: { material: { color: beforeColor }}, afterState: { material: { color: obj.material.color.getHex() }}}));
         matContainer.appendChild(colorInput);
         matGroup.appendChild(matContainer);
-        
+
         this.inspectorContent.appendChild(fragment);
     }
     
     updateTransformModeButtons(mode) {
         ['translate', 'rotate', 'scale'].forEach(m => document.getElementById(`tool-${m}`).classList.toggle('active', m === mode));
-    }
-    
-    onTestAsset() {
-        const placeholderAssetData = this.app.assetContext.serialize();
-        try {
-            localStorage.setItem('editorAssetData', JSON.stringify(placeholderAssetData));
-            window.open('index.html?loadAssetForTest=true', '_blank');
-        } catch (e) { console.error("Failed to save asset:", e); alert("Could not test asset."); }
     }
 }

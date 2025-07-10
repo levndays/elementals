@@ -4,7 +4,7 @@
     inset: 0;
     display: grid;
     grid-template-columns: 260px 1fr 320px;
-    grid-template-rows: auto auto 1fr 250px; /* Added row for timeline */
+    grid-template-rows: auto auto 1fr 250px;
     grid-template-areas:
         "menu menu menu"
         "toolbar toolbar toolbar"
@@ -13,10 +13,29 @@
     background-color: var(--color-bg-darkest);
     color: var(--color-text-light);
     z-index: 100;
+    transition: grid-template-columns 0.3s ease, grid-template-rows 0.3s ease;
 }
 
+/* --- FULLSCREEN TEST MODE --- */
+#asset-editor-container.is-testing {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "menu"
+        "viewport";
+}
+
+#asset-editor-container.is-testing #editor-toolbar,
+#asset-editor-container.is-testing #editor-outliner,
+#asset-editor-container.is-testing #editor-inspector,
+#asset-editor-container.is-testing #editor-timeline,
+#asset-editor-container.is-testing #create-button-container {
+    display: none;
+}
+
+
 /* --- GRID AREA ASSIGNMENTS --- */
-#editor-menu-bar { grid-area: menu; z-index: 20; }
+#editor-menu-bar { grid-area: menu; z-index: 30; }
 #editor-toolbar { grid-area: toolbar; z-index: 20; }
 #editor-outliner { grid-area: outliner; z-index: 10; }
 #editor-inspector { grid-area: inspector; z-index: 10; }
@@ -100,12 +119,16 @@
 #inspector-content { display: flex; flex-direction: column; gap: 16px; }
 .prop-group { display: flex; flex-direction: column; gap: 6px; }
 #inspector-content label { font-size: 11px; color: var(--color-text-dark); text-transform: uppercase; font-weight: 600; }
-#inspector-content input { background-color: var(--color-bg-darkest); border: 1px solid var(--color-border); color: var(--color-text-light); padding: 8px; border-radius: var(--border-radius-sm); font-family: inherit; font-size: 13px; width: 100%; }
+#inspector-content input, .delete-button { background-color: var(--color-bg-darkest); border: 1px solid var(--color-border); color: var(--color-text-light); padding: 8px; border-radius: var(--border-radius-sm); font-family: inherit; font-size: 13px; width: 100%; }
 #inspector-content input:focus { border-color: var(--color-accent); outline: none; }
 #inspector-content input[type="color"] { padding: 2px; height: 32px; }
 .prop-input-group { display: flex; gap: 6px; }
 .prop-input-group input { text-align: center; }
 #inspector-content hr { border: none; border-top: 1px solid var(--color-bg-light); margin: 0; }
+.keyframe-info-box { padding: 10px; background-color: var(--color-bg-darkest); border-radius: var(--border-radius-sm); font-size: 12px; color: var(--color-text-mid); }
+.keyframe-info-box b { color: var(--color-text-light); }
+.delete-button { background-color: var(--color-delete); border-color: var(--color-delete); cursor: pointer; font-weight: 700; margin-top: auto; transition: background-color 0.2s; }
+.delete-button:hover { background-color: var(--color-delete-hover); }
 
 /* --- TIMELINE PANEL (BOTTOM) --- */
 #editor-timeline {
@@ -121,5 +144,68 @@
 #anim-add-keyframe-btn { background-color: var(--color-accent); color: var(--color-accent-text); }
 #anim-add-keyframe-btn:hover:not(:disabled) { background-color: var(--color-accent-hover); }
 #anim-time-display { font-family: 'Consolas', monospace; font-size: 14px; color: var(--color-text-mid); min-width: 60px; text-align: center; }
-.timeline-track-area { flex-grow: 1; overflow: auto; position: relative; padding: 10px 0; }
+.timeline-track-area { flex-grow: 1; overflow: auto; position: relative; padding: 10px 0; display: flex; flex-direction: column; gap: 4px; }
 .timeline-scrubber { position: absolute; top: 0; left: 0; width: 2px; height: 100%; background-color: var(--color-accent); cursor: ew-resize; z-index: 10; }
+
+.timeline-track { display: flex; align-items: center; background-color: var(--color-bg-darkest); border-radius: var(--border-radius-sm); height: 28px; position: relative; }
+.track-label { font-size: 11px; padding: 0 12px; color: var(--color-text-mid); white-space: nowrap; width: 150px; text-overflow: ellipsis; overflow: hidden; border-right: 1px solid var(--color-border); }
+.track-keyframes { flex-grow: 1; height: 100%; position: relative; border-left: 1px solid var(--color-bg-light); }
+.timeline-keyframe { position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(45deg); width: 10px; height: 10px; background-color: var(--color-accent); border: 1px solid var(--color-accent-text); cursor: pointer; }
+.timeline-keyframe:hover { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+.timeline-keyframe.selected { background-color: var(--color-accent-fire); border-color: var(--color-text-light); }
+
+
+/* --- HELP MODAL --- */
+#help-modal-content { max-height: 60vh; overflow-y: auto; padding-right: 15px; }
+#help-modal-content h4 { color: var(--color-accent); margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid var(--color-bg-light); padding-bottom: 5px;}
+#help-modal-content p, #help-modal-content li { font-size: 14px; color: var(--color-text-mid); line-height: 1.6; }
+#help-modal-content ul { padding-left: 20px; }
+
+/* --- VIEWMODEL TEST OVERLAY --- */
+#viewmodel-test-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(to top, hsla(0, 0%, 0%, 0.5) 0%, transparent 30%);
+    pointer-events: none; /* The overlay itself is not interactive */
+}
+#viewmodel-test-overlay > * {
+    pointer-events: auto; /* Buttons inside are interactive */
+}
+#exit-test-mode-btn {
+    padding: 10px 20px;
+    background-color: var(--color-accent);
+    color: var(--color-accent-text);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    align-self: center; /* Center horizontally */
+}
+#exit-test-mode-btn:hover { background-color: var(--color-accent-hover); }
+.test-controls-info {
+    font-size: 16px;
+    color: var(--color-text-light);
+    text-shadow: 0 1px 3px black;
+    align-self: center;
+    margin-top: auto; /* Pushes it down */
+    margin-bottom: 20px; /* Space above the button */
+}
+#viewmodel-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}

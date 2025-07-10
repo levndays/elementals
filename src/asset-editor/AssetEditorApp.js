@@ -8,58 +8,136 @@ import { AssetEditorActions } from './AssetEditorActions.js';
 import { UndoManager } from './UndoManager.js';
 import { AssetContext } from './AssetContext.js';
 import { AnimationManager } from './AnimationManager.js';
+import { ViewModelCamera } from './ViewModelCamera.js';
+import { ViewModelGuide } from './ViewModelGuide.js';
+import { EDITOR_LAYERS } from './layers.js';
 
 export class AssetEditorApp {
     constructor() {
         this.clock = new THREE.Clock();
+        this.container = document.getElementById('asset-editor-container');
         const canvas = document.getElementById('editor-canvas');
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
 
         this.scene = this.renderer.scene;
+        this.viewModelScene = new THREE.Scene();
         this.camera = this.renderer.camera;
 
         this.gridHelper = null;
+        this.viewModelGuide = null;
+        this.ambientLight = null;
+        this.dirLight = null;
         
         this.selectedObjects = new Set();
         this.primarySelectedObject = null;
         this.selectionGroup = new THREE.Group();
         this.scene.add(this.selectionGroup);
+
+        this.editorState = 'EDITING';
+        this.editorBackgroundColor = new THREE.Color(0x333333);
+        this.testBackgroundColor = new THREE.Color(0x87CEEB);
     }
 
     async init() {
-        this.scene.background = new THREE.Color(0x333333);
+        this.scene.background = this.editorBackgroundColor;
         this.camera.position.set(0, 1.5, 5);
         this.camera.lookAt(0, 0, 0);
 
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        dirLight.position.set(5, 10, 7.5);
-        this.scene.add(dirLight);
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        this.scene.add(this.ambientLight);
+        
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.dirLight.position.set(5, 10, 7.5);
+        this.scene.add(this.dirLight);
 
         this.gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0x888888);
         this.scene.add(this.gridHelper);
 
-        // Core editor components
+        this.viewModelGuide = new ViewModelGuide();
+        this.scene.add(this.viewModelGuide);
+
         this.assetContext = new AssetContext(this.scene);
         this.undoManager = new UndoManager(this);
         this.actions = new AssetEditorActions(this);
         this.controls = new AssetEditorControls(this);
         this.ui = new ModelEditorUI(this);
-        this.cameraController = new EditorCamera(this);
-        this.animationManager = new AnimationManager(this.assetContext.assetRoot);
-
+        
+        this.editorCameraController = new EditorCamera(this);
+        this.viewModelCameraController = new ViewModelCamera(this);
+        
+        this.animationManager = new AnimationManager(this);
 
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
+
+    enterViewModelTest() {
+        if (this.editorState === 'TESTING') return;
+        this.editorState = 'TESTING';
+
+        this.deselect();
+        this.controls.transformControls.enabled = false;
+        
+        this.scene.background = this.testBackgroundColor;
+        this.gridHelper.visible = false;
+        this.viewModelGuide.setVisible(false);
+        
+        this.viewModelCameraController.start();
+
+        const asset = this.assetContext.assetRoot;
+        asset.traverse(child => {
+            child.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        });
+
+        // Move lights and camera into the dedicated viewmodel scene
+        this.scene.remove(this.ambientLight, this.dirLight);
+        this.viewModelScene.add(this.ambientLight, this.dirLight, this.camera);
+        
+        this.camera.add(asset); // Parent asset to camera
+        asset.position.set(0.25, -0.4, -0.8);
+        asset.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+        
+        document.getElementById('viewmodel-test-overlay').style.display = 'flex';
+        this.container.classList.add('is-testing');
+    }
+
+    exitViewModelTest() {
+        if (this.editorState !== 'TESTING') return;
+        this.editorState = 'EDITING';
+        
+        this.viewModelCameraController.stop();
+
+        const asset = this.assetContext.assetRoot;
+        
+        // Move everything back to the main scene
+        this.camera.remove(asset);
+        this.viewModelScene.remove(this.ambientLight, this.dirLight, this.camera);
+        this.scene.add(asset, this.ambientLight, this.dirLight);
+
+        asset.traverse(child => {
+            child.layers.set(EDITOR_LAYERS.DEFAULT);
+        });
+        asset.position.set(0, 0, 0);
+        asset.quaternion.identity();
+
+        this.scene.background = this.editorBackgroundColor;
+        this.controls.transformControls.enabled = true;
+        this.gridHelper.visible = document.getElementById('view-toggle-grid').checked;
+        this.viewModelGuide.setVisible(document.getElementById('view-toggle-viewmodel-guide').checked);
+        
+        this.animationManager.resetToIdle();
+        document.getElementById('viewmodel-test-overlay').style.display = 'none';
+        this.container.classList.remove('is-testing');
+    }
     
     select(object) {
+        if (this.editorState !== 'EDITING') return;
         this.deselect();
         this.addToSelection(object);
     }
 
     addToSelection(object) {
-        if (!object || this.selectedObjects.has(object)) return;
+        if (!object || this.selectedObjects.has(object) || this.editorState !== 'EDITING') return;
         this.selectedObjects.add(object);
         this.primarySelectedObject = object;
         this.controls.updateSelection();
@@ -87,9 +165,37 @@ export class AssetEditorApp {
     animate() {
         const deltaTime = this.clock.getDelta();
         
-        this.cameraController.update(deltaTime);
-        this.controls.update();
+        if (this.editorState === 'EDITING') {
+            this.editorCameraController.update(deltaTime);
+            this.controls.update();
+        } else { // 'TESTING'
+            this.viewModelCameraController.update(deltaTime);
+        }
+        
         this.animationManager.update(deltaTime);
-        this.renderer.render();
+        
+        const webglRenderer = this.renderer.renderer;
+        
+        if (this.editorState === 'TESTING') {
+            webglRenderer.autoClear = false;
+            webglRenderer.clear();
+            
+            // Render the main scene (background color only)
+            this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
+            webglRenderer.render(this.scene, this.camera);
+            
+            webglRenderer.clearDepth();
+
+            // Render the viewmodel scene
+            this.camera.layers.set(EDITOR_LAYERS.VIEWMODEL);
+            webglRenderer.render(this.viewModelScene, this.camera);
+
+            webglRenderer.autoClear = true;
+        } else {
+            this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
+            webglRenderer.render(this.scene, this.camera);
+        }
+        
+        this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
     }
 }

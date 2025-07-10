@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-09T23:44:33.453533
+Snapshot created on: 2025-07-10T06:27:42.145538
 ================================================================================
 
 === FILE: asset-editor.html ===
@@ -23,13 +23,13 @@ Snapshot created on: 2025-07-09T23:44:33.453533
                 <summary>File</summary>
                 <div class="menu-content">
                     <button id="menu-file-new-weapon">New Weapon</button>
-                    <button id="menu-file-new-npc">New NPC</button>
+                    <button id="menu-file-load-example">Load Example Pistol</button>
                     <hr>
                     <button id="menu-file-open">Open Asset...</button>
                     <input type="file" id="asset-file-input" accept=".json" style="display: none;">
                     <button id="menu-file-save">Save Asset</button>
                     <hr>
-                    <button id="menu-file-test">Test Asset in Game</button>
+                    <button id="menu-file-test-viewmodel">Test in ViewModel</button>
                     <hr>
                     <button id="menu-file-exit">Exit to Main Menu</button>
                 </div>
@@ -41,6 +41,19 @@ Snapshot created on: 2025-07-09T23:44:33.453533
                     <button id="menu-edit-redo" disabled>Redo (Ctrl+Y)</button>
                     <hr>
                     <button id="menu-edit-delete" disabled>Delete</button>
+                </div>
+            </details>
+            <details class="menu-dropdown">
+                <summary>View</summary>
+                <div class="menu-content checkbox-menu">
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-grid" checked><label for="view-toggle-grid">Grid</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="view-toggle-viewmodel-guide" checked><label for="view-toggle-viewmodel-guide">ViewModel Guide</label></div>
+                </div>
+            </details>
+            <details class="menu-dropdown">
+                <summary>Help</summary>
+                <div class="menu-content">
+                    <button id="menu-help-guide">Weapon Dev Guide</button>
                 </div>
             </details>
         </div>
@@ -80,6 +93,13 @@ Snapshot created on: 2025-07-09T23:44:33.453533
                     <button data-action="addSphere">Sphere</button>
                 </div>
             </div>
+            <div id="viewmodel-test-overlay" style="display: none;">
+                <div id="viewmodel-crosshair">+</div>
+                <div class="test-controls-info">
+                    [LMB] to Fire | [R] to Reload | [WASD] to Move
+                </div>
+                <button id="exit-test-mode-btn">Exit Test Mode</button>
+            </div>
         </div>
 
         <!-- INSPECTOR PANEL (Right) -->
@@ -107,8 +127,51 @@ Snapshot created on: 2025-07-09T23:44:33.453533
                 <!-- Tracks will be dynamically added here -->
             </div>
         </div>
-
     </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close-btn">×</span>
+            <h3>Weapon Development Guide</h3>
+            <div id="help-modal-content">
+                <h4>1. Coordinate System & Scale</h4>
+                <p>
+                    The editor uses a right-handed coordinate system: <b>+Y is Up</b>, <b>+X is Right</b>, and <b>-Z is Forward</b>.
+                </p>
+                <p>
+                    <b>Crucially, you should model your weapon pointing along the positive Z-axis (+Z).</b> The game's viewmodel will automatically handle rotating it to face away from the camera.
+                </p>
+                <p>
+                    The scale is <b>1 unit = 1 meter</b>. A standard pistol might be 0.2-0.3 units long, while a rifle would be closer to 1.0 unit.
+                </p>
+
+                <h4>2. Hierarchy & Root Point</h4>
+                <p>
+                    All weapon parts must be children of the `AssetRoot` in the Outliner. The root point (origin) of your main weapon part should be where the player's hand would grip the weapon. When you test the asset, this is the point that gets attached to the viewmodel's hands.
+                </p>
+                
+                <h4>3. Animation Clips (Coming Soon)</h4>
+                <p>
+                    The timeline will allow you to create and edit animation clips. The game engine looks for specific clip names to play automatically:
+                </p>
+                <ul>
+                    <li><b><code>fire</code>:</b> Plays once when the player attacks.</li>
+                    <li><b><code>reload</code>:</b> Plays when the player reloads.</li>
+                    <li><b><code>inspect</code>:</b> Plays when the player inspects the weapon.</li>
+                    <li><b><code>idle</code>:</b> (Optional) A looping idle animation.</li>
+                </ul>
+                <h4>4. Asset Properties & Attachment Points (Coming Soon)</h4>
+                <p>
+                    You will define asset-level properties in the Inspector when nothing is selected. This includes the asset's name and type. For weapons, you can specify attachment points by creating an empty part and giving it a special name:
+                </p>
+                 <ul>
+                    <li><b><code>muzzle</code>:</b> An empty part positioned at the tip of the barrel. This is where muzzle flash and tracer effects will originate.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
 
     <script type="importmap">
     {
@@ -684,7 +747,7 @@ jobs:
     inset: 0;
     display: grid;
     grid-template-columns: 260px 1fr 320px;
-    grid-template-rows: auto auto 1fr 250px; /* Added row for timeline */
+    grid-template-rows: auto auto 1fr 250px;
     grid-template-areas:
         "menu menu menu"
         "toolbar toolbar toolbar"
@@ -693,10 +756,29 @@ jobs:
     background-color: var(--color-bg-darkest);
     color: var(--color-text-light);
     z-index: 100;
+    transition: grid-template-columns 0.3s ease, grid-template-rows 0.3s ease;
 }
 
+/* --- FULLSCREEN TEST MODE --- */
+#asset-editor-container.is-testing {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "menu"
+        "viewport";
+}
+
+#asset-editor-container.is-testing #editor-toolbar,
+#asset-editor-container.is-testing #editor-outliner,
+#asset-editor-container.is-testing #editor-inspector,
+#asset-editor-container.is-testing #editor-timeline,
+#asset-editor-container.is-testing #create-button-container {
+    display: none;
+}
+
+
 /* --- GRID AREA ASSIGNMENTS --- */
-#editor-menu-bar { grid-area: menu; z-index: 20; }
+#editor-menu-bar { grid-area: menu; z-index: 30; }
 #editor-toolbar { grid-area: toolbar; z-index: 20; }
 #editor-outliner { grid-area: outliner; z-index: 10; }
 #editor-inspector { grid-area: inspector; z-index: 10; }
@@ -803,6 +885,61 @@ jobs:
 #anim-time-display { font-family: 'Consolas', monospace; font-size: 14px; color: var(--color-text-mid); min-width: 60px; text-align: center; }
 .timeline-track-area { flex-grow: 1; overflow: auto; position: relative; padding: 10px 0; }
 .timeline-scrubber { position: absolute; top: 0; left: 0; width: 2px; height: 100%; background-color: var(--color-accent); cursor: ew-resize; z-index: 10; }
+
+/* --- HELP MODAL --- */
+#help-modal-content { max-height: 60vh; overflow-y: auto; padding-right: 15px; }
+#help-modal-content h4 { color: var(--color-accent); margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid var(--color-bg-light); padding-bottom: 5px;}
+#help-modal-content p, #help-modal-content li { font-size: 14px; color: var(--color-text-mid); line-height: 1.6; }
+#help-modal-content ul { padding-left: 20px; }
+
+/* --- VIEWMODEL TEST OVERLAY --- */
+#viewmodel-test-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(to top, hsla(0, 0%, 0%, 0.5) 0%, transparent 30%);
+    pointer-events: none; /* The overlay itself is not interactive */
+}
+#viewmodel-test-overlay > * {
+    pointer-events: auto; /* Buttons inside are interactive */
+}
+#exit-test-mode-btn {
+    padding: 10px 20px;
+    background-color: var(--color-accent);
+    color: var(--color-accent-text);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    align-self: center; /* Center horizontally */
+}
+#exit-test-mode-btn:hover { background-color: var(--color-accent-hover); }
+.test-controls-info {
+    font-size: 16px;
+    color: var(--color-text-light);
+    text-shadow: 0 1px 3px black;
+    align-self: center;
+    margin-top: auto; /* Pushes it down */
+    margin-bottom: 20px; /* Space above the button */
+}
+#viewmodel-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
 --------------------------------------------------
 === END OF FILE: css/asset-editor.css ===
 
@@ -5492,30 +5629,107 @@ body:not(.game-active) #tutorial-text-container {
 
 === FILE: src/asset-editor/AnimationManager.js ===
 --------------------------------------------------
+import * as THREE from 'three';
+
 /**
- * Placeholder for the Asset Editor's animation logic.
- * In a full implementation, this would handle playback, keyframing, and timeline updates.
+ * Manages animation playback for the asset editor.
+ * This is a placeholder implementation for the ViewModel test mode.
  */
 export class AnimationManager {
-    constructor(assetRoot) {
-        this.assetRoot = assetRoot;
+    constructor(app) {
+        this.app = app;
+        this.assetRoot = app.assetContext.assetRoot;
         this.isPlaying = false;
         this.playbackTime = 0;
+        this.activeClipName = null;
+        this.activeClipDuration = 0;
+
+        // Store initial transforms to revert to
+        this.initialTransforms = new Map();
     }
 
-    play() {
+    triggerClip(clipName) {
+        if (this.isPlaying) return; // Don't interrupt animations for now
+
         this.isPlaying = true;
+        this.activeClipName = clipName;
+        this.playbackTime = 0;
+        
+        // Simple placeholder durations
+        this.activeClipDuration = (clipName === 'fire') ? 0.4 : 1.0;
+        
+        // Store initial state before animating
+        this.storeInitialTransforms();
     }
 
-    pause() {
-        this.isPlaying = false;
+    storeInitialTransforms() {
+        this.initialTransforms.clear();
+        this.assetRoot.traverse(child => {
+            if (this.app.assetContext.parts.has(child.uuid)) {
+                this.initialTransforms.set(child, {
+                    position: child.position.clone(),
+                    quaternion: child.quaternion.clone(),
+                });
+            }
+        });
     }
 
     update(deltaTime) {
         if (!this.isPlaying) return;
 
         this.playbackTime += deltaTime;
-        // In the future, this is where it would interpolate and apply keyframes.
+
+        if (this.playbackTime >= this.activeClipDuration) {
+            this.resetToIdle();
+            return;
+        }
+
+        if (this.activeClipName === 'fire') {
+            this.applyFireAnimation();
+        } else if (this.activeClipName === 'reload') {
+            this.applyReloadAnimation();
+        }
+    }
+
+    applyFireAnimation() {
+        // Example: A simple "kickback" animation for the whole asset
+        const progress = this.playbackTime / this.activeClipDuration;
+        const kickProgress = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+
+        const initialTransform = this.initialTransforms.get(this.assetRoot);
+        if (initialTransform) {
+            this.assetRoot.position.z = initialTransform.position.z + kickProgress * 0.1;
+            
+            const kickRotation = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                kickProgress * -0.2
+            );
+            this.assetRoot.quaternion.copy(initialTransform.quaternion).multiply(kickRotation);
+        }
+    }
+    
+    applyReloadAnimation() {
+        // Example: Rotate the asset down and up
+        const progress = this.playbackTime / this.activeClipDuration;
+        const reloadProgress = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+
+        const initialTransform = this.initialTransforms.get(this.assetRoot);
+        if (initialTransform) {
+            const reloadRotation = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                reloadProgress * 0.8
+            );
+            this.assetRoot.quaternion.copy(initialTransform.quaternion).multiply(reloadRotation);
+        }
+    }
+
+    resetToIdle() {
+        this.isPlaying = false;
+        this.activeClipName = null;
+        this.initialTransforms.forEach((transform, part) => {
+            part.position.copy(transform.position);
+            part.quaternion.copy(transform.quaternion);
+        });
     }
 }
 --------------------------------------------------
@@ -5568,30 +5782,74 @@ export class AssetContext {
     }
 
     serialize() {
-        const getTransform = (obj) => ({
-            position: obj.position.toArray(),
-            rotation: obj.rotation.toArray(),
-            scale: obj.scale.toArray()
-        });
-
         const geometry = [];
         this.parts.forEach(part => {
-            geometry.push({
+            const transform = {
+                position: part.position.toArray(),
+                rotation: part.rotation.toArray(),
+                scale: part.scale.toArray(),
+            };
+
+            const partData = {
                 uuid: part.uuid,
                 name: part.name,
                 type: part.geometry.type.replace('Geometry', ''),
                 parent: part.parent !== this.assetRoot ? part.parent.uuid : null,
-                transform: getTransform(part),
+                transform: transform,
                 material: { color: '#' + part.material.color.getHexString() }
-            });
+            };
+            geometry.push(partData);
         });
         
         return {
-            assetName: "CustomAsset",
+            assetName: this.assetRoot.name,
             type: "weapon",
             geometry,
             animations: {}
         };
+    }
+
+    loadFromData(assetData) {
+        this.clear();
+        if (!assetData || !assetData.geometry) return;
+
+        this.assetRoot.name = assetData.assetName || "CustomAsset";
+        
+        const createdParts = new Map(); // Maps original UUID to new THREE.Mesh
+        const geometryMap = {
+            'Box': (s) => new THREE.BoxGeometry(...s),
+            'Cylinder': (s) => new THREE.CylinderGeometry(s[0], s[1], s[2]),
+            'Sphere': (s) => new THREE.SphereGeometry(s[0]),
+        };
+
+        // First pass: create all meshes
+        assetData.geometry.forEach(partData => {
+            const geoFn = geometryMap[partData.type];
+            if (!geoFn) return;
+
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(partData.material.color)
+            });
+
+            const scale = partData.transform.scale || [1, 1, 1];
+            const partMesh = new THREE.Mesh(geoFn(scale), material);
+            partMesh.name = partData.name;
+            
+            createdParts.set(partData.uuid, partMesh);
+        });
+        
+        // Second pass: set transforms and build hierarchy
+        assetData.geometry.forEach(partData => {
+            const partMesh = createdParts.get(partData.uuid);
+            if (!partMesh) return;
+
+            const { position, rotation } = partData.transform;
+            if (position) partMesh.position.fromArray(position);
+            if (rotation) partMesh.rotation.fromArray(rotation);
+
+            const parentMesh = partData.parent ? createdParts.get(partData.parent) : null;
+            this.addPart(partMesh, parentMesh);
+        });
     }
 
     clear() {
@@ -5645,6 +5903,57 @@ export class AssetEditorActions {
     addBox() { this._addPart(new THREE.BoxGeometry(1, 1, 1), 'Box'); }
     addCylinder() { this._addPart(new THREE.CylinderGeometry(0.5, 0.5, 1, 16), 'Cylinder'); }
     addSphere() { this._addPart(new THREE.SphereGeometry(0.5, 16, 16), 'Sphere'); }
+
+    loadExamplePistol() {
+        const oldState = this.app.assetContext.serialize();
+
+        const pistolData = {
+            assetName: "Example Pistol",
+            type: "weapon",
+            geometry: [
+                {
+                    uuid: "pistol-body",
+                    name: "Body",
+                    type: "Box",
+                    parent: null,
+                    transform: {
+                        position: [0, 0, 0.05],
+                        rotation: [0, 0, 0],
+                        scale: [0.08, 0.12, 0.2]
+                    },
+                    material: { color: '#ff4757' }
+                },
+                {
+                    uuid: "pistol-slide",
+                    name: "Slide",
+                    type: "Box",
+                    parent: "pistol-body",
+                    transform: {
+                        position: [0, 0.08, 0],
+                        rotation: [0, 0, 0],
+                        scale: [0.07, 0.04, 0.3]
+                    },
+                    material: { color: '#ff4757' }
+                }
+            ],
+            animations: {}
+        };
+
+        const command = {
+            execute: () => {
+                this.app.assetContext.loadFromData(pistolData);
+                this.app.ui.updateOutliner();
+                this.app.deselect();
+            },
+            undo: () => {
+                this.app.assetContext.loadFromData(oldState);
+                this.app.ui.updateOutliner();
+                this.app.deselect();
+            }
+        };
+
+        this.app.undoManager.execute(command);
+    }
 
     deleteSelected() {
         if (this.app.selectedObjects.size === 0) return;
@@ -5702,37 +6011,49 @@ import { AssetEditorActions } from './AssetEditorActions.js';
 import { UndoManager } from './UndoManager.js';
 import { AssetContext } from './AssetContext.js';
 import { AnimationManager } from './AnimationManager.js';
+import { ViewModelCamera } from './ViewModelCamera.js';
+import { ViewModelGuide } from './ViewModelGuide.js';
+import { EDITOR_LAYERS } from './layers.js';
 
 export class AssetEditorApp {
     constructor() {
         this.clock = new THREE.Clock();
+        this.container = document.getElementById('asset-editor-container');
         const canvas = document.getElementById('editor-canvas');
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
 
         this.scene = this.renderer.scene;
-        this.camera = this.renderer.camera;
+        this.camera = this.renderer.camera; // There is now only one camera
 
         this.gridHelper = null;
+        this.viewModelGuide = null;
         
         this.selectedObjects = new Set();
         this.primarySelectedObject = null;
         this.selectionGroup = new THREE.Group();
         this.scene.add(this.selectionGroup);
+
+        this.editorState = 'EDITING'; // 'EDITING' or 'TESTING'
+        this.editorBackgroundColor = new THREE.Color(0x333333);
+        this.testBackgroundColor = new THREE.Color(0x87CEEB); // Sky blue
     }
 
     async init() {
-        this.scene.background = new THREE.Color(0x333333);
+        this.scene.background = this.editorBackgroundColor;
         this.camera.position.set(0, 1.5, 5);
         this.camera.lookAt(0, 0, 0);
 
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
         dirLight.position.set(5, 10, 7.5);
         this.scene.add(dirLight);
 
         this.gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0x888888);
         this.scene.add(this.gridHelper);
+
+        this.viewModelGuide = new ViewModelGuide();
+        this.scene.add(this.viewModelGuide);
 
         // Core editor components
         this.assetContext = new AssetContext(this.scene);
@@ -5740,20 +6061,71 @@ export class AssetEditorApp {
         this.actions = new AssetEditorActions(this);
         this.controls = new AssetEditorControls(this);
         this.ui = new ModelEditorUI(this);
-        this.cameraController = new EditorCamera(this);
-        this.animationManager = new AnimationManager(this.assetContext.assetRoot);
-
+        
+        // Camera Controllers - these now manipulate the single main camera
+        this.editorCameraController = new EditorCamera(this);
+        this.viewModelCameraController = new ViewModelCamera(this);
+        
+        this.animationManager = new AnimationManager(this);
 
         this.renderer.renderer.setAnimationLoop(() => this.animate());
     }
+
+    enterViewModelTest() {
+        if (this.editorState === 'TESTING') return;
+        this.editorState = 'TESTING';
+
+        this.deselect();
+        this.controls.transformControls.enabled = false;
+        
+        // Setup test environment
+        this.scene.background = this.testBackgroundColor;
+        this.gridHelper.visible = true;
+        this.viewModelGuide.setVisible(false);
+        
+        this.viewModelCameraController.start();
+
+        // Attach asset to camera for viewmodel effect
+        const asset = this.assetContext.assetRoot;
+        asset.layers.set(EDITOR_LAYERS.VIEWMODEL);
+        this.camera.add(asset);
+        asset.position.set(0.25, -0.4, -0.8);
+        asset.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+        
+        this.container.classList.add('is-testing');
+    }
+
+    exitViewModelTest() {
+        if (this.editorState !== 'TESTING') return;
+        this.editorState = 'EDITING';
+        
+        this.viewModelCameraController.stop();
+
+        // Detach asset from camera and restore state
+        const asset = this.assetContext.assetRoot;
+        this.scene.add(asset); // Reparent back to scene
+        asset.layers.set(EDITOR_LAYERS.DEFAULT);
+        asset.position.set(0, 0, 0); // Reset transform for editing
+        asset.quaternion.identity();
+
+        // Restore editor environment
+        this.scene.background = this.editorBackgroundColor;
+        this.controls.transformControls.enabled = true;
+        this.gridHelper.visible = document.getElementById('view-toggle-grid').checked;
+        this.viewModelGuide.setVisible(document.getElementById('view-toggle-viewmodel-guide').checked);
+        
+        this.animationManager.resetToIdle();
+        this.container.classList.remove('is-testing');
+    }
     
     select(object) {
+        if (this.editorState !== 'EDITING') return;
         this.deselect();
         this.addToSelection(object);
     }
 
     addToSelection(object) {
-        if (!object || this.selectedObjects.has(object)) return;
+        if (!object || this.selectedObjects.has(object) || this.editorState !== 'EDITING') return;
         this.selectedObjects.add(object);
         this.primarySelectedObject = object;
         this.controls.updateSelection();
@@ -5781,10 +6153,37 @@ export class AssetEditorApp {
     animate() {
         const deltaTime = this.clock.getDelta();
         
-        this.cameraController.update(deltaTime);
-        this.controls.update();
+        if (this.editorState === 'EDITING') {
+            this.editorCameraController.update(deltaTime);
+            this.controls.update();
+        } else { // 'TESTING'
+            this.viewModelCameraController.update(deltaTime);
+        }
+        
         this.animationManager.update(deltaTime);
-        this.renderer.render();
+        
+        // Render logic
+        const webglRenderer = this.renderer.renderer;
+        webglRenderer.autoClear = false;
+        webglRenderer.clear();
+
+        if (this.editorState === 'TESTING') {
+            // Render the main scene (world)
+            this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
+            webglRenderer.render(this.scene, this.camera);
+            
+            webglRenderer.clearDepth();
+
+            // Render the viewmodel
+            this.camera.layers.set(EDITOR_LAYERS.VIEWMODEL);
+            webglRenderer.render(this.scene, this.camera);
+        } else {
+            this.camera.layers.set(EDITOR_LAYERS.DEFAULT);
+            webglRenderer.render(this.scene, this.camera);
+        }
+        
+        webglRenderer.autoClear = true;
+        this.camera.layers.set(EDITOR_LAYERS.DEFAULT); // Reset for next frame
     }
 }
 --------------------------------------------------
@@ -6054,6 +6453,17 @@ export class EditorCamera {
 === END OF FILE: src/asset-editor/EditorCamera.js ===
 
 
+=== FILE: src/asset-editor/layers.js ===
+--------------------------------------------------
+// Defines rendering layers for the asset editor scene.
+export const EDITOR_LAYERS = {
+    DEFAULT: 0,
+    VIEWMODEL: 1, // For the asset when in viewmodel test mode
+};
+--------------------------------------------------
+=== END OF FILE: src/asset-editor/layers.js ===
+
+
 === FILE: src/asset-editor/ModelEditorUI.js ===
 --------------------------------------------------
 import * as THREE from 'three';
@@ -6071,10 +6481,16 @@ export class ModelEditorUI {
     init() {
         // --- Menu ---
         document.getElementById('menu-file-exit').onclick = () => { window.location.href = 'index.html'; };
-        document.getElementById('menu-file-test').onclick = () => this.onTestAsset();
+        document.getElementById('menu-file-load-example').onclick = () => this.app.actions.loadExamplePistol();
+        document.getElementById('menu-file-test-viewmodel').onclick = () => this.app.enterViewModelTest();
         document.getElementById('menu-edit-delete').onclick = () => this.app.actions.deleteSelected();
         document.getElementById('menu-edit-undo').onclick = () => this.app.undoManager.undo();
         document.getElementById('menu-edit-redo').onclick = () => this.app.undoManager.redo();
+        document.getElementById('menu-help-guide').onclick = () => this.showHelpModal(true);
+
+        // --- View Menu ---
+        document.getElementById('view-toggle-grid').onchange = (e) => { if(this.app.gridHelper) this.app.gridHelper.visible = e.target.checked; };
+        document.getElementById('view-toggle-viewmodel-guide').onchange = (e) => { if(this.app.viewModelGuide) this.app.viewModelGuide.setVisible(e.target.checked); };
 
         // --- Toolbar ---
         document.getElementById('tool-translate').onclick = () => this.app.controls.setMode('translate');
@@ -6089,7 +6505,6 @@ export class ModelEditorUI {
         rotSnapInput.onchange = (e) => this.app.controls.setRotationSnap(parseFloat(e.target.value));
         document.querySelector('label[for="snap-toggle"]').onclick = () => snapToggle.click();
         
-        // Set initial UI values from controls state
         snapToggle.checked = this.app.controls.isSnapEnabled;
         transSnapInput.value = this.app.controls.translationSnapValue;
         rotSnapInput.value = this.app.controls.rotationSnapValue;
@@ -6111,8 +6526,36 @@ export class ModelEditorUI {
         this.outlinerContent.addEventListener('dragover', (e) => this.handleOutlinerDragOver(e));
         this.outlinerContent.addEventListener('dragleave', (e) => this.handleOutlinerDragLeave(e));
         this.outlinerContent.addEventListener('drop', (e) => this.handleOutlinerDrop(e));
+
+        // --- Viewmodel Test ---
+        document.getElementById('exit-test-mode-btn').onclick = () => this.app.exitViewModelTest();
+
+        // --- Help Modal ---
+        const helpModal = document.getElementById('help-modal');
+        helpModal.querySelector('.modal-close-btn').onclick = () => this.showHelpModal(false);
+        helpModal.onclick = (e) => { if (e.target === e.currentTarget) this.showHelpModal(false); };
+
+        // --- Top Menu Hover Logic to close other menus ---
+        const menuDropdowns = document.querySelectorAll('#editor-menu-bar .menu-dropdown');
+        menuDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('pointerenter', () => {
+                const openDropdown = document.querySelector('#editor-menu-bar .menu-dropdown[open]');
+                if (openDropdown && openDropdown !== dropdown) {
+                    openDropdown.open = false;
+                }
+                dropdown.open = true;
+            });
+
+            dropdown.addEventListener('mouseleave', () => {
+                dropdown.open = false;
+            });
+        });
     }
     
+    showHelpModal(show) {
+        document.getElementById('help-modal').style.display = show ? 'flex' : 'none';
+    }
+
     updateOnSelectionChange() {
         document.getElementById('menu-edit-delete').disabled = this.app.selectedObjects.size === 0;
         this.updateOutliner();
@@ -6325,14 +6768,6 @@ export class ModelEditorUI {
     updateTransformModeButtons(mode) {
         ['translate', 'rotate', 'scale'].forEach(m => document.getElementById(`tool-${m}`).classList.toggle('active', m === mode));
     }
-    
-    onTestAsset() {
-        const placeholderAssetData = this.app.assetContext.serialize();
-        try {
-            localStorage.setItem('editorAssetData', JSON.stringify(placeholderAssetData));
-            window.open('index.html?loadAssetForTest=true', '_blank');
-        } catch (e) { console.error("Failed to save asset:", e); alert("Could not test asset."); }
-    }
 }
 --------------------------------------------------
 === END OF FILE: src/asset-editor/ModelEditorUI.js ===
@@ -6456,6 +6891,135 @@ export class UndoManager {
 }
 --------------------------------------------------
 === END OF FILE: src/asset-editor/UndoManager.js ===
+
+
+=== FILE: src/asset-editor/ViewModelCamera.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+/**
+ * A controller that manipulates the main camera to simulate a first-person
+ * perspective for testing assets.
+ */
+export class ViewModelCamera {
+    constructor(app) {
+        this.app = app;
+        this.input = app.input;
+        this.camera = app.camera; // It controls the main camera now
+        this.moveSpeed = 5;
+        this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        
+        // Store the camera's state before taking over
+        this.originalCameraState = {};
+    }
+
+    start() {
+        // Save the editor camera's current state
+        this.originalCameraState = {
+            position: this.camera.position.clone(),
+            quaternion: this.camera.quaternion.clone(),
+        };
+
+        // Reset for test mode
+        this.camera.position.set(0, 1.6, 5);
+        this.euler.set(0, 0, 0);
+        this.camera.quaternion.setFromEuler(this.euler);
+    }
+
+    stop() {
+        if (this.originalCameraState.position) {
+            this.camera.position.copy(this.originalCameraState.position);
+            this.camera.quaternion.copy(this.originalCameraState.quaternion);
+        }
+    }
+    
+    update(deltaTime) {
+        // --- Look Controls ---
+        this.euler.setFromQuaternion(this.camera.quaternion, 'YXZ');
+        this.euler.y -= this.input.mouse.movementX * 0.002;
+        this.euler.x -= this.input.mouse.movementY * 0.002;
+        this.euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.euler.x));
+        this.camera.quaternion.setFromEuler(this.euler);
+        
+        // --- Movement Controls ---
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+
+        if (this.input.keys['KeyW']) this.camera.position.addScaledVector(forward, this.moveSpeed * deltaTime);
+        if (this.input.keys['KeyS']) this.camera.position.addScaledVector(forward, -this.moveSpeed * deltaTime);
+        if (this.input.keys['KeyA']) this.camera.position.addScaledVector(right, -this.moveSpeed * deltaTime);
+        if (this.input.keys['KeyD']) this.camera.position.addScaledVector(right, this.moveSpeed * deltaTime);
+
+        this.camera.position.y = 1.6; // Keep a fixed height
+
+        // --- Animation Triggers ---
+        if (this.input.mouse.leftClick) {
+            this.app.animationManager.triggerClip('fire');
+        }
+        if (this.input.keys['KeyR']) {
+            this.app.animationManager.triggerClip('reload');
+        }
+
+        this.input.update();
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/asset-editor/ViewModelCamera.js ===
+
+
+=== FILE: src/asset-editor/ViewModelGuide.js ===
+--------------------------------------------------
+import * as THREE from 'three';
+
+/**
+ * A visual guide in the editor to help with weapon scale, orientation, and root position.
+ */
+export class ViewModelGuide extends THREE.Group {
+    constructor() {
+        super();
+        this.name = 'ViewModelGuide';
+        this.createHelpers();
+    }
+
+    createHelpers() {
+        // 1. Bounding box for typical weapon size
+        const boxSize = { width: 0.4, height: 0.5, depth: 1.2 };
+        const boxGeom = new THREE.BoxGeometry(boxSize.width, boxSize.height, boxSize.depth);
+        const boxEdges = new THREE.EdgesGeometry(boxGeom);
+        const boxMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
+        const boxHelper = new THREE.LineSegments(boxEdges, boxMat);
+        // Position the box so its back is at the origin (where the grip should be)
+        boxHelper.position.z = boxSize.depth / 2;
+        this.add(boxHelper);
+
+        // 2. Arrow indicating the "forward" direction (+Z) for modeling
+        const arrow = new THREE.ArrowHelper(
+            new THREE.Vector3(0, 0, 1), // direction
+            new THREE.Vector3(0, 0, 0), // origin
+            1.5, // length
+            0xffff00, // color
+            0.2, // headLength
+            0.1 // headWidth
+        );
+        this.add(arrow);
+
+        // 3. Sphere indicating the hand/grip position at the origin
+        const handGeom = new THREE.SphereGeometry(0.08);
+        const handMat = new THREE.MeshBasicMaterial({ color: 0x00a3ff, wireframe: true });
+        const handSphere = new THREE.Mesh(handGeom, handMat);
+        this.add(handSphere);
+    }
+
+    /**
+     * Sets the visibility of the entire guide.
+     * @param {boolean} visible 
+     */
+    setVisible(visible) {
+        this.visible = visible;
+    }
+}
+--------------------------------------------------
+=== END OF FILE: src/asset-editor/ViewModelGuide.js ===
 
 
 === FILE: src/client/client_main.js ===
@@ -12986,24 +13550,12 @@ export class Game {
 
     handleUrlParameters(params) {
         const loadFromEditor = params.get('loadFromEditor') === 'true';
-        const loadAssetForTest = params.get('loadAssetForTest') === 'true';
         const debugMode = params.get('debug') === 'true';
         const showLevelSelect = params.get('showLevelSelect') === 'true';
 
         if (debugMode) this.toggleDebugMode();
 
-        if (loadAssetForTest) {
-            const editorAssetData = localStorage.getItem('editorAssetData');
-            if (editorAssetData) {
-                try {
-                    const assetData = JSON.parse(editorAssetData);
-                    this.startLevel({ url: './levels/level-stadium.json', testAsset: assetData });
-                } catch (e) {
-                    console.error("Failed to parse asset data from editor:", e);
-                    this.returnToMenu();
-                }
-            }
-        } else if (loadFromEditor) {
+        if (loadFromEditor) {
             const editorLevelData = localStorage.getItem('editorLevelData');
             if (editorLevelData) {
                 try {
@@ -13050,10 +13602,6 @@ export class Game {
 
         try {
             await this.world.loadLevel(config);
-
-            if (config.testAsset) {
-                this.world.player.useCustomWeapon(config.testAsset);
-            }
 
             this.core.renderer.setupPostProcessing(
                 this.world.scene,

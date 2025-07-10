@@ -42,30 +42,84 @@ export class AssetContext {
     }
 
     serialize() {
-        const getTransform = (obj) => ({
-            position: obj.position.toArray(),
-            rotation: obj.rotation.toArray(),
-            scale: obj.scale.toArray()
-        });
-
         const geometry = [];
         this.parts.forEach(part => {
-            geometry.push({
+            const transform = {
+                position: part.position.toArray(),
+                quaternion: part.quaternion.toArray(),
+                scale: part.scale.toArray(),
+            };
+
+            const partData = {
                 uuid: part.uuid,
                 name: part.name,
                 type: part.geometry.type.replace('Geometry', ''),
                 parent: part.parent !== this.assetRoot ? part.parent.uuid : null,
-                transform: getTransform(part),
+                transform: transform,
                 material: { color: '#' + part.material.color.getHexString() }
-            });
+            };
+            geometry.push(partData);
         });
         
         return {
-            assetName: "CustomAsset",
+            assetName: this.assetRoot.name,
             type: "weapon",
             geometry,
-            animations: {}
+            animations: this.animations
         };
+    }
+
+    loadFromData(assetData) {
+        this.clear();
+        if (!assetData) return;
+
+        this.assetRoot.name = assetData.assetName || "CustomAsset";
+        
+        const createdParts = new Map(); // Maps original UUID to new THREE.Mesh
+        const geometryMap = {
+            'Box': (s) => new THREE.BoxGeometry(...s),
+            'Cylinder': (s) => new THREE.CylinderGeometry(s[0], s[1], s[2]),
+            'Sphere': (s) => new THREE.SphereGeometry(s[0]),
+        };
+
+        if (assetData.geometry) {
+            // First pass: create all meshes
+            assetData.geometry.forEach(partData => {
+                const geoFn = geometryMap[partData.type];
+                if (!geoFn) return;
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(partData.material.color)
+                });
+
+                const scale = partData.transform.scale || [1, 1, 1];
+                const partMesh = new THREE.Mesh(geoFn(scale), material);
+                partMesh.name = partData.name;
+                
+                createdParts.set(partData.uuid, partMesh);
+            });
+            
+            // Second pass: set transforms and build hierarchy
+            assetData.geometry.forEach(partData => {
+                const partMesh = createdParts.get(partData.uuid);
+                if (!partMesh) return;
+
+                const { position, quaternion, rotation } = partData.transform;
+                if (position) partMesh.position.fromArray(position);
+                
+                // Handle both quaternion and legacy euler rotation data
+                if (quaternion) {
+                    partMesh.quaternion.fromArray(quaternion);
+                } else if (rotation) {
+                    partMesh.rotation.fromArray(rotation);
+                }
+
+                const parentMesh = partData.parent ? createdParts.get(partData.parent) : null;
+                this.addPart(partMesh, parentMesh);
+            });
+        }
+        
+        this.animations = assetData.animations || {};
     }
 
     clear() {
