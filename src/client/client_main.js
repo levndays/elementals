@@ -1,3 +1,4 @@
+// src/client/client_main.js
 import * as THREE from 'three';
 import { Renderer } from '../core/Renderer.js';
 import { Physics } from '../core/Physics.js';
@@ -54,6 +55,12 @@ class App {
         });
 
         // 6. Load initial assets, set up game, start loop
+        this.core.assets.queue([{
+            name: 'npcMannequin',
+            type: 'gltf',
+            path: 'https://threejs.org/examples/models/gltf/Soldier.glb'
+        }]);
+        await this.core.assets.loadAll();
         await this.game.init();
 
         this.core.renderer.renderer.setAnimationLoop(() => this.animate());

@@ -1,9 +1,11 @@
+// src/game/prefabs/NPCPrefab.js
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { NPC } from '../entities/NPC.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { RENDERING_LAYERS } from '../../shared/CollisionGroups.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 /**
  * A factory for creating NPC entities with all their required components.
@@ -19,16 +21,28 @@ export class NPCPrefab {
         const config = GAME_CONFIG.NPC.BASE;
         const team = definition.team || 'enemy';
 
-        // 1. Visuals (Mesh)
-        const geometry = new THREE.CapsuleGeometry(0.7, 1.0, 4, 8);
-        const color = team === 'enemy' ? 0x990000 : 0x009933; // Red for enemies, Green for allies
-        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.4, emissive: 0x000000 });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        mesh.position.copy(definition.position);
-        mesh.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
+        // 1. Visuals (Mesh) - Clone from pre-loaded asset
+        const originalGltf = world.core.assets.get('npcMannequin');
+        
+        const containerGroup = new THREE.Group();
+        const modelMesh = SkeletonUtils.clone(originalGltf.scene);
+        modelMesh.rotation.y = Math.PI;
+        containerGroup.add(modelMesh);
+        containerGroup.scale.setScalar(0.9);
+        
+        const teamColor = team === 'enemy' ? new THREE.Color(0x990000) : new THREE.Color(0x009933);
+        containerGroup.traverse(child => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.layers.enable(RENDERING_LAYERS.NO_REFLECTION);
+                child.material = child.material.clone();
+                child.material.color.lerp(teamColor, 0.4);
+            }
+        });
+        
+        containerGroup.position.copy(definition.position);
 
-        // 2. Physics (Body)
+        // 2. Physics (Body) - Use a Sphere for live state.
         const shape = new CANNON.Sphere(config.RADIUS);
         
         let group, mask;
@@ -42,33 +56,81 @@ export class NPCPrefab {
         
         const body = new CANNON.Body({
             mass: config.MASS,
-            shape,
             position: new CANNON.Vec3(definition.position.x, definition.position.y, definition.position.z),
             fixedRotation: true,
             collisionFilterGroup: group,
             collisionFilterMask: mask,
             linearDamping: 0.1,
         });
+        body.addShape(shape, new CANNON.Vec3(0, config.RADIUS, 0));
 
         // 3. Entity creation
-        const entity = new NPC(world, body, mesh, definition);
-        
-        // 4. Add melee "hands" if applicable
-        if (entity.attackType === 'melee') {
-            const handGeo = new THREE.SphereGeometry(0.3, 8, 8);
-            const handMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 });
-            
-            entity.leftHand = new THREE.Mesh(handGeo, handMat);
-            entity.leftHand.position.set(-0.7, 0.2, 0.5); // Position relative to parent capsule
-            entity.leftHand.castShadow = true;
-            
-            entity.rightHand = new THREE.Mesh(handGeo, handMat);
-            entity.rightHand.position.set(0.7, 0.2, 0.5); // Position relative to parent capsule
-            entity.rightHand.castShadow = true;
+        const entity = new NPC(world, body, containerGroup, definition);
 
-            mesh.add(entity.leftHand, entity.rightHand);
-        }
+        // 4. Animation Setup
+        entity.mixer = new THREE.AnimationMixer(modelMesh);
+        originalGltf.animations.forEach(clip => entity.animations.set(clip.name, clip));
+        const idleAction = entity.mixer.clipAction(entity.animations.get('Idle'));
+        idleAction.play();
+        entity.activeAction = idleAction;
+
+        // 5. Create Ragdoll Physics Skeleton
+        this._createRagdoll(entity);
         
         return entity;
+    }
+
+    static _createRagdoll(entity) {
+        const bones = {};
+        entity.mesh.traverse(child => {
+            if (child.isBone) bones[child.name] = child;
+        });
+
+        const massPerBody = entity.physics.body.mass / Object.keys(bones).length;
+        const box = (w, h, d) => new CANNON.Box(new CANNON.Vec3(w/2, h/2, d/2));
+
+        const bodyDefs = {
+            'Hips': { shape: box(0.28, 0.22, 0.2), mass: massPerBody * 4 },
+            'Spine': { shape: box(0.25, 0.25, 0.25), mass: massPerBody * 4 },
+            'Head': { shape: new CANNON.Sphere(0.12), mass: massPerBody * 2 },
+            'LeftArm': { shape: box(0.1, 0.4, 0.1), mass: massPerBody },
+            'RightArm': { shape: box(0.1, 0.4, 0.1), mass: massPerBody },
+            'LeftForeArm': { shape: box(0.08, 0.4, 0.08), mass: massPerBody },
+            'RightForeArm': { shape: box(0.08, 0.4, 0.08), mass: massPerBody },
+            'LeftUpLeg': { shape: box(0.15, 0.5, 0.15), mass: massPerBody * 2 },
+            'RightUpLeg': { shape: box(0.15, 0.5, 0.15), mass: massPerBody * 2 },
+            'LeftLeg': { shape: box(0.12, 0.5, 0.12), mass: massPerBody * 2 },
+            'RightLeg': { shape: box(0.12, 0.5, 0.12), mass: massPerBody * 2 },
+        };
+        
+        for (const name in bodyDefs) {
+            const bone = bones[name];
+            if (!bone) continue;
+
+            const body = new CANNON.Body({ mass: bodyDefs[name].mass, shape: bodyDefs[name].shape });
+            entity.ragdoll.bodies.push(body);
+            entity.ragdoll.bodyBoneMap.set(body, bone);
+        }
+
+        const addConstraint = (bone1, bone2, pivot1, pivot2) => {
+            const body1 = entity.ragdoll.bodyBoneMap.get(bones[bone1]);
+            const body2 = entity.ragdoll.bodyBoneMap.get(bones[bone2]);
+            if (body1 && body2) {
+                const c = new CANNON.PointToPointConstraint(body1, new CANNON.Vec3(...pivot1), body2, new CANNON.Vec3(...pivot2));
+                entity.ragdoll.constraints.push(c);
+            }
+        };
+
+        // Connect joints
+        addConstraint('Spine', 'Hips', [0, -0.125, 0], [0, 0.11, 0]);
+        addConstraint('Spine', 'Head', [0, 0.125, 0], [0, -0.12, 0]);
+        addConstraint('Spine', 'LeftArm', [-0.125, 0, 0], [0, 0.2, 0]);
+        addConstraint('Spine', 'RightArm', [0.125, 0, 0], [0, 0.2, 0]);
+        addConstraint('LeftArm', 'LeftForeArm', [0, -0.2, 0], [0, 0.2, 0]);
+        addConstraint('RightArm', 'RightForeArm', [0, -0.2, 0], [0, 0.2, 0]);
+        addConstraint('Hips', 'LeftUpLeg', [-0.1, -0.11, 0], [0, 0.25, 0]);
+        addConstraint('Hips', 'RightUpLeg', [0.1, -0.11, 0], [0, 0.25, 0]);
+        addConstraint('LeftUpLeg', 'LeftLeg', [0, -0.25, 0], [0, 0.25, 0]);
+        addConstraint('RightUpLeg', 'RightLeg', [0, -0.25, 0], [0, 0.25, 0]);
     }
 }

@@ -1,5 +1,6 @@
-// ~ src/client/systems/WorldUISystem.js
+// src/client/systems/WorldUISystem.js
 import { HealthBar } from '../ui/HealthBar.js';
+import * as CANNON from 'cannon-es';
 
 /**
  * Manages 3D UI elements that exist in the world space, like enemy health bars.
@@ -57,7 +58,15 @@ export class WorldUISystem {
             }
             
             const position = entity.physics.body.position.clone();
-            position.y += (entity.mesh.geometry.parameters.height || 1.0) + 1.0;
+            
+            // Calculate height offset based on physics body, not mesh geometry.
+            let heightOffset = 2.0; // Default offset
+            if (entity.physics.body.shapes[0] && entity.physics.body.shapes[0] instanceof CANNON.Sphere) {
+                // The physics body is centered at y=radius, so its top is at y=2*radius.
+                // We add a small margin above that.
+                heightOffset = entity.physics.body.shapes[0].radius * 2 + 0.5;
+            }
+            position.y += heightOffset;
 
             const isVisible = this.world.player.camera.position.distanceTo(position) < 30;
             healthBar.setVisible(isVisible);
