@@ -1,6 +1,6 @@
 Flutter Project Snapshot (Python Script)
 Project Root: C:\Users\levndays\Desktop\elementals\elementals
-Snapshot created on: 2025-07-10T09:08:43.715411
+Snapshot created on: 2025-07-10T21:40:43.677850
 ================================================================================
 
 === FILE: asset-editor.html ===
@@ -738,6 +738,237 @@ jobs:
 ]
 --------------------------------------------------
 === END OF FILE: assets/skyboxes/manifest.json ===
+
+
+=== FILE: assets/weapons/weapon-katana.json ===
+--------------------------------------------------
+{
+  "assetName": "Katana",
+  "type": "weapon",
+  "attackType": "melee",
+  "damage": 250,
+  "range": 4,
+  "cooldown": 0.6,
+  "viewModel": {
+    "position": [0.35, -0.35, -0.7],
+    "rotation": [10, -15, 5]
+  },
+  "geometry": [
+    {
+      "uuid": "hilt",
+      "name": "Hilt",
+      "type": "Cylinder",
+      "parent": null,
+      "transform": {
+        "position": [0, -0.1375, 0],
+        "quaternion": [0, 0, 0, 1],
+        "scale": [0.025, 0.25, 0.025]
+      },
+      "material": { "color": "#1a1a1a", "metalness": 0.2, "roughness": 0.8 }
+    },
+    {
+      "uuid": "guard",
+      "name": "Guard",
+      "type": "Box",
+      "parent": "hilt",
+      "transform": {
+        "position": [0, 0.135, 0],
+        "quaternion": [0, 0, 0, 1],
+        "scale": [0.06, 0.02, 0.15]
+      },
+      "material": { "color": "#333333", "metalness": 0.6, "roughness": 0.5 }
+    },
+    {
+      "uuid": "blade",
+      "name": "Blade",
+      "type": "Box",
+      "parent": "guard",
+      "transform": {
+        "position": [0, 0.36, 0],
+        "quaternion": [0, 0, 0, 1],
+        "scale": [0.02, 0.7, 0.01]
+      },
+      "material": { "color": "#c0c0c0", "metalness": 0.9, "roughness": 0.3 }
+    }
+  ],
+  "animations": {
+    "fire": {
+      "name": "fire",
+      "duration": 0.45,
+      "tracks": [
+        {
+          "targetUUID": "AssetRoot",
+          "property": "rotation",
+          "keyframes": [
+            { "time": 0, "value": [10, -15, 5] },
+            { "time": 0.09, "value": [70, 30, -20] },
+            { "time": 0.27, "value": [-45, -40, 45] },
+            { "time": 0.45, "value": [10, -15, 5] }
+          ]
+        },
+        {
+          "targetUUID": "AssetRoot",
+          "property": "position",
+          "keyframes": [
+            { "time": 0, "value": [0.35, -0.35, -0.7] },
+            { "time": 0.09, "value": [0.5, 0.4, -0.6] },
+            { "time": 0.27, "value": [-0.4, -0.5, -0.7] },
+            { "time": 0.45, "value": [0.35, -0.35, -0.7] }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+--------------------------------------------------
+=== END OF FILE: assets/weapons/weapon-katana.json ===
+
+
+=== FILE: assets/weapons/weapon-revolver.json ===
+--------------------------------------------------
+{
+    "assetName": "Revolver",
+    "type": "weapon",
+    "attackType": "ranged",
+    "damage": 100,
+    "range": 200,
+    "cooldown": 0.5,
+    "magazineSize": 6,
+    "reserveAmmo": 24,
+    "viewModel": {
+        "position": [0.3, -0.4, -0.7],
+        "rotation": [0, -17.2, 0]
+    },
+    "geometry": [
+        {
+            "uuid": "frame",
+            "name": "Frame",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [0, -0.01, -0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.045, 0.1, 0.14]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "barrelAssembly",
+            "name": "BarrelAssembly",
+            "type": "Box",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0.055, -0.07],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.04, 0.055, 0.22]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "barrel",
+            "name": "Barrel",
+            "type": "Cylinder",
+            "parent": "barrelAssembly",
+            "transform": {
+                "position": [0, 0, -0.01],
+                "quaternion": [0.707, 0, 0, 0.707],
+                "scale": [0.014, 0.2, 0.014]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "grip",
+            "name": "Grip",
+            "type": "Cylinder",
+            "parent": "frame",
+            "transform": {
+                "position": [0, -0.09, 0.06],
+                "quaternion": [-0.1, 0, 0, 0.995],
+                "scale": [0.035, 0.16, 0.03]
+            },
+            "material": { "color": "#111111", "metalness": 0.1, "roughness": 0.7 }
+        },
+        {
+            "uuid": "crane",
+            "name": "Crane",
+            "type": "Cylinder",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0, 0],
+                "quaternion": [0.707, 0, 0, 0.707],
+                "scale": [0.03, 0.07, 0.03]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "hammer",
+            "name": "Hammer",
+            "type": "Box",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0.06, 0.07],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.015, 0.04, 0.02]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        }
+    ],
+    "animations": {}
+}
+--------------------------------------------------
+=== END OF FILE: assets/weapons/weapon-revolver.json ===
+
+
+=== FILE: assets/weapons/weapon-sai.json ===
+--------------------------------------------------
+{
+    "assetName": "Twin Sai",
+    "type": "weapon",
+    "attackType": "melee",
+    "damage": 150,
+    "range": 2.5,
+    "cooldown": 0.7,
+    "viewModel": {
+        "position": [0, -0.4, -0.8],
+        "rotation": [-2.8, 0, 0]
+    },
+    "geometry": [
+        {
+            "uuid": "left_sai",
+            "name": "LeftSai",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [-0.35, -0.05, 0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.08, 0.5, 0.08]
+            },
+            "material": { "color": "#999999", "metalness": 0.9, "roughness": 0.2 }
+        },
+        {
+            "uuid": "right_sai",
+            "name": "RightSai",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [0.35, -0.05, 0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.08, 0.5, 0.08]
+            },
+            "material": { "color": "#999999", "metalness": 0.9, "roughness": 0.2 }
+        }
+    ],
+    "animations": {
+        "fire": {
+            "name": "fire",
+            "duration": 0.4,
+            "tracks": []
+        }
+    }
+}
+--------------------------------------------------
+=== END OF FILE: assets/weapons/weapon-sai.json ===
 
 
 === FILE: css/asset-editor.css ===
@@ -2434,7 +2665,7 @@ body:not(.game-active) #tutorial-text-container {
 --------------------------------------------------
 {
   "inventory": [
-    "WEAPON_001",
+    "WEAPON_KATANA",
     "WEAPON_REVOLVER",
     "WEAPON_SAI",
     "FIRE_001",
@@ -2446,7 +2677,7 @@ body:not(.game-active) #tutorial-text-container {
   "savedLoadouts": {
     "My First Build": {
       "name": "My First Build",
-      "weapon": "WEAPON_001",
+      "weapon": "WEAPON_KATANA",
       "cards": [
         "FIRE_001",
         "FIRE_002",
@@ -2459,6 +2690,16 @@ body:not(.game-active) #tutorial-text-container {
       "weapon": "WEAPON_REVOLVER",
       "cards": [
         "FIRE_001",
+        "UTILITY_001",
+        null,
+        null
+      ]
+    },
+    "Assassin": {
+      "name": "Assassin",
+      "weapon": "WEAPON_SAI",
+      "cards": [
+        "EARTH_001",
         "UTILITY_001",
         null,
         null
@@ -6025,73 +6266,28 @@ export class AssetEditorActions {
         this._loadDataWithUndo(data);
     }
 
-    loadExampleDagger() {
-        const daggerData = {
-            "assetName": "Example Dagger",
-            "type": "weapon",
-            "geometry": [
-                { "uuid": "hilt", "name": "Hilt", "type": "Cylinder", "parent": null, "transform": { "position": [0, 0, 0], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.12] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.8 } },
-                { "uuid": "guard", "name": "Guard", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.06], "quaternion": [0,0,0,1], "scale": [0.12, 0.03, 0.03] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } },
-                { "uuid": "blade", "name": "Blade", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.18], "quaternion": [0,0,0,1], "scale": [0.01, 0.05, 0.24] }, "material": { "color": "#cccccc", "metalness": 0.9, "roughness": 0.2 } },
-                { "uuid": "pommel", "name": "Pommel", "type": "Sphere", "parent": "hilt", "transform": { "position": [0, 0, -0.07], "quaternion": [0,0,0,1], "scale": [0.04, 0.04, 0.04] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } }
-            ],
-            "animations": {
-                "fire": {
-                    "name": "fire", "duration": 0.5,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ 
-                            { "time": 0, "value": [0, 0, 0] }, 
-                            { "time": 0.15, "value": [40, 20, -30] }, 
-                            { "time": 0.5, "value": [0, 0, 0] } 
-                        ] },
-                        { "targetUUID": "AssetRoot", "property": "position", "keyframes": [ 
-                            { "time": 0, "value": [0, 0, 0] }, 
-                            { "time": 0.15, "value": [0, 0, 0.1] }, 
-                            { "time": 0.5, "value": [0, 0, 0] } 
-                        ] }
-                    ]
-                },
-                "inspect": { "name": "inspect", "duration": 2.0, "tracks": [ { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] } ] }
-            }
-        };
-        this._loadDataWithUndo(daggerData);
+    async loadExampleDagger() {
+        try {
+            const response = await fetch('./assets/weapons/weapon-sai.json');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            this._loadDataWithUndo(data);
+        } catch (error) {
+            console.error("Failed to load example dagger:", error);
+            alert("Could not load example asset. See console for details.");
+        }
     }
 
-    loadExamplePistol() {
-        const pistolData = {
-            "assetName": "Example Pistol",
-            "type": "weapon",
-            "geometry": [
-                { "uuid": "body", "name": "Body", "type": "Box", "parent": null, "transform": { "position": [0,0,0], "quaternion": [0,0,0,1], "scale": [0.05, 0.08, 0.18] }, "material": { "color": "#454545", "metalness": 0.7, "roughness": 0.5 } },
-                { "uuid": "slide", "name": "Slide", "type": "Box", "parent": "body", "transform": { "position": [0,0.05,0], "quaternion": [0,0,0,1], "scale": [0.045, 0.05, 0.2] }, "material": { "color": "#333333", "metalness": 0.8, "roughness": 0.4 } },
-                { "uuid": "grip", "name": "Grip", "type": "Box", "parent": "body", "transform": { "position": [0,-0.08,-0.05], "quaternion": [-0.08715574274765817, 0, 0, 0.9961946980917455], "scale": [0.04, 0.15, 0.05] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.7 } },
-                { "uuid": "magazine", "name": "Magazine", "type": "Box", "parent": "grip", "transform": { "position": [0,-0.07,0.01], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.04] }, "material": { "color": "#222222", "metalness": 0.9, "roughness": 0.3 } },
-                { "uuid": "trigger", "name": "Trigger", "type": "Box", "parent": "body", "transform": { "position": [0,-0.01,-0.03], "quaternion": [0,0,0,1], "scale": [0.01, 0.03, 0.02] }, "material": { "color": "#111111", "metalness": 0.9, "roughness": 0.2 } }
-            ],
-            "animations": {
-                "fire": {
-                    "name": "fire", "duration": 0.3,
-                    "tracks": [
-                        { "targetUUID": "slide", "property": "position", "keyframes": [ { "time": 0, "value": [0, 0.05, 0] }, { "time": 0.05, "value": [0, 0.05, -0.05] }, { "time": 0.3, "value": [0, 0.05, 0] } ] },
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.05, "value": [-10, 0, 0] }, { "time": 0.3, "value": [0, 0, 0] } ] }
-                    ]
-                },
-                "reload": {
-                    "name": "reload", "duration": 1.5,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.2, "value": [30, 0, 20] }, { "time": 1.3, "value": [30, 0, 20] }, { "time": 1.5, "value": [0, 0, 0] } ] },
-                        { "targetUUID": "magazine", "property": "position", "keyframes": [ { "time": 0.3, "value": [0,-0.07,0.01] }, { "time": 0.6, "value": [0,-0.15,0.01] }, { "time": 0.9, "value": [0,-0.15,0.01] }, { "time": 1.2, "value": [0,-0.07,0.01] } ] }
-                    ]
-                },
-                "inspect": {
-                    "name": "inspect", "duration": 2.0,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] }
-                    ]
-                }
-            }
-        };
-        this._loadDataWithUndo(pistolData);
+    async loadExamplePistol() {
+        try {
+            const response = await fetch('./assets/weapons/weapon-revolver.json');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            this._loadDataWithUndo(data);
+        } catch (error) {
+            console.error("Failed to load example pistol:", error);
+            alert("Could not load example asset. See console for details.");
+        }
     }
     
     updateKeyframeProperty(keyframeInfo, property, newValue) {
@@ -14041,13 +14237,13 @@ export class UndoManager {
 
 === FILE: src/game/Game.js ===
 --------------------------------------------------
-// ~ src/game/Game.js
 import * as THREE from 'three';
 import { World } from './world/World.js';
 import { PlayerController } from '../client/entities/PlayerController.js';
 import { EventEmitter } from '../shared/EventEmitter.js';
 import { AbilityFactory } from './abilities/AbilityFactory.js';
 import { GAME_CONFIG } from '../shared/config.js';
+import { WeaponFactory } from './weapons/WeaponFactory.js';
 
 /**
  * Manages the high-level state of the game application.
@@ -14144,7 +14340,7 @@ export class Game {
             this.core.renderer.setupPostProcessing(
                 this.world.scene,
                 this.core.renderer.camera,
-                this.game.viewModelScene
+                this.viewModelScene
             );
 
             this.playerController.attach(this.world.player);
@@ -14733,14 +14929,12 @@ export class FireballAbility extends Ability {
         let spawnPosition;
         if (result.hasHit) {
             const hitPoint = result.hitPointWorld;
+            const nudgeDirection = new CANNON.Vec3();
+            rayTo.vsub(rayFrom, nudgeDirection); // Get direction vector safely
+            nudgeDirection.normalize();
             
-            // FIX: Corrected method chaining.
-            // .normalize() returns the length (a number), not the vector.
-            const nudgeDirection = rayTo.vsub(rayFrom); // Get direction vector
-            nudgeDirection.normalize(); // Normalize it in-place
-            
-            // .scale() returns a new, scaled vector.
-            const nudgeVector = nudgeDirection.scale(-0.1); 
+            const nudgeVector = new CANNON.Vec3();
+            nudgeDirection.scale(-0.1, nudgeVector); // Scale into new vector
             
             spawnPosition = hitPoint.vadd(nudgeVector);
         } else {
@@ -15689,7 +15883,13 @@ export class Player {
         this.world = world;
         this.camera = camera;
         this.weapon = weapon;
-        if (this.weapon) this.weapon.wielder = this;
+        
+        if (this.weapon) {
+            this.weapon.wielder = this;
+            if (this.weapon.mesh) {
+                this.camera.add(this.weapon.mesh);
+            }
+        }
         
         this.health = new HealthComponent(GAME_CONFIG.PLAYER.MAX_HEALTH);
         this.input = new PlayerInputComponent();
@@ -15979,7 +16179,7 @@ import { GAME_CONFIG } from '../../shared/config.js';
  * A factory for creating the player entity with all its required components.
  */
 export class PlayerPrefab {
-    static create(world, camera, viewModelScene, loadoutData) {
+    static async create(world, camera, viewModelScene, loadoutData) {
         const { physics } = world;
         const config = GAME_CONFIG.PLAYER;
 
@@ -15994,10 +16194,7 @@ export class PlayerPrefab {
             collisionFilterGroup: COLLISION_GROUPS.PLAYER,
             collisionFilterMask: COLLISION_GROUPS.WORLD | COLLISION_GROUPS.ENEMY | COLLISION_GROUPS.ENEMY_PROJECTILE | COLLISION_GROUPS.TRIGGER | COLLISION_GROUPS.WATER,
             linearDamping: config.DEFAULT_DAMPING,
-            // --- CONTINUOUS COLLISION DETECTION (CCD) ---
-            // Activate CCD if speed exceeds 15 m/s to prevent tunneling.
             ccdSpeedThreshold: 15, 
-            // Set the radius for the swept sphere check, slightly smaller than the actual radius.
             ccdSweptSphereRadius: 0.75, 
         });
         const playerWorldContactMaterial = new CANNON.ContactMaterial(
@@ -16006,19 +16203,19 @@ export class PlayerPrefab {
         );
         physics.addContactMaterial(playerWorldContactMaterial);
         
-        const weaponId = loadoutData?.weapon || 'WEAPON_001';
-        const weapon = WeaponFactory.create(weaponId);
+        const weaponId = loadoutData?.weapon || 'WEAPON_KATANA';
+        const weapon = await WeaponFactory.create(weaponId);
 
+        const entity = new Player(world, camera, weapon, body);
+        
+        // Setup viewmodel scene with its own lights
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
         directionalLight.position.set(0.5, 0.8, -0.2).normalize();
         
-        if (weapon?.mesh) {
-            camera.add(weapon.mesh);
-        }
-        viewModelScene.add(ambientLight, directionalLight, camera);
+        // The camera should NOT be added to the scene it renders.
+        viewModelScene.add(ambientLight, directionalLight);
         
-        const entity = new Player(world, camera, weapon, body);
         entity.applyLoadout(loadoutData || { cards: [null, null, null, null], weapon: null });
         
         return entity;
@@ -17455,6 +17652,9 @@ export class WeaponSystem {
 --------------------------------------------------
 import * as THREE from 'three';
 import { Weapon } from './Weapon.js';
+import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
+import { BleedingEffect } from '../effects/BleedingEffect.js';
+import { GAME_CONFIG } from '../../shared/config.js';
 
 /**
  * A weapon instantiated from dynamic asset data created in the Asset Editor.
@@ -17463,15 +17663,23 @@ export class CustomWeapon extends Weapon {
     constructor(assetData) {
         super(null, {
             name: assetData.assetName,
-            damage: 50, // Placeholder
-            cooldown: 0.5, // Placeholder
+            damage: assetData.damage || 50,
+            cooldown: assetData.cooldown || 0.5,
         });
 
         this.assetData = assetData;
-        this.parts = new Map(); // Map<uuid, THREE.Object3D>
+        this.range = assetData.range || 100;
+        this.attackType = assetData.attackType || 'ranged';
+
+        // Ranged weapon properties
+        this.magazineSize = assetData.magazineSize || 0;
+        this.magazineAmmo = this.magazineSize;
+        this.reserveAmmo = assetData.reserveAmmo || 0;
+        this.isReloading = false;
         
+        this.parts = new Map();
         this.createMesh();
-        this.wielder = null; // Set when equipped
+        this.wielder = null;
     }
 
     createMesh() {
@@ -17479,62 +17687,132 @@ export class CustomWeapon extends Weapon {
         this.mesh.name = this.assetData.assetName;
 
         const geometryMap = {
-            'Box': (s) => new THREE.BoxGeometry(...s),
-            'Cylinder': (s) => new THREE.CylinderGeometry(s[0], s[1], s[2]),
-            'Sphere': (s) => new THREE.SphereGeometry(s[0]),
+            'Box': (s) => new THREE.BoxGeometry(s[0] || 1, s[1] || 1, s[2] || 1),
+            'Cylinder': (s) => new THREE.CylinderGeometry(s[0] || 0.5, s[2] || 0.5, s[1] || 1, 16),
+            'Sphere': (s) => new THREE.SphereGeometry(s[0] || 0.5, 16, 16),
         };
 
-        // First pass: create all objects and map them by UUID
         for (const partData of this.assetData.geometry) {
             const geoFn = geometryMap[partData.type];
             if (!geoFn) continue;
 
+            const matData = partData.material || {};
             const material = new THREE.MeshStandardMaterial({
-                color: parseInt(partData.material.color, 16) || 0xcccccc,
+                color: new THREE.Color(matData.color || '#cccccc'),
+                metalness: matData.metalness ?? 0.5,
+                roughness: matData.roughness ?? 0.5,
             });
 
-            // Use scale from definition
-            const size = partData.transform.scale || [1, 1, 1];
-            const partMesh = new THREE.Mesh(geoFn(size), material);
+            const scale = partData.transform.scale || [1, 1, 1];
+            const partMesh = new THREE.Mesh(geoFn(scale), material);
+            partMesh.name = partData.name;
             
-            partMesh.name = partData.uuid; // For debugging
             this.parts.set(partData.uuid, partMesh);
         }
 
-        // Second pass: build the hierarchy
         for (const partData of this.assetData.geometry) {
             const partMesh = this.parts.get(partData.uuid);
             if (!partMesh) continue;
 
-            const { position, rotation } = partData.transform;
+            const { position, quaternion, rotation } = partData.transform;
             if (position) partMesh.position.fromArray(position);
-            if (rotation) partMesh.quaternion.setFromEuler(new THREE.Euler().fromArray(rotation));
             
-            if (partData.parent) {
-                const parentMesh = this.parts.get(partData.parent);
-                parentMesh?.add(partMesh);
-            } else {
-                this.mesh.add(partMesh); // Add root parts to the main mesh group
+            if (quaternion) {
+                partMesh.quaternion.fromArray(quaternion);
+            } else if (rotation) { // Legacy Euler support
+                partMesh.rotation.fromArray(rotation.map(d => THREE.MathUtils.degToRad(d)));
+            }
+            
+            const parent = partData.parent ? this.parts.get(partData.parent) : this.mesh;
+            parent.add(partMesh);
+        }
+
+        // Apply initial viewmodel transform if it exists in the data
+        if (this.assetData.viewModel) {
+            const { position, rotation } = this.assetData.viewModel;
+            if (position) this.mesh.position.fromArray(position);
+            if (rotation) {
+                this.mesh.rotation.fromArray(rotation.map(d => THREE.MathUtils.degToRad(d)), 'YXZ');
             }
         }
     }
 
     attack() {
-        if (!this.canAttack() || !this.wielder) return;
-        
+        if (!this.canAttack() || !this.wielder) return false;
+
         this.triggerCooldown();
-        this.wielder.world.emit('animationTriggered', {
-            entity: this,
-            clipName: 'fire'
-        });
+
+        if (this.attackType === 'melee') {
+            this._performMeleeAttack();
+        } else {
+            this._performRangedAttack();
+        }
+
+        // TODO: Implement a proper animation system for CustomWeapon
+        return true;
+    }
+
+    _performMeleeAttack() {
+        const forward = new THREE.Vector3();
+        this.wielder.camera.getWorldDirection(forward);
+        const playerPos = this.wielder.physics.body.position;
+
+        for (const npc of this.wielder.world.getEnemies()) {
+            if (npc.isDead || !npc.physics.body) continue;
+
+            const npcPos = npc.physics.body.position;
+            const distance = playerPos.distanceTo(npcPos);
+
+            if (distance < this.range + npc.physics.body.shapes[0].radius) {
+                const toNPC = new THREE.Vector3().subVectors(npcPos, playerPos).normalize();
+                if (forward.dot(toNPC) > 0.64) {
+                    let finalDamage = this.damage;
+                    // Apply bleeding effect if defined for this weapon
+                    if (this.assetData.id === 'WEAPON_SAI' && npc.health.currentHealth / npc.health.maxHealth < GAME_CONFIG.BLEEDING.HP_THRESHOLD_PERCENT) {
+                        if (!npc.statusEffects.has('bleeding')) {
+                            npc.statusEffects.addEffect(new BleedingEffect(npc));
+                        }
+                    }
+                    npc.takeDamage(finalDamage);
+                }
+            }
+        }
+    }
+
+    _performRangedAttack() {
+        if (this.magazineAmmo <= 0) {
+            // this.reload(); // Future implementation
+            return;
+        }
+        this.magazineAmmo--;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera({ x: 0, y: 0 }, this.wielder.camera);
+
+        const enemyMeshes = this.wielder.world.getEnemies().map(e => e.mesh).filter(Boolean);
+        const worldMeshes = this.wielder.world.getLevelObjects().map(e => e.mesh).filter(Boolean);
+        const entitiesToTest = [...enemyMeshes, ...worldMeshes];
+
+        const intersects = raycaster.intersectObjects(entitiesToTest, true);
+        let hitPoint = raycaster.ray.at(this.range, new THREE.Vector3());
+
+        if (intersects.length > 0) {
+            const hit = intersects[0];
+            if (hit.distance < this.range) {
+                hitPoint = hit.point;
+                const gameEntityLink = hit.object.userData.gameEntity;
+                if (gameEntityLink?.type === 'NPC' && gameEntityLink.entity.team === 'enemy') {
+                    gameEntityLink.entity.takeDamage(this.damage);
+                }
+            }
+        }
         
-        // Placeholder attack logic
-        console.log(`Custom weapon "${this.name}" fired!`);
+        this.wielder.world.emit('weaponFired', { weapon: this, hitPoint });
     }
 
     update(deltaTime) {
         super.update(deltaTime);
-        // The AnimationSystem will handle transform updates.
+        // Animation logic would go here if not handled by a dedicated system
     }
 }
 --------------------------------------------------
@@ -18395,34 +18673,46 @@ export class Weapon {
 
 === FILE: src/game/weapons/WeaponFactory.js ===
 --------------------------------------------------
-import { Katana } from './Katana.js';
-import { Revolver } from './Revolver.js';
-import { Sai } from './Sai.js'; // Import the new Sai weapon
-
-const WeaponMap = {
-    'WEAPON_001': Katana,
-    'WEAPON_REVOLVER': Revolver,
-    'WEAPON_SAI': Sai, // Add Sai to the map
-};
+import { CustomWeapon } from './CustomWeapon.js';
 
 /**
  * A factory for creating weapon instances from their IDs.
+ * It now asynchronously fetches weapon data from JSON files.
  */
 export class WeaponFactory {
+    // Cache to prevent re-fetching the same JSON data
+    static weaponCache = new Map();
+
     /**
      * Creates a weapon instance for a given weapon ID.
-     * @param {string} weaponId - The ID of the weapon (e.g., 'WEAPON_001').
-     * @returns {import('./Weapon.js').Weapon | null} An instance of the weapon, or null if the ID is not found.
+     * @param {string} weaponId - The ID of the weapon (e.g., 'WEAPON_SAI').
+     * @returns {Promise<CustomWeapon | null>} A promise that resolves to an instance of the weapon, or null if not found.
      */
-    static create(weaponId) {
-        const WeaponClass = WeaponMap[weaponId];
-
-        if (WeaponClass) {
-            return new WeaponClass();
+    static async create(weaponId) {
+        if (this.weaponCache.has(weaponId)) {
+            return new CustomWeapon(this.weaponCache.get(weaponId));
         }
 
-        console.warn(`WeaponFactory: No class found for weapon ID: ${weaponId}`);
-        return null;
+        try {
+            // Normalize ID to file name convention (e.g., WEAPON_SAI -> weapon-sai.json)
+            const fileName = `weapon-${weaponId.split('_')[1].toLowerCase()}.json`;
+            const response = await fetch(`./assets/weapons/${fileName}`);
+
+            if (!response.ok) {
+                throw new Error(`Weapon data not found for ${weaponId} at ${response.url}`);
+            }
+
+            const weaponData = await response.json();
+            weaponData.id = weaponId; // Ensure the ID is part of the data object
+            
+            this.weaponCache.set(weaponId, weaponData);
+
+            return new CustomWeapon(weaponData);
+
+        } catch (error) {
+            console.error(`WeaponFactory: Failed to create weapon for ID: ${weaponId}`, error);
+            return null;
+        }
     }
 }
 --------------------------------------------------
@@ -18804,6 +19094,7 @@ export class WeaponFactory {
 
 === FILE: src/game/world/World.js ===
 --------------------------------------------------
+// ~ src/game/world/World.js
 import * as THREE from 'three';
 import { EventEmitter } from '../../shared/EventEmitter.js';
 import { LevelManager } from './LevelManager.js';
@@ -18892,7 +19183,8 @@ export class World {
             this.scene.add(dLight.target);
         });
 
-        this.player = PlayerPrefab.create(
+        // FIX: Await the async prefab creation
+        this.player = await PlayerPrefab.create(
             this,
             this.core.renderer.camera,
             this.game.viewModelScene,

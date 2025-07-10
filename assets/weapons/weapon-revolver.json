@@ -1,0 +1,89 @@
+{
+    "assetName": "Revolver",
+    "type": "weapon",
+    "attackType": "ranged",
+    "damage": 100,
+    "range": 200,
+    "cooldown": 0.5,
+    "magazineSize": 6,
+    "reserveAmmo": 24,
+    "viewModel": {
+        "position": [0.3, -0.4, -0.7],
+        "rotation": [0, -17.2, 0]
+    },
+    "geometry": [
+        {
+            "uuid": "frame",
+            "name": "Frame",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [0, -0.01, -0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.045, 0.1, 0.14]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "barrelAssembly",
+            "name": "BarrelAssembly",
+            "type": "Box",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0.055, -0.07],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.04, 0.055, 0.22]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "barrel",
+            "name": "Barrel",
+            "type": "Cylinder",
+            "parent": "barrelAssembly",
+            "transform": {
+                "position": [0, 0, -0.01],
+                "quaternion": [0.707, 0, 0, 0.707],
+                "scale": [0.014, 0.2, 0.014]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "grip",
+            "name": "Grip",
+            "type": "Cylinder",
+            "parent": "frame",
+            "transform": {
+                "position": [0, -0.09, 0.06],
+                "quaternion": [-0.1, 0, 0, 0.995],
+                "scale": [0.035, 0.16, 0.03]
+            },
+            "material": { "color": "#111111", "metalness": 0.1, "roughness": 0.7 }
+        },
+        {
+            "uuid": "crane",
+            "name": "Crane",
+            "type": "Cylinder",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0, 0],
+                "quaternion": [0.707, 0, 0, 0.707],
+                "scale": [0.03, 0.07, 0.03]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        },
+        {
+            "uuid": "hammer",
+            "name": "Hammer",
+            "type": "Box",
+            "parent": "frame",
+            "transform": {
+                "position": [0, 0.06, 0.07],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.015, 0.04, 0.02]
+            },
+            "material": { "color": "#2a2a2a", "metalness": 0.9, "roughness": 0.4 }
+        }
+    ],
+    "animations": {}
+}

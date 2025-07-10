@@ -1,4 +1,5 @@
 // src/client/ui/UIManager.js
+// src/client/ui/UIManager.js
 import { HUD } from './HUD.js';
 import { Minimap } from '../rendering/Minimap.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -15,6 +16,7 @@ export class UIManager {
             levelSelect: document.getElementById('level-select-menu'),
             pauseMenu: document.getElementById('pause-menu'),
             deathScreen: document.getElementById('death-screen'),
+            readyScreen: document.getElementById('ready-screen'),
         };
 
         this.elements = {
@@ -28,6 +30,7 @@ export class UIManager {
             energyBarContainer: document.getElementById('energy-bar-container'),
             abilitySlots: document.querySelectorAll('.ability-slot'), // Direct access for flashing
             underwaterOverlay: document.getElementById('vfx-underwater-overlay'),
+            readyScreenLevelName: document.getElementById('ready-screen-level-name'),
         };
 
         this.hud = new HUD(abilityIconService);
@@ -50,18 +53,31 @@ export class UIManager {
         }
     }
 
+    showReadyScreen(levelName) {
+        if (this.elements.readyScreenLevelName) {
+            this.elements.readyScreenLevelName.textContent = levelName;
+        }
+        this.setLoading(false);
+        this.showScreen('readyScreen');
+    }
+
     setLoading(isLoading) {
         if (isLoading) {
+            // You might want a dedicated loading overlay instead of overwriting the main menu
             this.showScreen('mainMenu');
             this.screens.mainMenu.innerHTML = '<h2>Loading...</h2>';
         } else {
-            this.screens.mainMenu.innerHTML = `
-                <h1>ELEMENTALS</h1>
-                <div class="menu-options">
-                    <button id="play-btn">Play</button>
-                    <button id="loadout-btn">Loadout</button>
-                    <button id="editor-btn">Level Editor</button>
-                </div>`;
+            // Only restore the main menu if it was actually in a loading state
+            if (this.screens.mainMenu.querySelector('h2')) {
+                 this.screens.mainMenu.innerHTML = `
+                    <h1>ELEMENTALS</h1>
+                    <div class="menu-options">
+                        <button id="play-btn">Play</button>
+                        <button id="loadout-btn">Loadout</button>
+                        <button id="editor-btn">Level Editor</button>
+                        <button id="asset-editor-btn">Asset Editor</button>
+                    </div>`;
+            }
         }
     }
 
@@ -70,6 +86,7 @@ export class UIManager {
             const playBtn = document.getElementById('play-btn');
             const loadoutBtn = document.getElementById('loadout-btn');
             const editorBtn = document.getElementById('editor-btn');
+            const assetEditorBtn = document.getElementById('asset-editor-btn');
 
             if (playBtn) playBtn.onclick = () => {
                 this.populateLevelList(game);
@@ -77,6 +94,7 @@ export class UIManager {
             };
             if (loadoutBtn) loadoutBtn.onclick = () => { window.location.href = 'loadout.html'; };
             if (editorBtn) editorBtn.onclick = () => { window.location.href = 'editor.html'; };
+            if (assetEditorBtn) assetEditorBtn.onclick = () => { window.location.href = 'asset-editor.html'; };
         };
         
         setupMainMenuListeners();
@@ -92,6 +110,7 @@ export class UIManager {
         this.elements.resumeBtn.onclick = () => game.requestPointerLock();
         this.elements.pauseQuitBtn.onclick = () => game.returnToMenu();
         this.elements.deathQuitBtn.onclick = () => game.returnToMenu();
+        this.screens.readyScreen.onclick = () => game.requestPointerLock();
     }
 
     async populateLevelList(game) {

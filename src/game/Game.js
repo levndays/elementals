@@ -1,10 +1,10 @@
-// src/game/Game.js
 import * as THREE from 'three';
 import { World } from './world/World.js';
 import { PlayerController } from '../client/entities/PlayerController.js';
 import { EventEmitter } from '../shared/EventEmitter.js';
 import { AbilityFactory } from './abilities/AbilityFactory.js';
 import { GAME_CONFIG } from '../shared/config.js';
+import { WeaponFactory } from './weapons/WeaponFactory.js';
 
 /**
  * Manages the high-level state of the game application.
@@ -106,8 +106,9 @@ export class Game {
 
             this.playerController.attach(this.world.player);
             
-            this.gameState = 'AWAITING_PLAY';
-            this.requestPointerLock();
+            this.gameState = 'READY';
+            this.ui.showReadyScreen(this.world.levelName);
+
         } catch (error) {
             console.error("Failed to start level:", error);
             this.returnToMenu();
@@ -115,7 +116,7 @@ export class Game {
     }
 
     startGameplay() {
-        if (this.gameState !== 'AWAITING_PLAY') return;
+        if (this.gameState !== 'READY') return;
         this.gameState = 'PLAYING';
         this.ui.setLoading(false);
         this.ui.showScreen('none');
@@ -137,9 +138,8 @@ export class Game {
 
     respawnPlayer() {
         this.world.resetPlayer();
-        this.gameState = 'AWAITING_PLAY';
-        this.ui.showScreen('none');
-        this.requestPointerLock();
+        this.gameState = 'READY';
+        this.ui.showReadyScreen(this.world.levelName);
     }
     
     returnToMenu() {
@@ -170,7 +170,7 @@ export class Game {
     _setupEventListeners() {
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement) {
-                if (this.gameState === 'AWAITING_PLAY') this.startGameplay();
+                if (this.gameState === 'READY') this.startGameplay();
                 if (this.gameState === 'PAUSED') {
                     this.gameState = 'PLAYING';
                     this.ui.showScreen('none');

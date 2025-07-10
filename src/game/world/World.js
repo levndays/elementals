@@ -86,10 +86,10 @@ export class World {
             this.scene.add(dLight.target);
         });
 
-        this.player = PlayerPrefab.create(
+        // FIX: Await the async prefab creation
+        this.player = await PlayerPrefab.create(
             this,
             this.core.renderer.camera,
-            this.game.viewModelScene,
             config.loadout
         );
         this.add(this.player);

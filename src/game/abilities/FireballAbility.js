@@ -31,14 +31,12 @@ export class FireballAbility extends Ability {
         let spawnPosition;
         if (result.hasHit) {
             const hitPoint = result.hitPointWorld;
+            const nudgeDirection = new CANNON.Vec3();
+            rayTo.vsub(rayFrom, nudgeDirection); // Get direction vector safely
+            nudgeDirection.normalize();
             
-            // FIX: Corrected method chaining.
-            // .normalize() returns the length (a number), not the vector.
-            const nudgeDirection = rayTo.vsub(rayFrom); // Get direction vector
-            nudgeDirection.normalize(); // Normalize it in-place
-            
-            // .scale() returns a new, scaled vector.
-            const nudgeVector = nudgeDirection.scale(-0.1); 
+            const nudgeVector = new CANNON.Vec3();
+            nudgeDirection.scale(-0.1, nudgeVector); // Scale into new vector
             
             spawnPosition = hitPoint.vadd(nudgeVector);
         } else {

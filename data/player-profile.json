@@ -1,6 +1,6 @@
 {
   "inventory": [
-    "WEAPON_001",
+    "WEAPON_KATANA",
     "WEAPON_REVOLVER",
     "WEAPON_SAI",
     "FIRE_001",
@@ -12,7 +12,7 @@
   "savedLoadouts": {
     "My First Build": {
       "name": "My First Build",
-      "weapon": "WEAPON_001",
+      "weapon": "WEAPON_KATANA",
       "cards": [
         "FIRE_001",
         "FIRE_002",
@@ -25,6 +25,16 @@
       "weapon": "WEAPON_REVOLVER",
       "cards": [
         "FIRE_001",
+        "UTILITY_001",
+        null,
+        null
+      ]
+    },
+    "Assassin": {
+      "name": "Assassin",
+      "weapon": "WEAPON_SAI",
+      "cards": [
+        "EARTH_001",
         "UTILITY_001",
         null,
         null

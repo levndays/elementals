@@ -1,0 +1,45 @@
+{
+    "assetName": "Twin Sai",
+    "type": "weapon",
+    "attackType": "melee",
+    "damage": 150,
+    "range": 2.5,
+    "cooldown": 0.7,
+    "viewModel": {
+        "position": [0, -0.4, -0.8],
+        "rotation": [-2.8, 0, 0]
+    },
+    "geometry": [
+        {
+            "uuid": "left_sai",
+            "name": "LeftSai",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [-0.35, -0.05, 0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.08, 0.5, 0.08]
+            },
+            "material": { "color": "#999999", "metalness": 0.9, "roughness": 0.2 }
+        },
+        {
+            "uuid": "right_sai",
+            "name": "RightSai",
+            "type": "Box",
+            "parent": null,
+            "transform": {
+                "position": [0.35, -0.05, 0.05],
+                "quaternion": [0, 0, 0, 1],
+                "scale": [0.08, 0.5, 0.08]
+            },
+            "material": { "color": "#999999", "metalness": 0.9, "roughness": 0.2 }
+        }
+    ],
+    "animations": {
+        "fire": {
+            "name": "fire",
+            "duration": 0.4,
+            "tracks": []
+        }
+    }
+}

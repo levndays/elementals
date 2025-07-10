@@ -7,7 +7,13 @@ export class WeaponSystem {
      * @param {number} deltaTime
      */
     update(world, deltaTime) {
-        for (const entity of world.getEntities()) {
+        // Specifically update the player's weapon if it exists and has an update method.
+        if (world.player?.weapon?.update) {
+            world.player.weapon.update(deltaTime);
+        }
+
+        // This loop is kept for potential future NPCs with complex, updatable weapons.
+        for (const entity of world.getNPCs()) {
             if (entity.weapon?.update) {
                 entity.weapon.update(deltaTime);
             }

@@ -60,73 +60,28 @@ export class AssetEditorActions {
         this._loadDataWithUndo(data);
     }
 
-    loadExampleDagger() {
-        const daggerData = {
-            "assetName": "Example Dagger",
-            "type": "weapon",
-            "geometry": [
-                { "uuid": "hilt", "name": "Hilt", "type": "Cylinder", "parent": null, "transform": { "position": [0, 0, 0], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.12] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.8 } },
-                { "uuid": "guard", "name": "Guard", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.06], "quaternion": [0,0,0,1], "scale": [0.12, 0.03, 0.03] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } },
-                { "uuid": "blade", "name": "Blade", "type": "Box", "parent": "hilt", "transform": { "position": [0, 0, 0.18], "quaternion": [0,0,0,1], "scale": [0.01, 0.05, 0.24] }, "material": { "color": "#cccccc", "metalness": 0.9, "roughness": 0.2 } },
-                { "uuid": "pommel", "name": "Pommel", "type": "Sphere", "parent": "hilt", "transform": { "position": [0, 0, -0.07], "quaternion": [0,0,0,1], "scale": [0.04, 0.04, 0.04] }, "material": { "color": "#454545", "metalness": 0.8, "roughness": 0.4 } }
-            ],
-            "animations": {
-                "fire": {
-                    "name": "fire", "duration": 0.5,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ 
-                            { "time": 0, "value": [0, 0, 0] }, 
-                            { "time": 0.15, "value": [40, 20, -30] }, 
-                            { "time": 0.5, "value": [0, 0, 0] } 
-                        ] },
-                        { "targetUUID": "AssetRoot", "property": "position", "keyframes": [ 
-                            { "time": 0, "value": [0, 0, 0] }, 
-                            { "time": 0.15, "value": [0, 0, 0.1] }, 
-                            { "time": 0.5, "value": [0, 0, 0] } 
-                        ] }
-                    ]
-                },
-                "inspect": { "name": "inspect", "duration": 2.0, "tracks": [ { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] } ] }
-            }
-        };
-        this._loadDataWithUndo(daggerData);
+    async loadExampleDagger() {
+        try {
+            const response = await fetch('./assets/weapons/weapon-sai.json');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            this._loadDataWithUndo(data);
+        } catch (error) {
+            console.error("Failed to load example dagger:", error);
+            alert("Could not load example asset. See console for details.");
+        }
     }
 
-    loadExamplePistol() {
-        const pistolData = {
-            "assetName": "Example Pistol",
-            "type": "weapon",
-            "geometry": [
-                { "uuid": "body", "name": "Body", "type": "Box", "parent": null, "transform": { "position": [0,0,0], "quaternion": [0,0,0,1], "scale": [0.05, 0.08, 0.18] }, "material": { "color": "#454545", "metalness": 0.7, "roughness": 0.5 } },
-                { "uuid": "slide", "name": "Slide", "type": "Box", "parent": "body", "transform": { "position": [0,0.05,0], "quaternion": [0,0,0,1], "scale": [0.045, 0.05, 0.2] }, "material": { "color": "#333333", "metalness": 0.8, "roughness": 0.4 } },
-                { "uuid": "grip", "name": "Grip", "type": "Box", "parent": "body", "transform": { "position": [0,-0.08,-0.05], "quaternion": [-0.08715574274765817, 0, 0, 0.9961946980917455], "scale": [0.04, 0.15, 0.05] }, "material": { "color": "#594534", "metalness": 0.1, "roughness": 0.7 } },
-                { "uuid": "magazine", "name": "Magazine", "type": "Box", "parent": "grip", "transform": { "position": [0,-0.07,0.01], "quaternion": [0,0,0,1], "scale": [0.03, 0.03, 0.04] }, "material": { "color": "#222222", "metalness": 0.9, "roughness": 0.3 } },
-                { "uuid": "trigger", "name": "Trigger", "type": "Box", "parent": "body", "transform": { "position": [0,-0.01,-0.03], "quaternion": [0,0,0,1], "scale": [0.01, 0.03, 0.02] }, "material": { "color": "#111111", "metalness": 0.9, "roughness": 0.2 } }
-            ],
-            "animations": {
-                "fire": {
-                    "name": "fire", "duration": 0.3,
-                    "tracks": [
-                        { "targetUUID": "slide", "property": "position", "keyframes": [ { "time": 0, "value": [0, 0.05, 0] }, { "time": 0.05, "value": [0, 0.05, -0.05] }, { "time": 0.3, "value": [0, 0.05, 0] } ] },
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.05, "value": [-10, 0, 0] }, { "time": 0.3, "value": [0, 0, 0] } ] }
-                    ]
-                },
-                "reload": {
-                    "name": "reload", "duration": 1.5,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.2, "value": [30, 0, 20] }, { "time": 1.3, "value": [30, 0, 20] }, { "time": 1.5, "value": [0, 0, 0] } ] },
-                        { "targetUUID": "magazine", "property": "position", "keyframes": [ { "time": 0.3, "value": [0,-0.07,0.01] }, { "time": 0.6, "value": [0,-0.15,0.01] }, { "time": 0.9, "value": [0,-0.15,0.01] }, { "time": 1.2, "value": [0,-0.07,0.01] } ] }
-                    ]
-                },
-                "inspect": {
-                    "name": "inspect", "duration": 2.0,
-                    "tracks": [
-                        { "targetUUID": "AssetRoot", "property": "rotation", "keyframes": [ { "time": 0, "value": [0, 0, 0] }, { "time": 0.5, "value": [10, -30, 25] }, { "time": 1.5, "value": [10, 30, -20] }, { "time": 2.0, "value": [0, 0, 0] } ] }
-                    ]
-                }
-            }
-        };
-        this._loadDataWithUndo(pistolData);
+    async loadExamplePistol() {
+        try {
+            const response = await fetch('./assets/weapons/weapon-revolver.json');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            this._loadDataWithUndo(data);
+        } catch (error) {
+            console.error("Failed to load example pistol:", error);
+            alert("Could not load example asset. See console for details.");
+        }
     }
     
     updateKeyframeProperty(keyframeInfo, property, newValue) {

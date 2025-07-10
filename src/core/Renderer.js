@@ -10,7 +10,7 @@ export class Renderer {
         }
 
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
 
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -32,16 +32,9 @@ export class Renderer {
         window.addEventListener('resize', this._onWindowResize);
     }
     
-    setupPostProcessing(mainScene, camera, viewModelScene = null) {
+    setupPostProcessing(mainScene, camera) {
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(new RenderPass(mainScene, camera));
-
-        if (viewModelScene) {
-            const viewModelPass = new RenderPass(viewModelScene, camera);
-            viewModelPass.clear = false;
-            viewModelPass.clearDepth = true;
-            this.composer.addPass(viewModelPass);
-        }
         
         this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         this.bloomPass.threshold = 0.9;

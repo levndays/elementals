@@ -8,20 +8,19 @@ import { StatusEffectComponent } from '../components/StatusEffectComponent.js';
 import { GAME_CONFIG } from '../../shared/config.js';
 import { AbilityFactory } from '../abilities/AbilityFactory.js';
 import { COLLISION_GROUPS } from '../../shared/CollisionGroups.js';
-import { CustomWeapon } from '../weapons/CustomWeapon.js';
+import { WeaponFactory } from '../weapons/WeaponFactory.js';
 
 /**
  * Encapsulates the player entity's state, components, and core logic.
  */
 export class Player {
-    constructor(world, camera, weapon, body) {
+    constructor(world, camera, body) {
         this.id = THREE.MathUtils.generateUUID();
         this.type = 'player';
         this.team = 'player';
         this.world = world;
         this.camera = camera;
-        this.weapon = weapon;
-        if (this.weapon) this.weapon.wielder = this;
+        this.weapon = null; // Initialized as null
         
         this.health = new HealthComponent(GAME_CONFIG.PLAYER.MAX_HEALTH);
         this.input = new PlayerInputComponent();
@@ -139,11 +138,28 @@ export class Player {
         this.selectAbility(newIndex);
     }
 
-    applyLoadout(loadoutData) {
-        // Ensure loadoutData is an object and has a 'cards' array property.
+    async applyLoadout(loadoutData) {
+        // Clear existing weapon
+        if (this.weapon) {
+            if (this.weapon.mesh) this.camera.remove(this.weapon.mesh);
+            this.weapon = null;
+        }
+
+        // Load and set new weapon
+        const weaponId = loadoutData?.weapon || 'WEAPON_KATANA';
+        this.weapon = await WeaponFactory.create(weaponId);
+        
+        if (this.weapon) {
+            this.weapon.wielder = this;
+            if (this.weapon.mesh) {
+                this.camera.add(this.weapon.mesh);
+            }
+        }
+
+        // Load abilities
         const cardIds = (loadoutData && Array.isArray(loadoutData.cards)) 
             ? loadoutData.cards 
-            : [null, null, null, null]; // Default to empty slots if data is malformed.
+            : [null, null, null, null];
         
         this.abilities.abilities = cardIds.map(cardId => 
             cardId ? AbilityFactory.create(cardId, this) : null
